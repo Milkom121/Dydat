@@ -7,11 +7,11 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Install ALL dependencies (dev included) and build the application
-RUN pnpm install --filter=backend
+RUN pnpm install
 RUN pnpm --filter=backend run build
 
 # Prune dev dependencies to leave only production ones
-RUN pnpm --filter=backend --prod prune
+RUN cd apps/backend && pnpm prune --prod
 
 # Stage 2: Create the final production image
 FROM node:20-alpine
@@ -21,8 +21,8 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package.json ./package.json
+COPY --from=builder /usr/src/app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /usr/src/app/apps/backend/package.json ./apps/backend/package.json
-
 
 EXPOSE 3001
 CMD ["node", "dist/apps/backend/main.js"] 
