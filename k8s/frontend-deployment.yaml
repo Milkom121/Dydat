@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 012823504146.dkr.ecr.eu-central-1.amazonaws.com/dydat/frontend:latest
+          image: 012823504146.dkr.ecr.eu-central-1.amazonaws.com/dydat-frontend:latest
           ports:
             - containerPort: 3000
           imagePullPolicy: Always 
