@@ -1,33 +1,28 @@
 # Stage 1: Build the application
 FROM node:20-alpine AS builder
 
-# Install pnpm
+# Install pnpm and copy source code
 RUN npm install -g pnpm
-
 WORKDIR /usr/src/app
-
-# Copy all source code
 COPY . .
 
-# Install dependencies and build the backend
+# Install ALL dependencies (dev included) and build the application
 RUN pnpm install --filter=backend
 RUN pnpm --filter=backend run build
 
-# Stage 2: Create the production image
-FROM node:20-alpine
+# Prune dev dependencies to leave only production ones
+RUN pnpm --filter=backend --prod prune
 
-RUN npm install -g pnpm
+# Stage 2: Create the final production image
+FROM node:20-alpine
 WORKDIR /usr/src/app
 
-# Copy only the files needed for production dependencies
-COPY package.json pnpm-lock.yaml ./
-COPY apps/backend/package.json ./apps/backend/
-
-# Install only production dependencies
-RUN pnpm install --filter=backend --prod
-
-# Copy the built application from the builder stage
+# Copy the pruned node_modules and the built application from the builder stage
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/package.json ./package.json
+COPY --from=builder /usr/src/app/apps/backend/package.json ./apps/backend/package.json
+
 
 EXPOSE 3001
 CMD ["node", "dist/apps/backend/main.js"] 
