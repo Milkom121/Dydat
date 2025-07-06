@@ -10,7 +10,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Install dependencies and build the backend
-RUN pnpm install --filter=backend --prod
+RUN pnpm install --filter=backend
 RUN pnpm --filter=backend run build
 
 # Stage 2: Create the production image
