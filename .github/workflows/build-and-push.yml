@@ -31,7 +31,9 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         run: |
-          ECR_REGISTRY=$(aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin "https://$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" && echo "$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com")
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin "$ECR_REGISTRY"
           echo "registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
