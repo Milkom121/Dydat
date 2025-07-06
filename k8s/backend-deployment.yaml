@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dydat-backend-deployment
+  labels:
+    app: dydat-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dydat-backend
+  template:
+    metadata:
+      labels:
+        app: dydat-backend
+    spec:
+      containers:
+        - name: backend
+          image: 012823504146.dkr.ecr.eu-central-1.amazonaws.com/dydat/backend:latest
+          ports:
+            - containerPort: 3001
+          imagePullPolicy: Always 
