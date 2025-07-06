@@ -1,40 +1,33 @@
-# Stage 1: Builder
-# This stage installs all dependencies and builds the source code.
+# Stage 1: Build the application
 FROM node:20-alpine AS builder
+
+# Install pnpm
+RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
-# Copy root dependency management files first
-COPY package.json pnpm-lock.yaml ./
-# Then copy the package.json for the specific app
-COPY apps/frontend/package.json ./apps/frontend/
-
-# Install dependencies for the frontend workspace, including devDependencies.
-RUN npm install -g pnpm && pnpm install --filter frontend
-
-# Copy the rest of the source code
+# Copy all source code
 COPY . .
 
-# Build the specific 'frontend' workspace.
-# This will generate the .next/standalone folder
-RUN pnpm --filter frontend build
+# Install dependencies and build the frontend
+# Note: We don't use --prod here because Next.js build needs devDependencies
+RUN pnpm install --filter=frontend
+RUN pnpm --filter=frontend run build
 
-
-# Stage 2: Production
-# This is the final, minimal image using the standalone output.
+# Stage 2: Production image
 FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-# Set the environment to production
-ENV NODE_ENV production
-# Set the correct port
-ENV PORT 3000
+ENV NODE_ENV=production
 
-# Copy the standalone output from the builder stage
+# Copy built standalone output, public folder, and static assets from builder
 COPY --from=builder /usr/src/app/apps/frontend/.next/standalone ./
-# Copy the static assets from the builder stage
-COPY --from=builder /usr/src/app/apps/frontend/.next/static ./.next/static
+COPY --from=builder /usr/src/app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder /usr/src/app/apps/frontend/public ./apps/frontend/public
 
-# The standalone output includes a server.js file that starts the app
-CMD ["node", "server.js"] 
+EXPOSE 3000
+
+ENV PORT=3000
+
+CMD ["node", "apps/frontend/server.js"] 

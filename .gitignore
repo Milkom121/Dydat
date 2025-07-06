@@ -12,7 +12,6 @@
 /apps/frontend/out
 
 # PNPM
-pnpm-lock.yaml
 pnpm-debug.log
 
 # Terraform
