@@ -1,4 +1,4 @@
-name: Build and Push to ECR
+name: Build and Push to ECR (Manual Login)
 
 on:
   push:
@@ -14,6 +14,8 @@ jobs:
   build-and-push:
     name: Build and Push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -26,9 +28,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
+      - name: Log in to Amazon ECR
         id: login-ecr
-        uses: aws-actions/login-ecr@v3
+        run: |
+          ECR_REGISTRY=$(aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin "https://$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" && echo "$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com")
+          echo "registry=$ECR_REGISTRY" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
