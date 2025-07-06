@@ -67,9 +67,29 @@ L'obiettivo è realizzare un ecosistema di apprendimento intelligente e gamifica
   - `/infra/.terraform.lock.hcl`
 - 🎯 **Pronto per:** Fase 1.3
 
+✅ **[COMPLETATO] Task 1.3.1-1.3.3: Deploy Applicazioni su Kubernetes (EKS)**
+- 📅 **Data:** 04/07/2025
+- 👤 **Implementato da:** AI Assistant
+- 🧪 **Test Status:** PASSED (Frontend accessibile pubblicamente via Load Balancer)
+- 📊 **Report Breve:**
+  - Creato cluster EKS e Node Group tramite Terraform (`eks.tf`).
+  - Configurato `kubectl` per l'accesso al cluster.
+  - Containerizzate le applicazioni backend e frontend con Docker (`Dockerfile`).
+  - Creati repository su ECR e pushato le immagini.
+  - Creati manifesti Kubernetes per il deploy.
+  - Eseguito deploy su EKS e risolto problemi di `CrashLoopBackOff`.
+  - Esposto il frontend tramite un Service di tipo LoadBalancer.
+- 📂 **File Modificati/Creati:**
+  - `/infra/eks.tf`
+  - `/apps/frontend/Dockerfile`
+  - `/apps/backend/Dockerfile`
+  - `/.dockerignore`
+  - `/k8s/*.yaml`
+- 🎯 **Pronto per:** Fase 1.4 / 1.5
+
 ---
 
-## 📋 MILESTONES E FASI
+## �� MILESTONES E FASI
 
 ### 🔹 MILESTONE 1: Fondamenta del Progetto
 Timeline: ~1 settimana | Obiettivo: Creare le basi tecniche (codice e infrastruttura) per lo sviluppo delle funzionalità.
@@ -82,14 +102,13 @@ Timeline: ~1 settimana | Obiettivo: Creare le basi tecniche (codice e infrastrut
 - **FASE 1.2: Infrastructure as Code (IaC) con Terraform** → ✅ **COMPLETATA**
   - Task 1.2.1: Creazione Infrastruttura di Rete (VPC, Subnet, etc.) → ✅ **COMPLETATO**
 
-- **FASE 1.3: Setup Piattaforma di Orchestrazione (Kubernetes)** → ⏳ **IN ATTESA**
-  - Task 1.3.1: Definizione del cluster EKS con Terraform
-  - Task 1.3.2: Creazione del Node Group
-  - Task 1.3.3: Configurazione `kubectl` per l'accesso al cluster
+- **FASE 1.3: Setup Piattaforma di Orchestrazione (Kubernetes)** → ✅ **COMPLETATA**
+  - Task 1.3.1: Definizione del cluster EKS con Terraform → ✅ **COMPLETATO**
+  - Task 1.3.2: Creazione del Node Group → ✅ **COMPLETATO**
+  - Task 1.3.3: Configurazione `kubectl` per l'accesso al cluster → ✅ **COMPLETATO**
 
 - **FASE 1.4: Setup Database** → ⏳ **IN ATTESA**
   - Task 1.4.1: Creazione istanza RDS (PostgreSQL) con Terraform
-  - Task 1.4.2: Configurazione della connessione e sicurezza
 
 - **FASE 1.5: Continuous Integration (CI)** → ⏳ **IN ATTESA**
   - Task 1.5.1: Creazione pipeline di base con GitHub Actions
