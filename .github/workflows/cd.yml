@@ -82,7 +82,7 @@ jobs:
           sudo mv ./kubectl /usr/local/bin/kubectl
 
       - name: Update kube config
-        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+        run: aws eks update-kubeconfig --name dydat-main-cluster --region ${{ env.AWS_REGION }}
 
       - name: Create/Update DB Credentials Secret
         run: |
