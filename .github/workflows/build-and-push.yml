@@ -1,54 +1,21 @@
-name: Build and Push to ECR
+name: Debug Workflow Resolution
 
 on:
   push:
     branches:
       - main
 
-env:
-  AWS_REGION: eu-central-1
-  ECR_REPOSITORY_BACKEND: dydat-backend
-  ECR_REPOSITORY_FRONTEND: dydat-frontend
-
 jobs:
-  build-and-push:
-    name: Build and Push
+  debug-job:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          node-version: '20'
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/login-ecr@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./apps/backend/Dockerfile
-          push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:latest
-          cache-from: type=inline
-          cache-to: type=inline
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./apps/frontend/Dockerfile
-          push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}:latest
-          cache-from: type=inline
-          cache-to: type=inline 
+      - name: Check Node version
+        run: node --version 
