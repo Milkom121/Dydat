@@ -82,9 +82,33 @@ jobs:
           sudo mv ./kubectl /usr/local/bin/kubectl
 
       - name: Update kube config
-        run: aws eks update-kubeconfig --name dydat-main-cluster --region ${{ env.AWS_REGION }}
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to EKS
+      - name: Create/Update DB Credentials Secret
         run: |
-          kubectl rollout restart deployment dydat-backend-deployment
-          kubectl rollout restart deployment dydat-frontend-deployment 
+          # Get the ARN of the secret from Terraform output
+          DB_SECRET_ARN=$(cd infra && terraform output -raw db_cluster_secret_arn)
+          echo "Fetching secret from ARN: $DB_SECRET_ARN"
+
+          # Get the secret value from AWS Secrets Manager
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $DB_SECRET_ARN --query SecretString --output text)
+          
+          # Extract values from the JSON
+          DB_HOST=$(echo $SECRET_JSON | jq -r .host)
+          DB_PORT=$(echo $SECRET_JSON | jq -r .port)
+          DB_USERNAME=$(echo $SECRET_JSON | jq -r .username)
+          DB_PASSWORD=$(echo $SECRET_JSON | jq -r .password)
+          DB_NAME=$(echo $SECRET_JSON | jq -r .dbname)
+
+          # Create or update the Kubernetes secret
+          kubectl create secret generic dydat-db-credentials \
+            --from-literal=DB_HOST=$DB_HOST \
+            --from-literal=DB_PORT=$DB_PORT \
+            --from-literal=DB_USERNAME=$DB_USERNAME \
+            --from-literal=DB_PASSWORD=$DB_PASSWORD \
+            --from-literal=DB_NAME=$DB_NAME \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Restart deployments
+        run: |
+          kubectl rollout restart deployment backend-deployment 
