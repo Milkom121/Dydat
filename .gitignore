@@ -1,28 +1,27 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Dependencies
-/node_modules
-/apps/backend/node_modules
-/apps/frontend/node_modules
-/packages/**/node_modules
-
-# Build outputs
-/apps/backend/dist
-/apps/frontend/.next
-/apps/frontend/out
+# Node
+node_modules
+dist
+.npm
 
 # PNPM
-pnpm-debug.log
+.pnpm-debug.log
 
 # Terraform
-.terraform/
+.terraform
 *.tfstate
 *.tfstate.backup
-.terraform.lock.hcl
 
-# IDEs and editors
-.vscode/
-.idea/
+# IDE
+.vscode
+.idea
+
+# Build outputs
+.next/
+out/
+build/
+coverage/
 
 # OS-generated files
 .DS_Store
