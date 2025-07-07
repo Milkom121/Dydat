@@ -7,8 +7,8 @@ on:
 
 env:
   AWS_REGION: eu-central-1
-  ECR_REPOSITORY_BACKEND: dydat-backend
-  ECR_REPOSITORY_FRONTEND: dydat-frontend
+  ECR_REPOSITORY_BACKEND: dydat-backend-v2
+  ECR_REPOSITORY_FRONTEND: dydat-frontend-v2
 
 jobs:
   build-and-push:
