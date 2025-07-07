@@ -2,24 +2,12 @@
 
 # 1. ECR Repository for the Backend application
 resource "aws_ecr_repository" "backend" {
-  name                 = "dydat-backend"
-  image_tag_mutability = "MUTABLE"
-  force_delete         = true
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+  name = "dydat-backend-v2"
 }
 
 # 2. ECR Repository for the Frontend application
 resource "aws_ecr_repository" "frontend" {
-  name                 = "dydat-frontend"
-  image_tag_mutability = "MUTABLE"
-  force_delete         = true
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+  name = "dydat-frontend-v2"
 }
 
 # --- Outputs ---

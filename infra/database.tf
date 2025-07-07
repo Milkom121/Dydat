@@ -1,47 +1,55 @@
 # --- infra/database.tf ---
 
-variable "db_password" {
-  description = "Master password for the database"
-  type        = string
-  sensitive   = true
-}
+resource "aws_security_group" "db_sg" {
+  name        = "dydat-db-sg-v2"
+  description = "Allow traffic to the database"
+  vpc_id      = aws_vpc.main.id
 
-resource "aws_rds_cluster" "dydat_cluster" {
-  cluster_identifier      = "dydat-aurora-cluster"
-  engine                  = "aurora-postgresql"
-  engine_mode             = "provisioned"
-  engine_version          = "15.3" # Aurora usa versioni specifiche, proviamo con questa
-  database_name           = "dydatdb"
-  master_username         = "dydatadmin"
-  manage_master_user_password = true # Lasciamo che AWS gestisca la password
-  skip_final_snapshot     = true
-  db_subnet_group_name    = aws_db_subnet_group.default.name
-  vpc_security_group_ids  = [aws_security_group.default.id]
-}
-
-resource "aws_rds_cluster_instance" "dydat_cluster_instance" {
-  cluster_identifier = aws_rds_cluster.dydat_cluster.id
-  instance_class     = "db.t3.medium" # Aurora richiede classi di istanza diverse
-  engine             = aws_rds_cluster.dydat_cluster.engine
-  engine_version     = aws_rds_cluster.dydat_cluster.engine_version
-}
-
-resource "aws_db_subnet_group" "default" {
-  name       = "dydat-main-subnet-group"
-  subnet_ids = [aws_subnet.public_a.id, aws_subnet.public_b.id]
-
-  tags = {
-    Name = "Dydat DB Subnet Group"
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [module.eks.node_security_group_id]
   }
 }
 
-# Questo subnet group lo abbiamo già definito ma lo tengo qui per riferimento logico
-# resource "aws_db_subnet_group" "default" {
-#   name       = "dydat-main-subnet-group"
-#   subnet_ids = [aws_subnet.public_a.id, aws_subnet.public_b.id]
-# }
+resource "aws_rds_cluster" "dydat_db" {
+  cluster_identifier          = "dydat-db-cluster-v3"
+  engine                      = "aurora-postgresql"
+  engine_version              = "16.1"
+  database_name               = "dydat"
+  master_username             = "dydatadmin"
+  manage_master_user_password = true
+  skip_final_snapshot         = true
+  vpc_security_group_ids      = [aws_security_group.db_sg.id]
+  db_subnet_group_name        = aws_db_subnet_group.default.name
+}
+
+resource "aws_rds_cluster_instance" "cluster_instances" {
+  count                       = 1
+  identifier                  = "dydat-db-cluster-instance-v3-${count.index}"
+  cluster_identifier          = aws_rds_cluster.dydat_db.id
+  instance_class              = "db.t3.medium"
+  engine                      = aws_rds_cluster.dydat_db.engine
+  engine_version              = aws_rds_cluster.dydat_db.engine_version
+}
+
+resource "aws_db_subnet_group" "default" {
+  name       = "dydat-db-subnet-group-v2"
+  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+
+  tags = {
+    Name = "Dydat DB subnet group"
+  }
+}
 
 output "db_cluster_secret_arn" {
   description = "The ARN of the secret containing the database credentials"
-  value       = aws_rds_cluster.dydat_cluster.master_user_secret[0].secret_arn
+  value       = aws_rds_cluster.dydat_db.master_user_secret[0].secret_arn
+  sensitive   = true
+}
+
+output "db_cluster_endpoint" {
+  description = "The endpoint of the database cluster"
+  value       = aws_rds_cluster.dydat_db.endpoint
 } 
