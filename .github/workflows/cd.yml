@@ -92,9 +92,14 @@ jobs:
 
       - name: Create/Update DB Credentials Secret
         run: |
-          # Initialize Terraform and get the ARN of the secret from Terraform output
-          DB_SECRET_ARN=$(cd infra && terraform init && terraform output -raw db_cluster_secret_arn)
+          # Initialize Terraform
+          cd infra
+          terraform init
+          
+          # Get the ARN of the secret from Terraform output
+          DB_SECRET_ARN=$(terraform output -raw db_cluster_secret_arn)
           echo "Fetching secret from ARN: $DB_SECRET_ARN"
+          cd ..
 
           # Get the secret value from AWS Secrets Manager
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $DB_SECRET_ARN --query SecretString --output text)
