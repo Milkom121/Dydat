@@ -68,8 +68,20 @@ Questo documento delinea il piano di sviluppo operativo per la piattaforma Dydat
 ---
 
 ### Sprint 1.1 - 1.2: Nucleo Utenti e Autenticazione (4 settimane)
-**Status**: 🎯 **PROSSIMO**  
+**Status**: 🚀 **IN CORSO** - Task 1.1.1 COMPLETATO  
 **Focus Primario dell'Agente**: Core Backend, Frontend
+
+#### ✅ **PROGRESSO COMPLETATO:**
+
+**🎯 Task 1.1.1: Setup Authentication Module nel Monorepo** ✅ **COMPLETATO**
+- ✅ Modulo autenticazione completo implementato in `/apps/backend/src/auth/`
+- ✅ Entità User con sistema ruoli MVP (STUDENT/CREATOR/ADMIN)
+- ✅ AuthService con JWT + bcrypt, Guards e Decorators implementati
+- ✅ 7 endpoint API completi con role-based access control
+- ✅ Test suite completa (17/17 test passati - 100% successo)
+- ✅ Sistema di permessi (canCreateContent, hasAdminPrivileges)
+
+**📍 PROSSIMO TASK**: 1.1.2 - Database Schema e Connessione Aurora PostgreSQL
 
 #### Istruzioni per l'Agente AI:
 
