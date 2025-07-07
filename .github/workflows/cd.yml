@@ -120,6 +120,20 @@ jobs:
             --from-literal=DB_NAME=$DB_NAME \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Restart deployments
+      - name: Restart deployments (if they exist)
         run: |
-          kubectl rollout restart deployment backend-deployment 
+          # Check if backend deployment exists and restart it
+          if kubectl get deployment backend-deployment 2>/dev/null; then
+            echo "Restarting backend deployment..."
+            kubectl rollout restart deployment backend-deployment
+          else
+            echo "Backend deployment not found - skipping restart"
+          fi
+          
+          # Check if frontend deployment exists and restart it
+          if kubectl get deployment frontend-deployment 2>/dev/null; then
+            echo "Restarting frontend deployment..."
+            kubectl rollout restart deployment frontend-deployment
+          else
+            echo "Frontend deployment not found - skipping restart"
+          fi 
