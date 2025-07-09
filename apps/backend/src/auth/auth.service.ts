@@ -8,23 +8,9 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 export interface JwtPayload {
-  sub: string; // user id
+  sub: string;
   email: string;
   role: UserRole;
-  firstName: string;
-  lastName: string;
-}
-
-export interface AuthResponse {
-  access_token: string;
-  user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: UserRole;
-    emailVerified: boolean;
-  };
 }
 
 @Injectable()
@@ -35,13 +21,16 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto): Promise<{ access_token: string; user: any }> {
     const { email, password, firstName, lastName, role } = registerDto;
 
-    // Check se l'utente esiste già
-    const existingUser = await this.userRepository.findOne({ where: { email } });
+    // Verifica se l'email esiste già
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
+
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Email già in uso');
     }
 
     // Hash della password
@@ -58,87 +47,125 @@ export class AuthService {
 
     const savedUser = await this.userRepository.save(user);
 
-    // Genera JWT
+    // Genera token JWT
     const payload: JwtPayload = {
       sub: savedUser.id,
       email: savedUser.email,
       role: savedUser.role,
-      firstName: savedUser.firstName,
-      lastName: savedUser.lastName,
     };
 
+    const access_token = this.jwtService.sign(payload);
+
     return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: savedUser.id,
-        email: savedUser.email,
-        firstName: savedUser.firstName,
-        lastName: savedUser.lastName,
-        role: savedUser.role,
-        emailVerified: savedUser.emailVerified,
-      },
+      access_token,
+      user: savedUser.toJSON(),
     };
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  async login(loginDto: LoginDto): Promise<{ access_token: string; user: any }> {
     const { email, password } = loginDto;
 
-    // Trova l'utente
-    const user = await this.userRepository.findOne({ where: { email } });
+    // Trova l'utente per email
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenziali non valide');
+    }
+
+    // Verifica se l'account è attivo
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account disattivato');
     }
 
     // Verifica la password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenziali non valide');
     }
 
-    // Check se l'utente è attivo
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    // Genera JWT
+    // Genera token JWT
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
     };
 
+    const access_token = this.jwtService.sign(payload);
+
     return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        emailVerified: user.emailVerified,
-      },
+      access_token,
+      user: user.toJSON(),
     };
   }
 
   async validateUser(payload: JwtPayload): Promise<User | null> {
-    const user = await this.userRepository.findOne({ 
-      where: { id: payload.sub, email: payload.email } 
+    const user = await this.userRepository.findOne({
+      where: { id: payload.sub },
     });
-    
-    if (user && user.isActive) {
-      return user;
+
+    if (!user || !user.isActive) {
+      return null;
     }
+
+    return user;
+  }
+
+  async updateProfile(userId: string, updateData: Partial<Pick<User, 'firstName' | 'lastName'>>): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utente non trovato');
+    }
+
+    // Aggiorna i dati
+    Object.assign(user, updateData);
     
-    return null;
+    return await this.userRepository.save(user);
   }
 
-  async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utente non trovato');
+    }
+
+    // Verifica la password attuale
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Password attuale non corretta');
+    }
+
+    // Hash della nuova password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+    
+    // Aggiorna la password
+    user.password = hashedNewPassword;
+    await this.userRepository.save(user);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+  async deleteAccount(userId: string): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utente non trovato');
+    }
+
+    await this.userRepository.delete(userId);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await this.userRepository.find({
+      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt'],
+      order: { createdAt: 'DESC' },
+    });
   }
 } 

@@ -1,3 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+:root {
+  /* Dydat Color Palette - Giallo Pastello Base + Educational */
+  --primary-yellow: #FFF9C4;      /* Giallo pastello base */
+  --primary-gold: #FEF3C7;        /* Giallo pastello più intenso */
+  --accent-amber: #F59E0B;        /* Accent giallo-ambra */
+  --educational-blue: #0066CC;    /* Trust, Knowledge */
+  --success-green: #10B981;       /* Achievement */
+  --error-red: #EF4444;           /* Alerts */
+  
+  /* Light Mode Semantic Colors */
+  --background: #FFFEF7;          /* Giallo pastello ultra-light background */
+  --surface: #ffffff;             /* White surface */
+  --card: #ffffff;                /* Card background */
+  --foreground: #111827;          /* Dark text */
+  --muted: #f3f4f6;              /* Muted background */
+  --muted-foreground: #6b7280;    /* Muted text */
+  --border: #e5e7eb;              /* Border color */
+  --input: #ffffff;               /* Input background */
+  --ring: #F59E0B;                /* Focus ring */
+  --accent: #FFF9C4;              /* Accent color */
+  --accent-foreground: #92400E;   /* Accent text */
+  
+  /* Shadows */
+  --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+  --shadow-strong: 0 8px 32px 0 rgba(0, 0, 0, 0.16);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Dark Mode Variables */
+.dark {
+  --background: #0f0f0f;          /* Background nero profondo */
+  --surface: #1a1a1a;            /* Surface grigio scuro */
+  --card: #262626;                /* Card background */
+  --foreground: #f5f5f5;          /* Light text */
+  --muted: #262626;               /* Muted background */
+  --muted-foreground: #a3a3a3;    /* Muted text */
+  --border: #404040;              /* Border color */
+  --input: #262626;               /* Input background */
+  --ring: #F59E0B;                /* Focus ring (mantiene giallo) */
+  --accent: #1f1b00;              /* Giallo scuro per dark mode */
+  --accent-foreground: #FFF9C4;   /* Accent text */
+  
+  /* Dark Mode Shadows */
+  --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 16px 0 rgba(0, 0, 0, 0.4);
+  --shadow-strong: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Automatic dark mode based on system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #0f0f0f;
+    --surface: #1a1a1a;
+    --card: #262626;
+    --foreground: #f5f5f5;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --border: #404040;
+    --input: #262626;
+    --accent: #1f1b00;
+    --accent-foreground: #FFF9C4;
+    --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 16px 0 rgba(0, 0, 0, 0.4);
+    --shadow-strong: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+  
+  body {
+    @apply font-sans antialiased transition-colors duration-300;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Typography with dark mode support */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+    color: var(--foreground);
+  }
+  
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+  
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+  
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
+  
+  h4 {
+    @apply text-xl lg:text-2xl;
+  }
+  
+  h5 {
+    @apply text-lg lg:text-xl;
+  }
+  
+  h6 {
+    @apply text-base lg:text-lg;
+  }
+  
+  /* Scrollbar styling for dark mode */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+}
+
+@layer components {
+  /* Dydat Button Variants with Dark Mode */
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-primary:hover {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .btn-secondary {
+    @apply bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 border border-gray-200 dark:border-gray-700;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-success {
+    @apply bg-success-500 hover:bg-success-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-warning {
+    @apply bg-warning-500 hover:bg-warning-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-warning-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-error {
+    @apply bg-error-500 hover:bg-error-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-error-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  /* Dydat Card with Dark Mode */
+  .card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all duration-200;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .card:hover {
+    box-shadow: var(--shadow-medium);
+  }
+  
+  /* Dydat Input with Dark Mode */
+  .input {
+    @apply w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400;
+  }
+  
+  /* Focus states for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+  }
+  
+  /* Dydat Gradient Text */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-educational {
+    @apply bg-gradient-to-r from-primary-500 to-blue-500 bg-clip-text text-transparent;
+  }
+  
+  /* Dark Mode Toggle Button */
+  .dark-mode-toggle {
+    @apply relative inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+  }
+  
+  /* Glass effect for modern look */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 dark:bg-gray-800/10 border border-white/20 dark:border-gray-700/20;
+  }
+  
+  /* Dydat Hero Section */
+  .hero-bg {
+    @apply bg-gradient-to-br from-primary-50 via-white to-success-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900;
+  }
+  
+  /* Status indicators */
+  .status-completed {
+    @apply w-8 h-8 bg-success-500 rounded-full flex items-center justify-center;
+  }
+  
+  .status-in-progress {
+    @apply w-8 h-8 bg-warning-500 rounded-full flex items-center justify-center animate-pulse;
+  }
+  
+  .status-planned {
+    @apply w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center;
+  }
+}
+
+@layer utilities {
+  /* Custom animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  /* Theme transition */
+  .theme-transition {
+    @apply transition-colors duration-300;
+  }
+  
+  /* Utility classes for dark mode */
+  .text-primary {
+    color: var(--foreground);
+  }
+  
+  .text-muted {
+    color: var(--muted-foreground);
+  }
+  
+  .bg-surface {
+    background-color: var(--surface);
+  }
+  
+  .bg-card {
+    background-color: var(--card);
+  }
+  
+  .border-default {
+    border-color: var(--border);
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive-sm {
+    @apply text-sm md:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base md:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg md:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl md:text-2xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl md:text-3xl;
+  }
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+} 

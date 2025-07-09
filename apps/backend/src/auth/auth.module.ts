@@ -14,7 +14,7 @@ import { RolesGuard } from './guards/roles.guard';
     TypeOrmModule.forFeature([User]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'dev-secret-key', // In produzione usare sempre una chiave sicura!
+      secret: process.env.JWT_SECRET || 'dev-jwt-secret-key-change-in-production', 
       signOptions: { 
         expiresIn: process.env.JWT_EXPIRES_IN || '24h',
       },
