@@ -10,7 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Dydat Brand Colors - Giallo Pastello Base + Educational Palette
+        // Dydat Brand Colors - Integrazione con bolt_project
+        'dydat-amber': '#F59E0B',
+        'dydat-orange': '#F97316',
         primary: {
           50: '#FFFEF7',   // Giallo pastello ultra-light
           100: '#FFF9C4',  // Giallo pastello base
@@ -22,6 +24,21 @@ const config: Config = {
           700: '#B45309',  // Giallo terra
           800: '#92400E',  // Giallo terra scuro
           900: '#78350F',  // Giallo terra molto scuro
+        },
+        // Stone colors from bolt_project
+        stone: {
+          25: '#FEFDFB',
+          50: '#FAFAF9',
+          100: '#F5F5F4',
+          200: '#E7E5E4',
+          300: '#D6D3D1',
+          400: '#A8A29E',
+          500: '#78716C',
+          600: '#57534E',
+          700: '#44403C',
+          800: '#292524',
+          900: '#1C1917',
+          950: '#0C0A09',
         },
         // Educational Blue - Trust, Knowledge
         blue: {
@@ -105,21 +122,22 @@ const config: Config = {
         mono: ['JetBrains Mono', 'Monaco', 'monospace'],
       },
       fontSize: {
-        'xs': ['0.75rem', { lineHeight: '1rem' }],
-        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-        'base': ['1rem', { lineHeight: '1.5rem' }],
-        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
-        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
-        '2xl': ['1.5rem', { lineHeight: '2rem' }],
-        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
-        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
-        '5xl': ['3rem', { lineHeight: '1' }],
-        '6xl': ['3.75rem', { lineHeight: '1' }],
+        'xs': ['12px', '16px'],
+        'sm': ['14px', '20px'],
+        'base': ['16px', '24px'],
+        'lg': ['18px', '28px'],
+        'xl': ['20px', '28px'],
+        '2xl': ['24px', '32px'],
+        '3xl': ['30px', '36px'],
+        '4xl': ['36px', '40px'],
+        '5xl': ['48px', '1'],
+        '6xl': ['60px', '1'],
       },
       spacing: {
         '18': '4.5rem',
         '72': '18rem',
         '84': '21rem',
+        '88': '22rem',
         '96': '24rem',
       },
       borderRadius: {
@@ -139,9 +157,11 @@ const config: Config = {
         'dark-strong': '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-in-out',
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-in': 'slideIn 0.3s ease-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'slide-down': 'slideDown 0.3s ease-out',
+        'bounce-subtle': 'bounceSubtle 0.6s ease-in-out',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
       },
@@ -150,6 +170,10 @@ const config: Config = {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        slideIn: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
         slideUp: {
           '0%': { transform: 'translateY(16px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
@@ -157,6 +181,10 @@ const config: Config = {
         slideDown: {
           '0%': { transform: 'translateY(-16px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        bounceSubtle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-4px)' },
         },
         glow: {
           '0%': { boxShadow: '0 0 20px rgba(245, 158, 11, 0.3)' },
@@ -168,6 +196,7 @@ const config: Config = {
         'gradient-educational': 'linear-gradient(135deg, #FFF9C4 0%, #0066CC 100%)',
         'gradient-success': 'linear-gradient(135deg, #FFF9C4 0%, #10B981 100%)',
         'gradient-dark': 'linear-gradient(135deg, #1f1b00 0%, #0f0f0f 100%)',
+        'gradient-dydat': 'linear-gradient(135deg, #F59E0B 0%, #F97316 100%)',
       },
     },
   },

@@ -1,26 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Dydat Color Palette - Giallo Pastello Base + Educational */
+  /* Dydat Color Palette - Integrazione bolt_project */
   --primary-yellow: #FFF9C4;      /* Giallo pastello base */
   --primary-gold: #FEF3C7;        /* Giallo pastello più intenso */
   --accent-amber: #F59E0B;        /* Accent giallo-ambra */
+  --dydat-orange: #F97316;        /* Dydat Orange */
   --educational-blue: #0066CC;    /* Trust, Knowledge */
   --success-green: #10B981;       /* Achievement */
   --error-red: #EF4444;           /* Alerts */
   
   /* Light Mode Semantic Colors */
-  --background: #FFFEF7;          /* Giallo pastello ultra-light background */
+  --background: #FAFAF9;          /* Stone-50 background */
   --surface: #ffffff;             /* White surface */
   --card: #ffffff;                /* Card background */
-  --foreground: #111827;          /* Dark text */
-  --muted: #f3f4f6;              /* Muted background */
-  --muted-foreground: #6b7280;    /* Muted text */
-  --border: #e5e7eb;              /* Border color */
+  --foreground: #1C1917;          /* Stone-900 text */
+  --muted: #F5F5F4;              /* Stone-100 muted background */
+  --muted-foreground: #78716C;    /* Stone-500 muted text */
+  --border: #E7E5E4;              /* Stone-200 border */
   --input: #ffffff;               /* Input background */
   --ring: #F59E0B;                /* Focus ring */
   --accent: #FFF9C4;              /* Accent color */
@@ -35,16 +36,16 @@
 
 /* Dark Mode Variables */
 .dark {
-  --background: #0f0f0f;          /* Background nero profondo */
-  --surface: #1a1a1a;            /* Surface grigio scuro */
-  --card: #262626;                /* Card background */
-  --foreground: #f5f5f5;          /* Light text */
-  --muted: #262626;               /* Muted background */
-  --muted-foreground: #a3a3a3;    /* Muted text */
-  --border: #404040;              /* Border color */
-  --input: #262626;               /* Input background */
+  --background: #1C1917;          /* Stone-900 background */
+  --surface: #292524;             /* Stone-800 surface */
+  --card: #292524;                /* Stone-800 card background */
+  --foreground: #F5F5F4;          /* Stone-100 text */
+  --muted: #44403C;               /* Stone-700 muted background */
+  --muted-foreground: #A8A29E;    /* Stone-400 muted text */
+  --border: #44403C;              /* Stone-700 border */
+  --input: #292524;               /* Stone-800 input background */
   --ring: #F59E0B;                /* Focus ring (mantiene giallo) */
-  --accent: #1f1b00;              /* Giallo scuro per dark mode */
+  --accent: #44403C;              /* Stone-700 accent */
   --accent-foreground: #FFF9C4;   /* Accent text */
   
   /* Dark Mode Shadows */
@@ -54,36 +55,17 @@
   --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.4);
 }
 
-/* Automatic dark mode based on system preference */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #0f0f0f;
-    --surface: #1a1a1a;
-    --card: #262626;
-    --foreground: #f5f5f5;
-    --muted: #262626;
-    --muted-foreground: #a3a3a3;
-    --border: #404040;
-    --input: #262626;
-    --accent: #1f1b00;
-    --accent-foreground: #FFF9C4;
-    --shadow-soft: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
-    --shadow-medium: 0 4px 16px 0 rgba(0, 0, 0, 0.4);
-    --shadow-strong: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.4);
-  }
-}
-
 @layer base {
-  * {
-    @apply border-gray-200 dark:border-gray-700;
-  }
-  
   body {
-    @apply font-sans antialiased transition-colors duration-300;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    @apply antialiased transition-colors duration-300;
     background-color: var(--background);
     color: var(--foreground);
-    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  html {
+    scroll-behavior: smooth;
   }
   
   /* Typography with dark mode support */
@@ -115,118 +97,72 @@
   h6 {
     @apply text-base lg:text-lg;
   }
-  
-  /* Scrollbar styling for dark mode */
-  ::-webkit-scrollbar {
-    @apply w-2;
-  }
-  
-  ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-500;
-  }
 }
 
 @layer components {
-  /* Dydat Button Variants with Dark Mode */
+  /* Dydat Button Variants from bolt_project */
   .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
-    box-shadow: var(--shadow-soft);
-  }
-  
-  .btn-primary:hover {
-    box-shadow: var(--shadow-glow);
+    @apply bg-gradient-to-r from-dydat-amber to-dydat-orange text-white font-medium py-3 px-6 rounded-lg hover:from-amber-500 hover:to-orange-600 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-dydat-amber focus:ring-offset-2 dark:focus:ring-offset-stone-900;
   }
   
   .btn-secondary {
-    @apply bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 border border-gray-200 dark:border-gray-700;
-    box-shadow: var(--shadow-soft);
+    @apply border-2 border-dydat-amber text-dydat-amber font-medium py-3 px-6 rounded-lg hover:bg-dydat-amber hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-dydat-amber focus:ring-offset-2 dark:focus:ring-offset-stone-900;
   }
   
-  .btn-success {
-    @apply bg-success-500 hover:bg-success-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-success-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
-    box-shadow: var(--shadow-soft);
-  }
-  
-  .btn-warning {
-    @apply bg-warning-500 hover:bg-warning-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-warning-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
-    box-shadow: var(--shadow-soft);
-  }
-  
-  .btn-error {
-    @apply bg-error-500 hover:bg-error-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-error-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
-    box-shadow: var(--shadow-soft);
-  }
-  
-  /* Dydat Card with Dark Mode */
+  /* Dydat Card Component */
   .card {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all duration-200;
-    box-shadow: var(--shadow-soft);
+    @apply bg-white dark:bg-stone-900 rounded-xl p-6 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-md transition-all duration-200;
   }
   
-  .card:hover {
-    box-shadow: var(--shadow-medium);
-  }
-  
-  /* Dydat Input with Dark Mode */
-  .input {
-    @apply w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400;
+  /* Dydat Input Field */
+  .input-field {
+    @apply w-full px-4 py-3 border border-stone-200 dark:border-stone-700 rounded-lg bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-dydat-amber focus:border-transparent transition-all duration-200;
   }
   
   /* Focus states for accessibility */
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+  .focus-visible {
+    @apply outline-none ring-2 ring-dydat-amber ring-offset-2 ring-offset-white dark:ring-offset-stone-900;
+  }
+  
+  /* Improved hover states */
+  .hover-lift {
+    @apply transform transition-all duration-200 hover:scale-105 hover:shadow-lg;
+  }
+  
+  .hover-fade {
+    @apply transition-opacity duration-200 hover:opacity-80;
   }
   
   /* Dydat Gradient Text */
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-dydat-amber to-dydat-orange bg-clip-text text-transparent;
   }
   
   .text-gradient-educational {
-    @apply bg-gradient-to-r from-primary-500 to-blue-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-dydat-amber to-blue-500 bg-clip-text text-transparent;
   }
   
-  /* Dark Mode Toggle Button */
-  .dark-mode-toggle {
-    @apply relative inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
-  }
-  
-  /* Glass effect for modern look */
+  /* Glass Effect */
   .glass {
-    @apply backdrop-blur-md bg-white/10 dark:bg-gray-800/10 border border-white/20 dark:border-gray-700/20;
+    @apply bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm border border-stone-200/50 dark:border-stone-800/50;
   }
   
-  /* Dydat Hero Section */
-  .hero-bg {
-    @apply bg-gradient-to-br from-primary-50 via-white to-success-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900;
-  }
-  
-  /* Status indicators */
+  /* Status Indicators */
   .status-completed {
-    @apply w-8 h-8 bg-success-500 rounded-full flex items-center justify-center;
+    @apply bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300;
   }
   
   .status-in-progress {
-    @apply w-8 h-8 bg-warning-500 rounded-full flex items-center justify-center animate-pulse;
+    @apply bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300;
   }
   
   .status-planned {
-    @apply w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center;
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300;
   }
-}
-
-@layer utilities {
-  /* Custom animations */
+  
+  /* Animations */
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.5s ease-in-out;
   }
   
   .animate-slide-up {
@@ -241,12 +177,28 @@
     animation: glow 2s ease-in-out infinite alternate;
   }
   
-  /* Theme transition */
+  /* Theme Transition */
   .theme-transition {
-    @apply transition-colors duration-300;
+    @apply transition-all duration-300 ease-in-out;
   }
   
-  /* Utility classes for dark mode */
+  /* Utility Classes */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  /* Text Utilities */
   .text-primary {
     color: var(--foreground);
   }
@@ -255,6 +207,7 @@
     color: var(--muted-foreground);
   }
   
+  /* Background Utilities */
   .bg-surface {
     background-color: var(--surface);
   }
@@ -263,33 +216,30 @@
     background-color: var(--card);
   }
   
+  /* Border Utilities */
   .border-default {
     border-color: var(--border);
   }
-  
-  /* Responsive text sizes */
-  .text-responsive-sm {
-    @apply text-sm md:text-base;
-  }
-  
-  .text-responsive-base {
-    @apply text-base md:text-lg;
-  }
-  
-  .text-responsive-lg {
-    @apply text-lg md:text-xl;
-  }
-  
-  .text-responsive-xl {
-    @apply text-xl md:text-2xl;
-  }
-  
-  .text-responsive-2xl {
-    @apply text-2xl md:text-3xl;
-  }
 }
 
-/* Smooth transitions for theme changes */
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-stone-100 dark:bg-stone-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-300 dark:bg-stone-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-400 dark:bg-stone-500;
+}
+
+/* Dark mode smooth transitions */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 } 

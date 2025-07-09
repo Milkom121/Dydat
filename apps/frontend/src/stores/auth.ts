@@ -40,19 +40,19 @@ export const useAuthStore = create<AuthStore>()(
           const response = await api.post<AuthResponse>(AUTH_ENDPOINTS.LOGIN, credentials);
           
           // Store token and user data
-          const { access_token, user } = response;
+          const { token, user } = response;
           
           // Update store state
           set({
             user,
-            token: access_token,
+            token,
             isAuthenticated: true,
             isLoading: false,
           });
 
           // Store in localStorage
           if (typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token);
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
             localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
           }
 
@@ -71,19 +71,19 @@ export const useAuthStore = create<AuthStore>()(
           const response = await api.post<AuthResponse>(AUTH_ENDPOINTS.REGISTER, userData);
           
           // Store token and user data
-          const { access_token, user } = response;
+          const { token, user } = response;
           
           // Update store state
           set({
             user,
-            token: access_token,
+            token,
             isAuthenticated: true,
             isLoading: false,
           });
 
           // Store in localStorage
           if (typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access_token);
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
             localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
           }
 
@@ -212,32 +212,80 @@ export const useAuthStore = create<AuthStore>()(
 // Helper hook to get user permissions
 export const useUserPermissions = (): UserPermissions => {
   const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (!user) {
     return {
-      isStudent: false,
-      isCreator: false,
-      isAdmin: false,
+      isAuthenticated: false,
+      hasRole: () => false,
+      hasAnyRole: () => false,
+      hasAllRoles: () => false,
+      // Corsi
       canCreateCourses: false,
+      canEditOwnCourses: false,
+      canDeleteOwnCourses: false,
+      canPublishCourses: false,
+      canAccessPrivateCourses: false,
+      canCommissionCourses: false,
+      // Tutoring
+      canOfferTutoring: false,
+      canBookTutoring: false,
+      canManageTutoringSessions: false,
+      canAccessTutorAnalytics: false,
+      // Organizzazione
+      canManageOrganization: false,
+      canInviteMembers: false,
+      canManageMembers: false,
+      canAccessOrgAnalytics: false,
+      // Sistema
+      canAccessAnalytics: false,
       canManageUsers: false,
-      hasPermission: () => false,
+      canModerateContent: false,
+      canAccessAdminPanel: false,
+      // Marketplace
+      canSellCourses: false,
+      canBuyCourses: false,
+      canRateAndReview: false,
+      canReportContent: false,
     };
   }
 
+  const hasRole = (role: UserRole) => user.roles.includes(role);
+  const hasAnyRole = (roles: UserRole[]) => roles.some(role => user.roles.includes(role));
+  const hasAllRoles = (roles: UserRole[]) => roles.every(role => user.roles.includes(role));
+
   return {
-    isStudent: user.role === UserRole.STUDENT,
-    isCreator: user.role === UserRole.CREATOR,
-    isAdmin: user.role === UserRole.ADMIN,
-    canCreateCourses: user.role === UserRole.CREATOR || user.role === UserRole.ADMIN,
-    canManageUsers: user.role === UserRole.ADMIN,
-    hasPermission: (requiredRole: UserRole) => {
-      const roleHierarchy = {
-        [UserRole.STUDENT]: 1,
-        [UserRole.CREATOR]: 2,
-        [UserRole.ADMIN]: 3,
-      };
-      return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
-    },
+    isAuthenticated,
+    hasRole,
+    hasAnyRole,
+    hasAllRoles,
+    // Corsi
+    canCreateCourses: hasRole('creator') || hasRole('admin'),
+    canEditOwnCourses: hasRole('creator') || hasRole('admin'),
+    canDeleteOwnCourses: hasRole('creator') || hasRole('admin'),
+    canPublishCourses: hasRole('creator') || hasRole('admin'),
+    canAccessPrivateCourses: hasRole('member') || hasRole('manager') || hasRole('admin'),
+    canCommissionCourses: hasRole('manager') || hasRole('admin'),
+    // Tutoring
+    canOfferTutoring: hasRole('tutor') || hasRole('admin'),
+    canBookTutoring: hasRole('student') || hasRole('member') || hasRole('admin'),
+    canManageTutoringSessions: hasRole('tutor') || hasRole('admin'),
+    canAccessTutorAnalytics: hasRole('tutor') || hasRole('admin'),
+    // Organizzazione
+    canManageOrganization: hasRole('manager') || hasRole('admin'),
+    canInviteMembers: hasRole('manager') || hasRole('admin'),
+    canManageMembers: hasRole('manager') || hasRole('admin'),
+    canAccessOrgAnalytics: hasRole('manager') || hasRole('admin'),
+    // Sistema
+    canAccessAnalytics: hasRole('creator') || hasRole('tutor') || hasRole('manager') || hasRole('admin'),
+    canManageUsers: hasRole('admin'),
+    canModerateContent: hasRole('admin'),
+    canAccessAdminPanel: hasRole('admin'),
+    // Marketplace
+    canSellCourses: hasRole('creator') || hasRole('admin'),
+    canBuyCourses: !hasRole('guest'),
+    canRateAndReview: hasRole('student') || hasRole('member') || hasRole('admin'),
+    canReportContent: !hasRole('guest'),
   };
 };
 
