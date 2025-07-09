@@ -403,6 +403,175 @@ export const PersonalProfile: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Bottom Grid: Achievement & Badge + Activities + Settings */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Achievement & Badge Section */}
+          <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl">
+            <div className="flex items-center space-x-3 mb-8">
+              <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Achievement & Badge</h2>
+                <p className="text-slate-300">I tuoi traguardi e riconoscimenti</p>
+              </div>
+            </div>
+
+            {/* Achievement Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Primo Corso Completato */}
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-sm rounded-xl p-6 border border-blue-400/20">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                    <GraduationCap className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold">Primo Corso Completato</h3>
+                    <p className="text-blue-300 text-sm">Hai completato il tuo primo corso!</p>
+                  </div>
+                </div>
+                <p className="text-slate-400 text-xs">15/01/2024</p>
+              </div>
+
+              {/* Creatore Emergente */}
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-6 border border-purple-400/20">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <PenTool className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold">Creatore Emergente</h3>
+                    <p className="text-purple-300 text-sm">Hai pubblicato il tuo primo corso</p>
+                  </div>
+                </div>
+                <p className="text-slate-400 text-xs">20/02/2024</p>
+              </div>
+
+              {/* Mentore Leggendario (Locked) */}
+              <div className="bg-gradient-to-br from-slate-600/20 to-slate-700/20 backdrop-blur-sm rounded-xl p-6 border border-slate-500/20 opacity-60">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold">Maestro del Codice</h3>
+                    <p className="text-slate-400 text-sm">Completa 50 corsi di programmazione</p>
+                  </div>
+                </div>
+                <p className="text-slate-500 text-xs">Bloccato</p>
+              </div>
+
+              {/* Mentore Leggendario */}
+              <div className="bg-gradient-to-br from-slate-600/20 to-slate-700/20 backdrop-blur-sm rounded-xl p-6 border border-slate-500/20 opacity-60">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex items-center justify-center">
+                    <Crown className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold">Mentore Leggendario</h3>
+                    <p className="text-slate-400 text-sm">Aiuta 100 studenti come tutor</p>
+                  </div>
+                </div>
+                <p className="text-slate-500 text-xs">Bloccato</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Activities + Settings */}
+          <div className="space-y-8">
+            {/* Recent Activities */}
+            <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl">
+              <div className="flex items-center space-x-3 mb-8">
+                <div className="p-3 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-xl">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Attività Recente</h2>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Corso completato */}
+                <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-xl">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">Corso completato</p>
+                    <p className="text-slate-300 text-sm">React Avanzato • 2 ore fa</p>
+                  </div>
+                </div>
+
+                {/* Badge ottenuto */}
+                <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-xl">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">Badge ottenuto</p>
+                    <p className="text-slate-300 text-sm">Creatore Emergente • 1 giorno fa</p>
+                  </div>
+                </div>
+
+                {/* Sessione tutoring */}
+                <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-xl">
+                  <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">Sessione tutoring</p>
+                    <p className="text-slate-300 text-sm">Matematica • 3 giorni fa</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl">
+              <div className="flex items-center space-x-3 mb-8">
+                <div className="p-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl">
+                  <Settings className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Impostazioni</h2>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Modifica Profilo */}
+                <button className="w-full flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-600/30 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <User className="w-5 h-5 text-slate-300" />
+                    <div className="text-left">
+                      <p className="text-white font-medium">Modifica Profilo</p>
+                      <p className="text-slate-400 text-sm">Aggiorna le tue informazioni</p>
+                    </div>
+                  </div>
+                  <div className="text-slate-400">→</div>
+                </button>
+
+                {/* Privacy */}
+                <button className="w-full flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-600/30 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Shield className="w-5 h-5 text-slate-300" />
+                    <div className="text-left">
+                      <p className="text-white font-medium">Privacy</p>
+                      <p className="text-slate-400 text-sm">Gestisci la tua privacy</p>
+                    </div>
+                  </div>
+                  <div className="text-slate-400">→</div>
+                </button>
+
+                {/* Notifiche */}
+                <button className="w-full flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-600/30 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Settings className="w-5 h-5 text-slate-300" />
+                    <div className="text-left">
+                      <p className="text-white font-medium">Notifiche</p>
+                      <p className="text-slate-400 text-sm">Configura le notifiche</p>
+                    </div>
+                  </div>
+                  <div className="text-slate-400">→</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
