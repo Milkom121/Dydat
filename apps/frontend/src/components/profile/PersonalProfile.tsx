@@ -22,9 +22,11 @@ import {
   Activity
 } from 'lucide-react';
 import { useUserRoles } from '../../hooks/useUserRoles';
+import { useTheme } from '../theme-provider';
 
 export const PersonalProfile: React.FC = () => {
   const { user, hasRole } = useUserRoles();
+  const { actualTheme } = useTheme();
   const [activeCareerTab, setActiveCareerTab] = useState('student');
 
   if (!user) return null;
@@ -124,17 +126,17 @@ export const PersonalProfile: React.FC = () => {
   const availableCareers = user.roles.filter(role => ['student', 'tutor', 'creator'].includes(role));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
+    <div className="min-h-screen bg-stone-50 dark:bg-gradient-to-br dark:from-indigo-900 dark:via-purple-900 dark:to-pink-900 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.3),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.3),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_40%,rgba(59,130,246,0.2),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.1),transparent_50%)] dark:bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.3),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.1),transparent_50%)] dark:bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.3),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_40%,rgba(59,130,246,0.1),transparent_50%)] dark:bg-[radial-gradient(circle_at_40%_40%,rgba(59,130,246,0.2),transparent_50%)]"></div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-8">
         {/* Character Card */}
-        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 mb-8 shadow-2xl">
+        <div className="bg-white/90 dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-900/90 backdrop-blur-xl rounded-3xl border border-stone-200 dark:border-white/10 p-8 mb-8 shadow-2xl">
           <div className="flex items-start space-x-8">
             {/* Avatar Section */}
             <div className="relative">
@@ -152,7 +154,7 @@ export const PersonalProfile: React.FC = () => {
               </div>
 
               {/* Status Indicator */}
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-4 border-slate-800 flex items-center justify-center">
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-4 border-white dark:border-slate-800 flex items-center justify-center">
                 <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
               </div>
             </div>
@@ -160,7 +162,7 @@ export const PersonalProfile: React.FC = () => {
             {/* Character Info */}
             <div className="flex-1">
               <div className="flex items-center space-x-4 mb-4">
-                <h1 className="text-4xl font-bold text-white">{user.name}</h1>
+                <h1 className="text-4xl font-bold text-stone-900 dark:text-white">{user.name}</h1>
                 <div className="flex space-x-2">
                   {user.roles.map((role) => (
                     <div 
@@ -183,10 +185,10 @@ export const PersonalProfile: React.FC = () => {
               {/* XP Bar */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white/80 font-medium">Esperienza Totale</span>
-                  <span className="text-amber-400 font-bold">{user.xp} / 3000 XP</span>
+                  <span className="text-stone-600 dark:text-white/80 font-medium">Esperienza Totale</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-bold">{user.xp} / 3000 XP</span>
                 </div>
-                <div className="w-full bg-slate-700/50 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-stone-200 dark:bg-slate-700/50 rounded-full h-3 overflow-hidden">
                   <div 
                     className="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full transition-all duration-1000 shadow-lg"
                     style={{ width: `${(user.xp / 3000) * 100}%` }}
@@ -247,19 +249,19 @@ export const PersonalProfile: React.FC = () => {
         </div>
 
         {/* Careers Section */}
-        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 mb-8 shadow-2xl">
+        <div className="bg-white/90 dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-900/90 backdrop-blur-xl rounded-3xl border border-stone-200 dark:border-white/10 p-8 mb-8 shadow-2xl">
           <div className="flex items-center space-x-3 mb-8">
             <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl">
               <Crown className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Le Tue Carriere</h2>
-              <p className="text-slate-300">Gestisci e monitora i tuoi progressi professionali</p>
+              <h2 className="text-3xl font-bold text-stone-900 dark:text-white">Le Tue Carriere</h2>
+              <p className="text-stone-600 dark:text-slate-300">Gestisci e monitora i tuoi progressi professionali</p>
             </div>
           </div>
 
           {/* Career Tabs */}
-          <div className="flex space-x-2 mb-8 bg-slate-700/30 p-2 rounded-2xl">
+          <div className="flex space-x-2 mb-8 bg-stone-100 dark:bg-slate-700/30 p-2 rounded-2xl">
             {availableCareers.map((career) => {
               const Icon = getCareerIcon(career);
               return (
@@ -269,7 +271,7 @@ export const PersonalProfile: React.FC = () => {
                   className={`flex items-center space-x-3 px-6 py-4 rounded-xl font-medium transition-all duration-300 ${
                     activeCareerTab === career
                       ? `bg-gradient-to-r ${getCareerColor(career)} text-white shadow-lg transform scale-105`
-                      : 'text-slate-300 hover:text-white hover:bg-slate-600/50'
+                      : 'text-stone-600 dark:text-slate-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200 dark:hover:bg-slate-600/50'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -407,14 +409,14 @@ export const PersonalProfile: React.FC = () => {
         {/* Bottom Grid: Achievement & Badge + Activities + Settings */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Achievement & Badge Section */}
-          <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl">
+          <div className="bg-white/90 dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-900/90 backdrop-blur-xl rounded-3xl border border-stone-200 dark:border-white/10 p-8 shadow-2xl">
             <div className="flex items-center space-x-3 mb-8">
               <div className="p-3 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl">
                 <Trophy className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Achievement & Badge</h2>
-                <p className="text-slate-300">I tuoi traguardi e riconoscimenti</p>
+                <h2 className="text-2xl font-bold text-stone-900 dark:text-white">Achievement & Badge</h2>
+                <p className="text-stone-600 dark:text-slate-300">I tuoi traguardi e riconoscimenti</p>
               </div>
             </div>
 
@@ -481,92 +483,92 @@ export const PersonalProfile: React.FC = () => {
           {/* Right Column: Activities + Settings */}
           <div className="space-y-8">
             {/* Recent Activities */}
-            <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-900/90 backdrop-blur-xl rounded-3xl border border-stone-200 dark:border-white/10 p-8 shadow-2xl">
               <div className="flex items-center space-x-3 mb-8">
                 <div className="p-3 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-xl">
                   <Activity className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Attività Recente</h2>
+                  <h2 className="text-2xl font-bold text-stone-900 dark:text-white">Attività Recente</h2>
                 </div>
               </div>
 
               <div className="space-y-4">
                 {/* Corso completato */}
-                <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-xl">
+                <div className="flex items-center space-x-4 p-4 bg-stone-100 dark:bg-slate-700/30 rounded-xl">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">Corso completato</p>
-                    <p className="text-slate-300 text-sm">React Avanzato • 2 ore fa</p>
+                    <p className="text-stone-900 dark:text-white font-medium">Corso completato</p>
+                    <p className="text-stone-600 dark:text-slate-300 text-sm">React Avanzato • 2 ore fa</p>
                   </div>
                 </div>
 
                 {/* Badge ottenuto */}
-                <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-xl">
+                <div className="flex items-center space-x-4 p-4 bg-stone-100 dark:bg-slate-700/30 rounded-xl">
                   <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">Badge ottenuto</p>
-                    <p className="text-slate-300 text-sm">Creatore Emergente • 1 giorno fa</p>
+                    <p className="text-stone-900 dark:text-white font-medium">Badge ottenuto</p>
+                    <p className="text-stone-600 dark:text-slate-300 text-sm">Creatore Emergente • 1 giorno fa</p>
                   </div>
                 </div>
 
                 {/* Sessione tutoring */}
-                <div className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-xl">
+                <div className="flex items-center space-x-4 p-4 bg-stone-100 dark:bg-slate-700/30 rounded-xl">
                   <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">Sessione tutoring</p>
-                    <p className="text-slate-300 text-sm">Matematica • 3 giorni fa</p>
+                    <p className="text-stone-900 dark:text-white font-medium">Sessione tutoring</p>
+                    <p className="text-stone-600 dark:text-slate-300 text-sm">Matematica • 3 giorni fa</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Settings */}
-            <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-900/90 backdrop-blur-xl rounded-3xl border border-stone-200 dark:border-white/10 p-8 shadow-2xl">
               <div className="flex items-center space-x-3 mb-8">
                 <div className="p-3 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl">
                   <Settings className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Impostazioni</h2>
+                  <h2 className="text-2xl font-bold text-stone-900 dark:text-white">Impostazioni</h2>
                 </div>
               </div>
 
               <div className="space-y-4">
                 {/* Modifica Profilo */}
-                <button className="w-full flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-600/30 transition-colors">
+                <button className="w-full flex items-center justify-between p-4 bg-stone-100 dark:bg-slate-700/30 rounded-xl hover:bg-stone-200 dark:hover:bg-slate-600/30 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <User className="w-5 h-5 text-slate-300" />
+                    <User className="w-5 h-5 text-stone-600 dark:text-slate-300" />
                     <div className="text-left">
-                      <p className="text-white font-medium">Modifica Profilo</p>
-                      <p className="text-slate-400 text-sm">Aggiorna le tue informazioni</p>
+                      <p className="text-stone-900 dark:text-white font-medium">Modifica Profilo</p>
+                      <p className="text-stone-600 dark:text-slate-400 text-sm">Aggiorna le tue informazioni</p>
                     </div>
                   </div>
-                  <div className="text-slate-400">→</div>
+                  <div className="text-stone-500 dark:text-slate-400">→</div>
                 </button>
 
                 {/* Privacy */}
-                <button className="w-full flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-600/30 transition-colors">
+                <button className="w-full flex items-center justify-between p-4 bg-stone-100 dark:bg-slate-700/30 rounded-xl hover:bg-stone-200 dark:hover:bg-slate-600/30 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <Shield className="w-5 h-5 text-slate-300" />
+                    <Shield className="w-5 h-5 text-stone-600 dark:text-slate-300" />
                     <div className="text-left">
-                      <p className="text-white font-medium">Privacy</p>
-                      <p className="text-slate-400 text-sm">Gestisci la tua privacy</p>
+                      <p className="text-stone-900 dark:text-white font-medium">Privacy</p>
+                      <p className="text-stone-600 dark:text-slate-400 text-sm">Gestisci la tua privacy</p>
                     </div>
                   </div>
-                  <div className="text-slate-400">→</div>
+                  <div className="text-stone-500 dark:text-slate-400">→</div>
                 </button>
 
                 {/* Notifiche */}
-                <button className="w-full flex items-center justify-between p-4 bg-slate-700/30 rounded-xl hover:bg-slate-600/30 transition-colors">
+                <button className="w-full flex items-center justify-between p-4 bg-stone-100 dark:bg-slate-700/30 rounded-xl hover:bg-stone-200 dark:hover:bg-slate-600/30 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <Settings className="w-5 h-5 text-slate-300" />
+                    <Settings className="w-5 h-5 text-stone-600 dark:text-slate-300" />
                     <div className="text-left">
-                      <p className="text-white font-medium">Notifiche</p>
-                      <p className="text-slate-400 text-sm">Configura le notifiche</p>
+                      <p className="text-stone-900 dark:text-white font-medium">Notifiche</p>
+                      <p className="text-stone-600 dark:text-slate-400 text-sm">Configura le notifiche</p>
                     </div>
                   </div>
-                  <div className="text-slate-400">→</div>
+                  <div className="text-stone-500 dark:text-slate-400">→</div>
                 </button>
               </div>
             </div>

@@ -5,11 +5,20 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { Search, Bell, User, Menu, Sun, Moon, Zap, Settings } from 'lucide-react';
-import { RoleSwitcher } from './RoleSwitcher';
+import React, { useState, useEffect } from 'react';
+import { 
+  Menu, 
+  Search, 
+  Bell, 
+  User, 
+  Settings, 
+  Zap,
+  Sun,
+  Moon
+} from 'lucide-react';
 import { useUserRoles } from '../../hooks/useUserRoles';
-import { useDarkMode } from '../../hooks/useDarkMode';
+import { RoleSwitcher } from './RoleSwitcher';
+import { useTheme } from '../theme-provider';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -24,40 +33,65 @@ export const Header: React.FC<HeaderProps> = ({
   className = ''
 }) => {
   const { user, isLoading } = useUserRoles();
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { theme, setTheme, actualTheme } = useTheme();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Mock notifications
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setIsNotificationsOpen(false);
+      setIsProfileOpen(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Mock notifications data
   const notifications = [
     {
-      id: '1',
-      type: 'achievement',
-      title: 'Nuovo badge ottenuto!',
-      message: 'Hai guadagnato il badge "Studente Dedicato"',
+      id: 1,
+      title: 'Nuovo corso disponibile',
+      message: 'React Advanced Patterns è ora disponibile',
       timestamp: new Date(),
       isRead: false
     },
     {
-      id: '2',
-      type: 'course',
-      title: 'Nuovo corso disponibile',
-      message: 'React Avanzato è ora disponibile nel catalogo',
-      timestamp: new Date(Date.now() - 3600000),
-      isRead: false
-    },
-    {
-      id: '3',
-      type: 'tutoring',
-      title: 'Sessione di tutoring confermata',
-      message: 'La tua sessione con Marco è confermata per domani',
-      timestamp: new Date(Date.now() - 7200000),
+      id: 2,
+      title: 'Sessione completata',
+      message: 'Hai completato la sessione di tutoring con Marco',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
       isRead: true
     }
   ];
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const toggleTheme = () => {
+    if (theme === 'light') {
+      setTheme('dark');
+    } else if (theme === 'dark') {
+      setTheme('system');
+    } else {
+      setTheme('light');
+    }
+  };
+
+  const getThemeIcon = () => {
+    if (theme === 'system') {
+      return actualTheme === 'dark' ? <Moon className="w-5 h-5 text-slate-400" /> : <Sun className="w-5 h-5 text-amber-500" />;
+    }
+    return actualTheme === 'dark' ? <Moon className="w-5 h-5 text-slate-400" /> : <Sun className="w-5 h-5 text-amber-500" />;
+  };
+
+  const getThemeLabel = () => {
+    if (theme === 'system') {
+      return `Sistema (${actualTheme === 'dark' ? 'Scuro' : 'Chiaro'})`;
+    }
+    return actualTheme === 'dark' ? 'Modalità Scura' : 'Modalità Chiara';
+  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 h-16 theme-transition ${className}`}>
@@ -109,15 +143,12 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Dark Mode Toggle */}
           <button 
-            onClick={toggleDarkMode}
+            onClick={toggleTheme}
             className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors focus-visible"
-            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={getThemeLabel()}
+            title={`Tema attuale: ${getThemeLabel()}. Clicca per cambiare.`}
           >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5 text-amber-400" />
-            ) : (
-              <Moon className="w-5 h-5 text-stone-600" />
-            )}
+            {getThemeIcon()}
           </button>
           
           {/* Notifications */}
