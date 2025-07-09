@@ -13,12 +13,12 @@ import { MyCourses } from '../components/courses/MyCourses';
 import { PersonalProfile } from '../components/profile/PersonalProfile';
 import { CourseMarketplace } from '../components/marketplace/CourseMarketplace';
 import { TutoringMarketplace } from '../components/marketplace/TutoringMarketplace';
-import { useDarkMode } from '../hooks/useDarkMode';
+import { useTheme } from '../components/theme-provider';
 
 export default function HomePage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPath, setCurrentPath] = useState('/dashboard');
-  const { isDarkMode, isHydrated } = useDarkMode();
+  const { actualTheme } = useTheme();
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -27,15 +27,6 @@ export default function HomePage() {
   const handleNavigate = (path: string) => {
     setCurrentPath(path);
   };
-
-  // Non renderizzare nulla fino all'hydration per evitare mismatch
-  if (!isHydrated) {
-    return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-stone-600">Caricamento...</div>
-      </div>
-    );
-  }
 
   const renderContent = () => {
     switch (currentPath) {
@@ -165,7 +156,7 @@ export default function HomePage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
-      isDarkMode ? 'dark bg-stone-950' : 'bg-stone-50'
+      actualTheme === 'dark' ? 'dark bg-stone-950' : 'bg-stone-50'
     }`}>
       {/* Header */}
       <Header 
