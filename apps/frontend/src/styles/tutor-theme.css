@@ -1,0 +1,309 @@
+/**
+ * Tutor Interface Theme
+ * Custom styling for the tutor dashboard and components
+ */
+
+/* Tutor-specific color palette */
+:root {
+  /* Tutor Brand Colors */
+  --tutor-primary: #f59e0b; /* amber-500 */
+  --tutor-primary-dark: #d97706; /* amber-600 */
+  --tutor-primary-light: #fbbf24; /* amber-400 */
+  --tutor-primary-bg: #fef3c7; /* amber-100 */
+  --tutor-primary-bg-dark: rgba(245, 158, 11, 0.1);
+
+  /* Status Colors */
+  --tutor-success: #10b981; /* emerald-500 */
+  --tutor-success-bg: #d1fae5; /* emerald-100 */
+  --tutor-warning: #f59e0b; /* amber-500 */
+  --tutor-warning-bg: #fef3c7; /* amber-100 */
+  --tutor-error: #ef4444; /* red-500 */
+  --tutor-error-bg: #fee2e2; /* red-100 */
+  --tutor-info: #3b82f6; /* blue-500 */
+  --tutor-info-bg: #dbeafe; /* blue-100 */
+
+  /* Shadows */
+  --tutor-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tutor-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --tutor-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tutor-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tutor-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Gradients */
+  --tutor-gradient-primary: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --tutor-gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --tutor-gradient-info: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+/* Dark mode adjustments */
+.dark {
+  --tutor-success-bg: rgba(16, 185, 129, 0.1);
+  --tutor-warning-bg: rgba(245, 158, 11, 0.1);
+  --tutor-error-bg: rgba(239, 68, 68, 0.1);
+  --tutor-info-bg: rgba(59, 130, 246, 0.1);
+}
+
+/* Custom scrollbar for tutor interface */
+.tutor-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tutor-primary) transparent;
+}
+
+.tutor-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tutor-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tutor-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--tutor-primary);
+  border-radius: 3px;
+  opacity: 0.7;
+}
+
+.tutor-scrollbar::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+/* Tutor card hover effects */
+.tutor-card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.tutor-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--tutor-shadow-lg);
+}
+
+/* Tutor glassmorphism effect */
+.tutor-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .tutor-glass {
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tutor notification animations */
+@keyframes tutor-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tutor-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tutor-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.tutor-slide-in {
+  animation: tutor-slide-in 0.3s ease-out;
+}
+
+.tutor-fade-in {
+  animation: tutor-fade-in 0.2s ease-out;
+}
+
+.tutor-pulse {
+  animation: tutor-pulse 2s infinite;
+}
+
+/* Tutor stat card animations */
+.tutor-stat-card {
+  transition: all 0.3s ease;
+}
+
+.tutor-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--tutor-shadow-xl);
+}
+
+.tutor-stat-card:hover .tutor-stat-icon {
+  transform: scale(1.1);
+}
+
+.tutor-stat-icon {
+  transition: transform 0.3s ease;
+}
+
+/* Tutor button styles */
+.tutor-btn-primary {
+  background: var(--tutor-gradient-primary);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.tutor-btn-primary:hover {
+  box-shadow: var(--tutor-shadow-lg);
+  transform: translateY(-1px);
+}
+
+.tutor-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Tutor sidebar styles */
+.tutor-sidebar {
+  backdrop-filter: blur(20px);
+}
+
+.tutor-sidebar-item {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.tutor-sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--tutor-gradient-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.tutor-sidebar-item:hover {
+  transform: translateX(4px);
+}
+
+/* Tutor loading spinner */
+.tutor-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(245, 158, 11, 0.2);
+  border-left: 2px solid var(--tutor-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Tutor progress bar */
+.tutor-progress {
+  background: rgba(245, 158, 11, 0.1);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tutor-progress-bar {
+  background: var(--tutor-gradient-primary);
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 3px;
+}
+
+/* Tutor badge styles */
+.tutor-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tutor-badge-success {
+  background: var(--tutor-success-bg);
+  color: var(--tutor-success);
+}
+
+.tutor-badge-warning {
+  background: var(--tutor-warning-bg);
+  color: var(--tutor-warning);
+}
+
+.tutor-badge-error {
+  background: var(--tutor-error-bg);
+  color: var(--tutor-error);
+}
+
+.tutor-badge-info {
+  background: var(--tutor-info-bg);
+  color: var(--tutor-info);
+}
+
+/* Tutor responsive utilities */
+@media (max-width: 768px) {
+  .tutor-mobile-hidden {
+    display: none;
+  }
+  
+  .tutor-mobile-stack {
+    flex-direction: column;
+  }
+  
+  .tutor-mobile-full {
+    width: 100%;
+  }
+}
+
+/* Tutor focus styles */
+.tutor-focus-ring:focus {
+  outline: none;
+  ring: 2px solid var(--tutor-primary);
+  ring-offset: 2px;
+}
+
+/* Tutor transition utilities */
+.tutor-transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+.tutor-transition-colors {
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.tutor-transition-transform {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Tutor text gradient */
+.tutor-text-gradient {
+  background: var(--tutor-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Print styles for tutor interface */
+@media print {
+  .tutor-no-print {
+    display: none !important;
+  }
+  
+  .tutor-print-break {
+    page-break-before: always;
+  }
+} 

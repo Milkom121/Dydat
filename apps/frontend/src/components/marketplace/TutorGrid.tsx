@@ -128,7 +128,7 @@ export const TutorGrid: React.FC<TutorGridProps> = ({
 
     // Price range filter
     if (filters.priceRange) {
-      const [min, max] = filters.priceRange.split('-').map(p => parseInt(p.replace(/[€\/h]/g, '')));
+      const [min, max] = filters.priceRange.split('-').map((p: string) => parseInt(p.replace(/[€\/h]/g, '')));
       if (filters.priceRange.includes('+')) {
         if (tutor.hourlyRate < min) return false;
       } else {
@@ -211,4 +211,4 @@ export const TutorGrid: React.FC<TutorGridProps> = ({
       )}
     </div>
   );
-}; 
+};

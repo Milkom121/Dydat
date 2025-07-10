@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Tutor Theme */
+@import '../styles/tutor-theme.css';
+
 :root {
   /* Dydat Color Palette - Integrazione bolt_project */
   --primary-yellow: #FFF9C4;      /* Giallo pastello base */
