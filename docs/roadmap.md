@@ -81,63 +81,67 @@ Knowledge graph deterministico.
 
 ## Blocco 5: Client LLM + streaming (Sessione 3)
 
-- ⬚ `app/llm/client.py`
-  - ⬚ Wrapper Anthropic SDK
-  - ⬚ Streaming response con parsing text_delta + tool_use
-  - ⬚ Gestione timeout
-  - ⬚ Conteggio token e costo stimato
-- ⬚ `app/llm/tools.py` — Schema completo azioni + segnali per Claude API
-- ⬚ `app/llm/prompts/` — System prompt + template direttive
-- ⬚ Test: chiamata streaming mock, parsing tool_use
+- ✅ `app/llm/client.py`
+  - ✅ Wrapper Anthropic SDK (`chiama_tutor` async generator)
+  - ✅ Streaming response con parsing text_delta + tool_use (azioni vs segnali)
+  - ✅ Gestione timeout (`asyncio.timeout` + errore strutturato)
+  - ✅ Conteggio token e costo stimato (`RisultatoTurno` dataclass)
+- ✅ `app/llm/tools.py` — Schema completo: 4 azioni Loop 1, 4 azioni Loop 2-3, 6 segnali Loop 1, 2 segnali Loop 3 + helper `is_azione`/`is_segnale`
+- ✅ `app/llm/prompts/system_prompt.py` — System prompt completo (personalità, metodo B+C, Feynman, regole, toolkit)
+- ✅ `app/llm/prompts/direttive.py` — 6 template direttive
+- ✅ Test: 17/17 pass — schema validation, streaming mock (text only, text+tool, timeout), costo stimato
 
 ---
 
 ## Blocco 6: Context builder + direttive (Sessione 4)
 
-- ⬚ `app/core/contesto.py` — Assembla i 6 blocchi XML
-  - ⬚ Blocco 1: System prompt (fisso)
-  - ⬚ Blocco 2: Direttiva (da template, situazione corrente)
-  - ⬚ Blocco 3: Profilo utente
-  - ⬚ Blocco 4: Contesto attivo (nodo focale + nodi supporto)
-  - ⬚ Blocco 5: Conversazione nei messages (solo testo)
-  - ⬚ Blocco 6: Memoria rilevante (placeholder Loop 3)
-- ⬚ Template direttive (sezione 9 brief):
-  - ⬚ Spiegazione concetto nuovo
-  - ⬚ Esercizio in corso
-  - ⬚ Onboarding (accoglienza / conoscenza / conclusione)
-  - ⬚ Ripresa sessione sospesa
-  - ⬚ Verifica Feynman (stub Loop 3)
-  - ⬚ Ripasso SR (stub Loop 2)
-- ⬚ Troncamento conversazione (>50 turni: primi 2 + ultimi 20)
-- ⬚ Test: assemblaggio context package con dati mock
+- ✅ `app/core/contesto.py` — Assembla i 6 blocchi XML → `ContextPackage`
+  - ✅ Blocco 1: System prompt (fisso, da `SYSTEM_PROMPT`)
+  - ✅ Blocco 2: Direttiva (generata da `stato_orchestratore` della sessione)
+  - ✅ Blocco 3: Profilo utente (preferenze, contesto, profilo sintetizzato)
+  - ✅ Blocco 4: Contesto attivo (nodo focale + esercizi + storico errori + nodi supporto)
+  - ✅ Blocco 5: Conversazione nei messages (solo testo, da `turni_conversazione`)
+  - ✅ Blocco 6: Memoria rilevante (placeholder Loop 3)
+- ✅ Template direttive (`app/llm/prompts/direttive.py`):
+  - ✅ Spiegazione concetto nuovo (con minuti rimasti opzionale)
+  - ✅ Esercizio in corso (con soluzione, storico errori, tentativi B+C)
+  - ✅ Onboarding (accoglienza / conoscenza / conclusione)
+  - ✅ Ripresa sessione sospesa
+  - ✅ Verifica Feynman (template Loop 3 definito)
+  - ✅ Ripasso SR (template Loop 2 definito)
+- ✅ Troncamento conversazione (>50 turni: primi 2 + raccordo + ultimi 20)
+- ✅ Test: 26/26 pass — troncamento, blocchi XML, direttive, ContextPackage, system prompt
 
 ---
 
 ## Blocco 7: Flusso del turno — IL CUORE (Sessione 4-5)
 
-- ⬚ `app/core/turno.py` — `esegui_turno()`
-  - ⬚ Fase 1: Preparazione (carica stato, assembla contesto)
-  - ⬚ Fase 2: Chiamata LLM (streaming, parsing, eventi SSE)
-  - ⬚ Fase 3: Post-processing (segnali, achievement)
-- ⬚ `app/core/elaborazione.py`
-  - ⬚ Action Executor
-    - ⬚ `proponi_esercizio` (selezione dal banco, mapping difficoltà)
-    - ⬚ `mostra_formula` (passthrough)
-    - ⬚ `suggerisci_backtrack` (passthrough)
-    - ⬚ `chiudi_sessione` (chiusura sessione)
-    - ⬚ Stub azioni Loop 2-3
-  - ⬚ Signal Processor
-    - ⬚ `concetto_spiegato` → aggiorna spiegazione_data, livello in_corso
-    - ⬚ `risposta_esercizio` → storico, contatori, verifica promozione
-    - ⬚ `confusione_rilevata` → log
-    - ⬚ `energia_utente` → log
-    - ⬚ `prossimo_passo_raccomandato` → salva in sessione
-    - ⬚ `punto_partenza_suggerito` → match nel grafo
-    - ⬚ Stub segnali Loop 3
-- ⬚ `app/core/conversazione.py` — Salvataggio turni (testo/azioni/segnali separati)
-- ⬚ Logica promozione: in_corso → operativo (spiegazione + 3 esercizi + 1 primo_tentativo)
-- ⬚ Cascata sblocco post-promozione
-- ⬚ Test: promozione, sblocco cascata, signal processing
+- ✅ `app/core/turno.py` — `esegui_turno()` coordinatore 3 fasi
+  - ✅ Fase 1: Preparazione (salva messaggio utente, assembla context package)
+  - ✅ Fase 2: Chiamata LLM (streaming, parsing text_delta + tool_use, dispatch azioni vs segnali)
+  - ✅ Fase 3: Post-processing (salva turno assistente, processa segnali, gestisci promozioni, achievement check safe, commit + turno_completo)
+- ✅ `app/core/elaborazione.py`
+  - ✅ Action Executor (`esegui_azione` con dispatch)
+    - ✅ `proponi_esercizio` (selezione dal banco con mapping difficoltà base→1-2, intermedio→3, avanzato→4-5, aggiornamento stato_orchestratore)
+    - ✅ `mostra_formula` (passthrough al frontend)
+    - ✅ `suggerisci_backtrack` (passthrough al frontend)
+    - ✅ `chiudi_sessione` (transizione stato → completata)
+    - ✅ Stub azioni Loop 2-3 (log + return None)
+  - ✅ Signal Processor (`processa_segnali` con dispatch, ritorna lista promozioni)
+    - ✅ `concetto_spiegato` → UPSERT stato_nodi_utente (livello=in_corso, spiegazione_data=True)
+    - ✅ `risposta_esercizio` → StoricoEsercizi + aggiorna contatori (esercizi_completati++, esercizi_consecutivi_ok, errori_in_corso) + verifica promozione
+    - ✅ `confusione_rilevata` → log (Loop 3 placeholder)
+    - ✅ `energia_utente` → log (Loop 3 placeholder)
+    - ✅ `prossimo_passo_raccomandato` → aggiorna attivita_corrente in stato_orchestratore
+    - ✅ `punto_partenza_suggerito` → salva punto_partenza_suggerito in stato_orchestratore
+    - ✅ Stub segnali Loop 3 (log + return None)
+  - ✅ `aggiorna_nodo_dopo_promozione()` — path planner per prossimo nodo, aggiorna sessione
+- ✅ `app/core/conversazione.py`
+  - ✅ `salva_turno()` — calcolo ordine progressivo, salvataggio con testo/azioni/segnali separati, token/costo
+  - ✅ `carica_conversazione()` — carica turni per Claude messages (solo testo, no azioni/segnali)
+- ✅ Logica promozione: in_corso → operativo (3 condizioni: spiegazione_data + esercizi_completati≥3 + almeno 1 primo_tentativo nello storico)
+- ✅ Cascata sblocco post-promozione (via `nodi_sbloccati_dopo_promozione` + UPSERT stato_nodi_utente sbloccato)
+- ✅ Test: 20/20 pass — mapping difficoltà (4), logica promozione (6), cascata sblocco (3), turno coordinatore (5), eventi SSE (2)
 
 ---
 
