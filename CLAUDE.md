@@ -287,7 +287,7 @@ dydat-backend/          (root del progetto = root del repo)
 
 ## Stato attuale
 
-**Fase**: Sviluppo — Blocchi 1-7 completati, prossimo Blocco 8
+**Fase**: Sviluppo — Blocchi 1-8 completati, prossimo Blocco 9
 **Ultimo aggiornamento**: 2026-02-18
 
 ### Completato
@@ -303,22 +303,24 @@ dydat-backend/          (root del progetto = root del repo)
 - [x] **Blocco 5**: Client LLM — wrapper Anthropic SDK con streaming, 16 tool schemas (azioni + segnali), parsing fire-and-forget
 - [x] **Blocco 6**: Context builder — 6 blocchi XML, 6 template direttive, troncamento conversazione (>50 turni)
 - [x] **Blocco 7**: Flusso del turno (IL CUORE) — `esegui_turno()` 3 fasi, Action Executor, Signal Processor, promozione (3 condizioni), cascata sblocco, conversation manager
+- [x] **Blocco 8**: API sessione con SSE — Session Manager + 5 endpoint HTTP + schemas Pydantic + 29 test
 
-### Test: 109 passed, 7 skipped (DB integration), ruff clean
+### Test: 138 passed, 7 skipped (DB integration), ruff clean
 
 ### Prossimo passo
-- **Blocco 8**: API sessione con SSE — endpoint HTTP che collegano il motore al frontend
-  - `POST /sessione/inizia` → SSE stream
-  - `POST /sessione/{id}/turno` → SSE stream
-  - `POST /sessione/{id}/sospendi` + `POST /sessione/{id}/termina`
-  - `app/core/sessione.py` — Session Manager (sessione unica, auto-sospensione 5 min)
-- Poi: Blocco 9 (onboarding), 10 (gamification), 11 (rifinitura + test E2E)
+- **Blocco 9**: Onboarding
+  - `app/api/onboarding.py` — inizia, turno, completa
+  - Gestione fasi: accoglienza → conoscenza → conclusione
+  - Punto di partenza personalizzato (segnale `punto_partenza_suggerito`)
+  - Creazione percorso binario_1 + inizializzazione stato_nodi_utente
+  - Sezioni brief da leggere: 12 (onboarding), 18 (walkthrough E2E step 1-3)
+- Poi: Blocco 10 (gamification), 11 (rifinitura + test E2E)
 
 ### Note per nuova sessione
-- Il codice è nel worktree `festive-saha` → `.claude/worktrees/festive-saha/`
-- Il brief completo è in `dydat_brief_backend_v3.md` nella root del repo (fuori dal worktree)
+- Il brief completo è in `dydat_brief_backend_v3.md` — cercarlo nel worktree che lo contiene
 - La roadmap dettagliata è in `docs/roadmap.md` dentro il worktree
-- Per il Blocco 8, leggere sezioni 5 (sessione), 11 (attività), 18 (walkthrough E2E) del brief
+- Per il Blocco 9, leggere sezioni 12 (onboarding) e 18 (walkthrough E2E step 1-3) del brief
+- I file core esistenti da usare: `app/core/turno.py`, `app/core/sessione.py`, `app/core/elaborazione.py`
 
 ## Log decisioni
 
@@ -333,3 +335,5 @@ dydat-backend/          (root del progetto = root del repo)
 | 2026-02-17 | Ralph Loop solo per sotto-task ripetitivi | Blocchi principali troppo accoppiati per loop autonomi |
 | 2026-02-18 | Import top-level in turno.py (no inline) | Ruff lint + leggibilità |
 | 2026-02-18 | `esercizi_consecutivi_ok` solo per achievement | Non è condizione di promozione (solo spiegazione + 3 esercizi + 1 primo_tentativo) |
+| 2026-02-18 | `SessioneConflitto` come eccezione custom | Separa logica di dominio (409) dalla gestione HTTP nell'API layer |
+| 2026-02-18 | SSE con `sse-starlette` EventSourceResponse | Formato standard SSE, unidirezionale server→client, come da brief sezione 19 |

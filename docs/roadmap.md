@@ -1,6 +1,6 @@
 # Dydat Backend — Roadmap di sviluppo
 
-> Aggiornamento: 2026-02-17
+> Aggiornamento: 2026-02-18
 > Legenda: ⬚ da fare | 🔄 in corso | ✅ completato
 
 ---
@@ -147,20 +147,21 @@ Knowledge graph deterministico.
 
 ## Blocco 8: API sessione con SSE (Sessione 5)
 
-- ⬚ `app/api/sessione.py`
-  - ⬚ `POST /sessione/inizia` → SSE stream (sessione_creata + primo turno tutor)
-  - ⬚ `POST /sessione/{id}/turno` → SSE stream (risposta tutor)
-  - ⬚ `POST /sessione/{id}/sospendi` → salva stato orchestratore
-  - ⬚ `POST /sessione/{id}/termina` → chiudi sessione
-  - ⬚ `GET /sessione/{id}` → stato sessione
-- ⬚ `app/core/sessione.py`
-  - ⬚ Scelta nodo a inizio sessione (sospesa → in_corso → path planner)
-  - ⬚ Sessione unica attiva (409 / auto-sospensione)
-  - ⬚ Transizioni attività (spiegazione ↔ esercizio ↔ ...)
-  - ⬚ Salvataggio/ripristino stato orchestratore
-- ⬚ Formato eventi SSE (text_delta, azione, achievement, turno_completo, errore)
-- ⬚ Gestione errori (timeout LLM, tool invalidi, esercizio non trovato)
-- ⬚ Test: flusso sessione end-to-end con LLM mock
+- ✅ `app/api/sessione.py` — 5 endpoint con SSE via sse-starlette
+  - ✅ `POST /sessione/inizia` → SSE stream (sessione_creata + primo turno tutor)
+  - ✅ `POST /sessione/{id}/turno` → SSE stream (risposta tutor)
+  - ✅ `POST /sessione/{id}/sospendi` → salva stato orchestratore
+  - ✅ `POST /sessione/{id}/termina` → chiudi sessione
+  - ✅ `GET /sessione/{id}` → stato sessione
+- ✅ `app/core/sessione.py` — Session Manager completo
+  - ✅ Scelta nodo a inizio sessione (sospesa → in_corso → path planner)
+  - ✅ Sessione unica attiva (409 `SessioneConflitto` / auto-sospensione 5 min)
+  - ✅ Transizioni attività (gestite da stato_orchestratore)
+  - ✅ Salvataggio/ripristino stato orchestratore (sospendi/riprendi)
+- ✅ `app/schemas/sessione.py` — Pydantic v2 schemas (request + response)
+- ✅ Formato eventi SSE (sessione_creata, text_delta, azione, achievement, turno_completo, errore)
+- ✅ Gestione errori (409 conflitto, 404 non trovata, 400 stato invalido, timeout LLM via turno.py)
+- ✅ Test: 29/29 pass — sessione unica, auto-sospensione, ripresa, scelta nodo, schemas, SSE, flusso E2E
 
 ---
 
