@@ -167,17 +167,19 @@ Knowledge graph deterministico.
 
 ## Blocco 9: Onboarding (Sessione 6)
 
-- ⬚ `app/api/onboarding.py`
-  - ⬚ `POST /onboarding/inizia` → crea utente temp + sessione onboarding + SSE
-  - ⬚ `POST /onboarding/turno` → turno conversazione onboarding
-  - ⬚ `POST /onboarding/completa` → finalizza, crea percorso
-- ⬚ Gestione fasi: accoglienza → conoscenza (automatico dopo 1° scambio) → conclusione
-- ⬚ Punto di partenza personalizzato (segnale `punto_partenza_suggerito`)
-  - ⬚ Match tema/nodo nel grafo
-  - ⬚ `nodo_iniziale_override` nel percorso
-  - ⬚ Nodi precedenti marcati operativo + presunto=true
-- ⬚ Al completamento: salva profilo, crea percorso binario_1, inizializza stato_nodi_utente
-- ⬚ Test: flusso onboarding completo
+- ✅ `app/core/onboarding.py` — Onboarding Manager (crea_utente_temporaneo, crea_sessione_onboarding, aggiorna_fase_onboarding, completa_onboarding, _trova_nodo_per_tema, _inizializza_stato_nodi)
+- ✅ `app/api/onboarding.py` — 3 endpoint SSE
+  - ✅ `POST /onboarding/inizia` → crea utente temp + sessione onboarding + SSE primo turno
+  - ✅ `POST /onboarding/turno` → turno conversazione onboarding con auto-fase
+  - ✅ `POST /onboarding/completa` → finalizza, crea percorso
+- ✅ `app/schemas/onboarding.py` — 4 Pydantic schemas (IniziaResponse, TurnoRequest, CompletaRequest, CompletaResponse)
+- ✅ Gestione fasi: accoglienza → conoscenza (automatico dopo 1° risposta utente) → conclusione (dopo TURNI_CONOSCENZA_MAX=8 turni)
+- ✅ Punto di partenza personalizzato (segnale `punto_partenza_suggerito`)
+  - ✅ Match tema/nodo nel grafo (spazi→underscore, case-insensitive, fallback nodo_id)
+  - ✅ `nodo_iniziale_override` nel percorso
+  - ✅ Nodi precedenti marcati operativo + presunto=true (via ordinamento topologico)
+- ✅ Al completamento: salva profilo, crea percorso binario_1, inizializza stato_nodi_utente
+- ✅ Test: 24/24 pass — utente temp, sessione, fasi (5), completamento (4), match tema (5), schemas (6), costanti (1), E2E (1)
 
 ---
 

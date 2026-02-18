@@ -287,7 +287,7 @@ dydat-backend/          (root del progetto = root del repo)
 
 ## Stato attuale
 
-**Fase**: Sviluppo — Blocchi 1-8 completati, prossimo Blocco 9
+**Fase**: Sviluppo — Blocchi 1-9 completati, prossimo Blocco 10
 **Ultimo aggiornamento**: 2026-02-18
 
 ### Completato
@@ -304,23 +304,23 @@ dydat-backend/          (root del progetto = root del repo)
 - [x] **Blocco 6**: Context builder — 6 blocchi XML, 6 template direttive, troncamento conversazione (>50 turni)
 - [x] **Blocco 7**: Flusso del turno (IL CUORE) — `esegui_turno()` 3 fasi, Action Executor, Signal Processor, promozione (3 condizioni), cascata sblocco, conversation manager
 - [x] **Blocco 8**: API sessione con SSE — Session Manager + 5 endpoint HTTP + schemas Pydantic + 29 test
+- [x] **Blocco 9**: Onboarding — Onboarding Manager + 3 endpoint SSE + fasi auto (accoglienza→conoscenza→conclusione) + punto di partenza personalizzato + inizializzazione stato nodi + 24 test
 
-### Test: 138 passed, 7 skipped (DB integration), ruff clean
+### Test: 162 passed, 7 skipped (DB integration), ruff clean
 
 ### Prossimo passo
-- **Blocco 9**: Onboarding
-  - `app/api/onboarding.py` — inizia, turno, completa
-  - Gestione fasi: accoglienza → conoscenza → conclusione
-  - Punto di partenza personalizzato (segnale `punto_partenza_suggerito`)
-  - Creazione percorso binario_1 + inizializzazione stato_nodi_utente
-  - Sezioni brief da leggere: 12 (onboarding), 18 (walkthrough E2E step 1-3)
-- Poi: Blocco 10 (gamification), 11 (rifinitura + test E2E)
+- **Blocco 10**: Gamification
+  - `app/core/gamification.py` — Achievement checker, seed definizioni, calcolo streak, statistiche giornaliere
+  - `app/api/achievement.py` — `GET /achievement` (sbloccati + prossimi)
+  - Sezioni brief da leggere: 14 (gamification), 18 (walkthrough E2E)
+  - File core da usare: `app/core/elaborazione.py` (achievement_check), `app/db/models/gamification.py`
+- Poi: Blocco 11 (API restanti + rifinitura + test E2E)
 
 ### Note per nuova sessione
 - Il brief completo è in `dydat_brief_backend_v3.md` — cercarlo nel worktree che lo contiene
 - La roadmap dettagliata è in `docs/roadmap.md` dentro il worktree
-- Per il Blocco 9, leggere sezioni 12 (onboarding) e 18 (walkthrough E2E step 1-3) del brief
-- I file core esistenti da usare: `app/core/turno.py`, `app/core/sessione.py`, `app/core/elaborazione.py`
+- Per il Blocco 10, leggere sezioni 14 (gamification) e 18 (walkthrough E2E) del brief
+- I file core esistenti da usare: `app/core/elaborazione.py`, `app/db/models/gamification.py`
 
 ## Log decisioni
 
@@ -337,3 +337,5 @@ dydat-backend/          (root del progetto = root del repo)
 | 2026-02-18 | `esercizi_consecutivi_ok` solo per achievement | Non è condizione di promozione (solo spiegazione + 3 esercizi + 1 primo_tentativo) |
 | 2026-02-18 | `SessioneConflitto` come eccezione custom | Separa logica di dominio (409) dalla gestione HTTP nell'API layer |
 | 2026-02-18 | SSE con `sse-starlette` EventSourceResponse | Formato standard SSE, unidirezionale server→client, come da brief sezione 19 |
+| 2026-02-18 | `_trova_nodo_per_tema` normalizza spazi→underscore | I tema_id nel grafo usano underscore (es. `equazioni_secondo_grado`) ma il tutor può suggerire con spazi |
+| 2026-02-18 | `_inizializza_stato_nodi` con `pg_insert` ON CONFLICT DO NOTHING | UPSERT sicuro per inizializzazione idempotente dei nodi utente |
