@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/achievement_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/onboarding_provider.dart';
 import 'providers/path_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/stats_provider.dart';
@@ -13,6 +14,7 @@ import 'routes/app_router.dart';
 import 'services/achievement_service.dart';
 import 'services/auth_service.dart';
 import 'services/dio_client.dart';
+import 'services/onboarding_service.dart';
 import 'services/path_service.dart';
 import 'services/session_service.dart';
 import 'services/sse_client.dart';
@@ -50,6 +52,10 @@ void main() async {
     client: dioClient,
     sseClient: sseClient,
   );
+  final onboardingService = OnboardingService(
+    client: dioClient,
+    sseClient: sseClient,
+  );
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
@@ -77,6 +83,12 @@ void main() async {
         ),
         sessionProvider.overrideWith(
           (ref) => SessionNotifier(sessionService: sessionService),
+        ),
+        onboardingProvider.overrideWith(
+          (ref) => OnboardingNotifier(
+            onboardingService: onboardingService,
+            storageService: storageService,
+          ),
         ),
       ],
       child: const DydatApp(),

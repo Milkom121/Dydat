@@ -67,6 +67,8 @@ async def esegui_azione(
         return {"tipo": "suggerisci_backtrack", "params": params}
     elif nome == "chiudi_sessione":
         return await _esegui_chiudi_sessione(db, params, sessione_id)
+    elif nome == "onboarding_domanda":
+        return {"tipo": "onboarding_domanda", "params": params}
     else:
         # Loop 2-3 stubs — log e ignora
         logger.info(

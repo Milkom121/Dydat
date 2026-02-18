@@ -96,6 +96,56 @@ AZIONI_LOOP_1: list[dict] = [
             "required": ["riepilogo"],
         },
     },
+    {
+        "name": "onboarding_domanda",
+        "description": (
+            "SOLO DURANTE ONBOARDING. Presenta una domanda allo studente "
+            "con un formato UI specifico. Usa questa azione per OGNI domanda "
+            "durante l'onboarding. Il testo descrittivo va nel messaggio "
+            "testuale, la domanda strutturata va qui."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tipo_input": {
+                    "type": "string",
+                    "enum": ["scelta_singola", "testo_libero", "scala"],
+                    "description": (
+                        "Tipo di interfaccia: scelta_singola (card cliccabili), "
+                        "testo_libero (campo di testo aperto), "
+                        "scala (valore numerico con etichette)."
+                    ),
+                },
+                "domanda": {
+                    "type": "string",
+                    "description": "Il testo della domanda da mostrare.",
+                },
+                "opzioni": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Opzioni per scelta_singola (2-5 opzioni).",
+                },
+                "placeholder": {
+                    "type": "string",
+                    "description": "Placeholder per testo_libero.",
+                },
+                "scala_min": {
+                    "type": "integer",
+                    "description": "Valore minimo della scala (default 1).",
+                },
+                "scala_max": {
+                    "type": "integer",
+                    "description": "Valore massimo della scala (default 5).",
+                },
+                "scala_labels": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Etichette per i due estremi [min_label, max_label].",
+                },
+            },
+            "required": ["tipo_input", "domanda"],
+        },
+    },
 ]
 
 AZIONI_LOOP_2_3: list[dict] = [

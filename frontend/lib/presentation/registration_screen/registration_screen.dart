@@ -7,6 +7,7 @@ import '../../core/sizer_extensions.dart';
 import './widgets/registration_form_widget.dart';
 import './widgets/registration_header_widget.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/onboarding_provider.dart';
 
 /// Registration screen for new user account creation
 /// Handles temporary user conversion and mobile-optimized form inputs
@@ -86,10 +87,14 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     final password = _passwordController.text;
     final nome = _nomeController.text.trim();
 
+    // Pass utenteTempId from onboarding to convert the temp user.
+    final utenteTempId = ref.read(onboardingProvider).utenteTempId;
+
     await ref.read(authProvider.notifier).register(
           email: email,
           password: password,
           nome: nome,
+          utenteTempId: utenteTempId,
         );
 
     // On success, GoRouter redirect handles navigation automatically.

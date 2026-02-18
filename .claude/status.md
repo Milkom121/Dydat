@@ -5,9 +5,9 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-18
-**Ultima sessione**: S9 (Blocco 13 — Azioni tutor nel canvas) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B13)
-**Prossima sessione**: S10 — Blocco 14 (Onboarding reale con SSE). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
+**Ultima sessione**: S10 (Blocco 14 — Onboarding reale con SSE) — COMPLETATA
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B14)
+**Prossima sessione**: S11 — Blocco 15 (Recap sessione + App lifecycle). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
 
 ## Blocchi Completati
 
@@ -27,6 +27,7 @@
 | B11 — SSE Client + Modelli eventi | DONE | S7 | sse_client.dart + sse_events.dart + 33 unit test tutti verdi |
 | B12 — Studio con SSE reale | DONE | S8 | SSE streaming in StudioScreen, cursore ambra, auto-scroll |
 | B13 — Azioni tutor nel canvas | DONE | S9 | ExerciseCard, FormulaCard, BacktrackCard, ChiudiSessioneCard, AchievementToast con dati SSE reali |
+| B14 — Onboarding reale con SSE | DONE | S10 | OnboardingScreen con SSE streaming, conversione utente temp→registrato, cursore ambra |
 
 ## Risultati Test E2E (S6)
 
@@ -67,7 +68,7 @@ Flusso completo testato manualmente:
 | B11 — SSE Client + Modelli eventi | `sse_client.dart`, `sse_events.dart`, parsing tutti i tipi evento | DONE | S7 |
 | B12 — Studio con SSE reale | Testo tutor in streaming, rimuovere placeholder | DONE | S8 |
 | B13 — Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE, achievement toast | DONE | S9 |
-| B14 — Onboarding reale con SSE | Onboarding con tutor AI, registrazione conversione utente_temp | TODO | S10 |
+| B14 — Onboarding reale con SSE | Onboarding con tutor AI, registrazione conversione utente_temp | DONE | S10 |
 | B15 — Recap + App lifecycle | Recap post-sessione, sospensione in background | TODO | S11 |
 | B16 — Test E2E Loop 2 | Flusso completo SSE reale senza crash | TODO | S12 |
 
@@ -125,6 +126,24 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 
 ### Test
 - 153 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock — invariati da S8)
+- Nessun nuovo test fallito
+
+## Risultati S10 (B14 — Onboarding reale con SSE)
+
+### File modificati
+- `lib/services/onboarding_service.dart` — Riscritto: aggiunto `SseClient` come dipendenza, nuovi metodi `startStream()` e `sendTurnStream()` che ritornano `Stream<SseEvent>`, rimossi metodi REST `start()` e `sendTurn()`. `complete()` REST mantenuto.
+- `lib/providers/onboarding_provider.dart` — Riscritto: nuovo stato con `currentTutorText`, `isStreaming`, `turnsCompleted`, `progress` getter. Nuovi metodi SSE: `startOnboarding()`, `sendMessage()`, `completeOnboarding()`, `_handleSseEvent()`, `_finalizeTutorMessage()`. Gestione subscription lifecycle. Rimossi `setIds()` e `addTutorMessage()` (ora gestiti internamente dal SSE handler).
+- `lib/presentation/onboarding_screen/onboarding_screen.dart` — Convertito da `StatefulWidget` a `ConsumerStatefulWidget`. Rimossi mock: `_simulateAiResponse()` e messaggi placeholder. Collegato a `onboardingProvider` per SSE reale. Streaming bubble con `_AmberCursor` ambra pulsante. Typing indicator. Progress bar da turni reali. Bottone "Inizia il tuo percorso!" dopo ~8 turni. Input disabilitato durante streaming.
+- `lib/presentation/registration_screen/registration_screen.dart` — Aggiunto import `onboarding_provider`. `_handleRegistration()` legge `utenteTempId` dal provider e lo passa a `authProvider.register()`.
+- `lib/main.dart` — Creato `OnboardingService` con `SseClient` iniettato. Aggiunto `onboardingProvider.overrideWith()` nel `ProviderScope`.
+- `test/services/onboarding_service_test.dart` — Aggiornato per nuova API con `SseClient`, rimossi test per metodi REST rimossi.
+- `test/providers/onboarding_provider_test.dart` — Riscritto per nuova API SSE-based.
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- 153 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock — invariati da S9)
 - Nessun nuovo test fallito
 
 ## Problemi Aperti
@@ -196,3 +215,10 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 | 2026-02-18 | BacktrackCard bottoni inviano messaggio al tutor | "Ok, rivediamolo" e "Continua qui" usano sendMessage() per comunicare la scelta al tutor |
 | 2026-02-18 | ExerciseCard con TextField per risposta | Input inline nella card, "Verifica" invia la risposta come turno SSE |
 | 2026-02-18 | theme.colorScheme.tertiary per BacktrackCard | Sostituito colore hardcoded #7EA8C9 con colore dal tema |
+| 2026-02-18 | OnboardingService con SseClient iniettato | Stessa DI pattern di SessionService per SSE streaming |
+| 2026-02-18 | OnboardingScreen convertito a ConsumerStatefulWidget | Necessario per accedere a Riverpod providers |
+| 2026-02-18 | Onboarding SSE senza autenticazione | `authenticated: false` nel SseClient — onboarding non richiede JWT |
+| 2026-02-18 | Progress bar da turni reali (turno/10) | ~10 turni totali nell'onboarding, progress = turnsCompleted / 10 clamped |
+| 2026-02-18 | Bottone "Inizia il tuo percorso!" dopo 8 turni | Appare quando turnsCompleted >= 8, chiama completeOnboarding() |
+| 2026-02-18 | RegistrationScreen legge utenteTempId da onboardingProvider | Conversione utente temp→registrato passa l'ID via provider (non route extra) |
+| 2026-02-18 | hide AchievementEvent in onboarding_provider.dart | Stessa ambiguita tra api_response.dart e sse_events.dart, risolta con hide |

@@ -3,20 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:dydat/services/onboarding_service.dart';
 import 'package:dydat/services/dio_client.dart';
+import 'package:dydat/services/sse_client.dart';
 import 'package:dydat/services/storage_service.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-class FakeSecureStorage extends Fake implements FlutterSecureStorage {
-  final Map<String, String> _store = {};
-  @override
-  Future<String?> read({required String key, IOSOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, MacOsOptions? mOptions, WindowsOptions? wOptions}) async => _store[key];
-  @override
-  Future<void> write({required String key, required String? value, IOSOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, MacOsOptions? mOptions, WindowsOptions? wOptions}) async { if (value != null) _store[key] = value; }
-  @override
-  Future<void> delete({required String key, IOSOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, MacOsOptions? mOptions, WindowsOptions? wOptions}) async => _store.remove(key);
-  @override
-  Future<void> deleteAll({IOSOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, MacOsOptions? mOptions, WindowsOptions? wOptions}) async => _store.clear();
-}
+import '../helpers/fake_secure_storage.dart';
 
 void main() {
   late Dio dio;
@@ -28,30 +17,25 @@ void main() {
     dioAdapter = DioAdapter(dio: dio);
     final storageService = StorageService(storage: FakeSecureStorage());
     final client = DioClient(storageService: storageService, dio: dio);
-    onboardingService = OnboardingService(client: client);
+    final sseClient = SseClient(storageService: storageService);
+    onboardingService = OnboardingService(
+      client: client,
+      sseClient: sseClient,
+    );
   });
 
   group('OnboardingService', () {
-    test('start makes POST to /onboarding/inizia', () async {
-      dioAdapter.onPost(
-        '/onboarding/inizia',
-        (server) => server.reply(200, ''),
-      );
-
-      await onboardingService.start();
+    test('startStream returns a Stream', () {
+      final stream = onboardingService.startStream();
+      expect(stream, isA<Stream>());
     });
 
-    test('sendTurn makes POST to /onboarding/turno', () async {
-      dioAdapter.onPost(
-        '/onboarding/turno',
-        (server) => server.reply(200, ''),
-        data: Matchers.any,
-      );
-
-      await onboardingService.sendTurn(
+    test('sendTurnStream returns a Stream', () {
+      final stream = onboardingService.sendTurnStream(
         sessioneId: 'session-uuid',
         messaggio: 'Ciao tutor',
       );
+      expect(stream, isA<Stream>());
     });
 
     test('complete returns OnboardingCompletaResponse', () async {

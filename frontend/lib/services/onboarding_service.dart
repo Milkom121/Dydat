@@ -1,31 +1,43 @@
 import 'package:dydat/config/api_config.dart';
 import 'package:dydat/models/onboarding.dart';
+import 'package:dydat/models/sse_events.dart';
 import 'package:dydat/services/dio_client.dart';
+import 'package:dydat/services/sse_client.dart';
 
 class OnboardingService {
   final DioClient _client;
+  final SseClient _sseClient;
 
-  OnboardingService({required DioClient client}) : _client = client;
+  OnboardingService({
+    required DioClient client,
+    required SseClient sseClient,
+  })  : _client = client,
+        _sseClient = sseClient;
 
-  /// Starts onboarding. Returns SSE stream in real backend,
-  /// but for REST-only phase we POST and expect non-streaming fallback.
-  /// The SSE streaming will be implemented in a future loop.
-  /// For now, this just makes the POST call.
-  Future<void> start() async {
-    await _client.dio.post(ApiConfig.onboardingStart);
+  /// Starts onboarding via SSE streaming.
+  /// Returns a stream with onboarding_iniziato, text_delta, turno_completo.
+  /// No authentication required.
+  Stream<SseEvent> startStream() {
+    return _sseClient.stream(
+      ApiConfig.onboardingStart,
+      authenticated: false,
+    );
   }
 
-  /// Sends a student message during onboarding.
-  Future<void> sendTurn({
+  /// Sends a student message during onboarding via SSE streaming.
+  /// Returns a stream with text_delta, turno_completo.
+  /// No authentication required.
+  Stream<SseEvent> sendTurnStream({
     required String sessioneId,
     required String messaggio,
-  }) async {
-    await _client.dio.post(
+  }) {
+    return _sseClient.stream(
       ApiConfig.onboardingTurn,
-      data: OnboardingTurnoRequest(
-        sessioneId: sessioneId,
-        messaggio: messaggio,
-      ).toJson(),
+      body: {
+        'sessione_id': sessioneId,
+        'messaggio': messaggio,
+      },
+      authenticated: false,
     );
   }
 

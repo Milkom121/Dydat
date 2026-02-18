@@ -352,10 +352,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           onPressed: isLoading
               ? null
               : () {
-                  context.go('/registration');
+                  context.go('/onboarding');
                 },
           child: Text(
-            'Registrati',
+            'Inizia qui',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w600,

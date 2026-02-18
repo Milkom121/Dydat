@@ -1,4 +1,4 @@
-"""Test Blocco 9 — Onboarding.
+"""Test Blocco 9 + B14-bis — Onboarding.
 
 Test:
 - Creazione utente temporaneo
@@ -8,6 +8,7 @@ Test:
 - Punto di partenza personalizzato
 - Match tema/nodo nel grafo
 - Schemas Pydantic
+- B14-bis: tool onboarding_domanda, elaborazione passthrough, prompt adattivi
 """
 
 from __future__ import annotations
@@ -26,6 +27,8 @@ from app.core.onboarding import (
     crea_sessione_onboarding,
     crea_utente_temporaneo,
 )
+from app.llm.prompts.direttive import direttiva_onboarding
+from app.llm.tools import NOMI_AZIONI, is_azione
 from app.schemas.onboarding import (
     OnboardingCompletaRequest,
     OnboardingCompletaResponse,
@@ -520,3 +523,135 @@ class TestFlussoOnboardingE2E:
         assert sessione.stato == "completata"
         assert utente.contesto_personale == {"motivazione": "debito matematica"}
         assert risultato["nodi_inizializzati"] == 100
+
+
+# ===================================================================
+# Test B14-bis: tool onboarding_domanda
+# ===================================================================
+
+
+class TestOnboardingDomandaTool:
+    def test_onboarding_domanda_is_azione(self):
+        """onboarding_domanda deve essere classificato come azione (SSE → frontend)."""
+        assert "onboarding_domanda" in NOMI_AZIONI
+        assert is_azione("onboarding_domanda")
+
+    @pytest.mark.asyncio
+    async def test_esegui_azione_onboarding_domanda_passthrough(self):
+        """esegui_azione con onboarding_domanda ritorna passthrough senza stub."""
+        from app.core.elaborazione import esegui_azione
+
+        db = AsyncMock()
+        result = await esegui_azione(
+            db=db,
+            azione={
+                "name": "onboarding_domanda",
+                "input": {
+                    "tipo_input": "scelta_singola",
+                    "domanda": "Come preferisci studiare?",
+                    "opzioni": ["Teoria prima", "Subito esercizi", "Mix"],
+                },
+            },
+            sessione_id=uuid.uuid4(),
+            utente_id=uuid.uuid4(),
+        )
+
+        assert result is not None
+        assert result["tipo"] == "onboarding_domanda"
+        assert result["params"]["tipo_input"] == "scelta_singola"
+        assert result["params"]["domanda"] == "Come preferisci studiare?"
+        assert result["params"]["opzioni"] == ["Teoria prima", "Subito esercizi", "Mix"]
+        assert "stub" not in result
+
+    @pytest.mark.asyncio
+    async def test_esegui_azione_onboarding_domanda_testo_libero(self):
+        """esegui_azione con tipo_input testo_libero."""
+        from app.core.elaborazione import esegui_azione
+
+        db = AsyncMock()
+        result = await esegui_azione(
+            db=db,
+            azione={
+                "name": "onboarding_domanda",
+                "input": {
+                    "tipo_input": "testo_libero",
+                    "domanda": "Cosa state facendo in classe?",
+                    "placeholder": "Es: equazioni, derivate...",
+                },
+            },
+            sessione_id=uuid.uuid4(),
+            utente_id=uuid.uuid4(),
+        )
+
+        assert result["tipo"] == "onboarding_domanda"
+        assert result["params"]["tipo_input"] == "testo_libero"
+        assert result["params"]["placeholder"] == "Es: equazioni, derivate..."
+
+    @pytest.mark.asyncio
+    async def test_esegui_azione_onboarding_domanda_scala(self):
+        """esegui_azione con tipo_input scala."""
+        from app.core.elaborazione import esegui_azione
+
+        db = AsyncMock()
+        result = await esegui_azione(
+            db=db,
+            azione={
+                "name": "onboarding_domanda",
+                "input": {
+                    "tipo_input": "scala",
+                    "domanda": "Quanto ti senti sicuro?",
+                    "scala_min": 1,
+                    "scala_max": 5,
+                    "scala_labels": ["Per niente", "Molto"],
+                },
+            },
+            sessione_id=uuid.uuid4(),
+            utente_id=uuid.uuid4(),
+        )
+
+        assert result["tipo"] == "onboarding_domanda"
+        assert result["params"]["scala_min"] == 1
+        assert result["params"]["scala_max"] == 5
+
+
+# ===================================================================
+# Test B14-bis: prompt onboarding adattivi
+# ===================================================================
+
+
+class TestDirettivaOnboardingAdattiva:
+    def test_accoglienza_menziona_onboarding_domanda(self):
+        d = direttiva_onboarding(fase="accoglienza")
+        assert "onboarding_domanda" in d
+
+    def test_accoglienza_menziona_checklist(self):
+        d = direttiva_onboarding(fase="accoglienza")
+        assert "CHECKLIST" in d
+
+    def test_accoglienza_menziona_scelta_singola(self):
+        d = direttiva_onboarding(fase="accoglienza")
+        assert "scelta_singola" in d
+
+    def test_conoscenza_menziona_onboarding_domanda(self):
+        d = direttiva_onboarding(fase="conoscenza")
+        assert "onboarding_domanda" in d
+
+    def test_conoscenza_menziona_una_domanda(self):
+        d = direttiva_onboarding(fase="conoscenza")
+        assert "UNA domanda per turno" in d
+
+    def test_conoscenza_include_info_raccolte(self):
+        d = direttiva_onboarding(fase="conoscenza", info_raccolte="studente, matematica")
+        assert "studente, matematica" in d
+
+    def test_conclusione_vieta_onboarding_domanda(self):
+        d = direttiva_onboarding(fase="conclusione")
+        assert "NON usare onboarding_domanda" in d
+
+    def test_conclusione_include_info_raccolte(self):
+        d = direttiva_onboarding(fase="conclusione", info_raccolte="32 anni, vuole riprendere")
+        assert "32 anni, vuole riprendere" in d
+
+    def test_fase_sconosciuta(self):
+        d = direttiva_onboarding(fase="inventata")
+        assert "fase non riconosciuta" in d
