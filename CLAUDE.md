@@ -30,19 +30,18 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 
 ## Stato Frontend — Fase Corrente
 
-### Cosa esiste (da Rocket.new)
-- UI mockup con widget ben fatti (tema, card, bottom sheet, navigazione)
-- Theme completo (light + dark, 690 righe, Plus Jakarta Sans)
-- 6 schermate: Splash, Onboarding, Login, Registration, LearningPath, Studio
-- Widget riutilizzabili: 3 varianti AppBar, BottomBar, ImageWidget, IconWidget
-- Zero architettura: niente modelli, servizi, provider, routing GoRouter
-- Tutto hardcodato con dati finti
+### Loop 1 completato (B0-B10)
+- Architettura completa: 9 modelli, 8 servizi Dio, 8 provider Riverpod, GoRouter con shell route
+- Tutte le 3 tab funzionanti con dati API reali (Studio, Percorso, Profilo)
+- Auth reale (login, registrazione, JWT), splash con redirect
+- Test E2E superato con backend Docker
+- `flutter analyze` → 0 errori
 - `sizer` sostituito con `lib/core/sizer_extensions.dart` custom (compatibile Flutter 3.41)
 
-### Strategia: "Chirurgico"
-- **Teniamo**: app_theme.dart, tutti i widget card/sheet/tray/mascotte, custom_bottom_bar, custom_app_bar
-- **Ricostruiamo**: modelli, servizi API, provider Riverpod, routing GoRouter, schermate
-- **NON implementiamo ora**: SSE streaming reale, LaTeX, animazioni, celebrazioni
+### Fase attuale: Loop 2 — SSE Streaming
+- **Obiettivo**: streaming reale delle risposte tutor, azioni nel canvas, onboarding reale
+- **Blocchi**: B11-B16 (6 sessioni, S7-S12)
+- **NON implementiamo ora**: LaTeX rendering, animazioni celebrative, mascotte animata — rimandati a Loop 3
 
 ### Stack Frontend (HARD CONSTRAINT)
 | Componente | Scelta |
@@ -56,7 +55,7 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | Tema | Dark-first, ThemeMode.system default |
 | Font | Plus Jakarta Sans (Google Fonts) |
 
-## Roadmap Frontend — 11 Blocchi (0-10)
+## Roadmap Frontend — Loop 1 (B0-B10) — COMPLETATO
 
 | Blocco | Contenuto | Stato | Sessione |
 |---|---|---|---|
@@ -72,19 +71,41 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | 9 | Tab Studio (SSE placeholder) | DONE | S5 |
 | 10 | Test E2E con backend | DONE | S6 |
 
+## Roadmap Frontend — Loop 2 (B11-B16) — SSE Streaming Reale
+
+| Blocco | Contenuto | Stato | Sessione |
+|---|---|---|---|
+| 11 | SSE Client + Modelli eventi | TODO | S7 |
+| 12 | Studio Screen con SSE reale | TODO | S8 |
+| 13 | Azioni tutor nel canvas (exercise/formula/backtrack) | TODO | S9 |
+| 14 | Onboarding reale con SSE | TODO | S10 |
+| 15 | Recap sessione + App lifecycle | TODO | S11 |
+| 16 | Test E2E Loop 2 | TODO | S12 |
+
 ### Prossima sessione
-**Tutti i blocchi frontend completati (B0-B10).** Prossimo passo: Loop 2 — SSE streaming reale, LaTeX rendering, animazioni celebrative.
+**S7 — Blocco 11**: SSE Client + Modelli eventi. Creare `sse_client.dart` e `sse_events.dart` con parsing di tutti i tipi di evento backend (sessione_creata, text_delta, azione, achievement, turno_completo, errore).
 
 ## Pipeline Sessioni
 
-| Sessione | Blocchi | Gate di uscita | Commit |
+### Loop 1 (completato)
+| Sessione | Blocchi | Gate di uscita | Stato |
+|----------|---------|----------------|-------|
+| S1 | B1+B2 | analyze 0 err + unit test modelli | DONE |
+| S2 | B3+B4 | analyze 0 err + unit test services/providers | DONE |
+| S3 | B5 | app parte + navigazione + auth redirect | DONE |
+| S4 | B6+B7 | login/register reali + percorso con dati API | DONE |
+| S5 | B8+B9 | tutte le tab con dati reali | DONE |
+| S6 | B10 | flusso E2E completo con backend | DONE |
+
+### Loop 2 (SSE streaming)
+| Sessione | Blocchi | Gate di uscita | Branch |
 |----------|---------|----------------|--------|
-| S1 | B1+B2 | analyze 0 err + unit test modelli | `feat(frontend): B1+B2` |
-| S2 | B3+B4 | analyze 0 err + unit test services/providers | `feat(frontend): B3+B4` |
-| S3 | B5 | app parte + navigazione + auth redirect | `feat(frontend): B5` |
-| S4 | B6+B7 | login/register reali + percorso con dati API | `feat(frontend): B6+B7` |
-| S5 | B8+B9 | tutte le tab con dati reali | `feat(frontend): B8+B9` |
-| S6 | B10 | flusso E2E completo con backend | `feat(frontend): B10` — DONE |
+| S7 | B11 | Unit test SSE parser + analyze 0 err | `feature/frontend-sse-client` |
+| S8 | B12 | Testo tutor in streaming reale nel canvas | `feature/frontend-studio-sse` |
+| S9 | B13 | Exercise/formula/backtrack card con dati SSE | `feature/frontend-azioni-tutor` |
+| S10 | B14 | Onboarding completo con tutor AI + registrazione conversione | `feature/frontend-onboarding` |
+| S11 | B15 | Recap post-sessione + sospensione in background | `feature/frontend-recap-lifecycle` |
+| S12 | B16 | Flusso completo con SSE reale senza crash | `feature/frontend-e2e-loop2` |
 
 **Regola**: ogni sessione crea branch da main, PR a fine sessione dopo test verdi.
 
@@ -191,7 +212,7 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 - **NON committare** senza autorizzazione esplicita del fondatore
 - **NON pushare** senza autorizzazione esplicita del fondatore
 - **NON modificare il backend** (salvo CORS)
-- **NON implementare** SSE, LaTeX, animazioni, celebrazioni — solo placeholder
+- **NON implementare** LaTeX rendering, animazioni celebrative (particelle/glow), mascotte animata — rimandati a Loop 3
 - **NON toccare** app_theme.dart, widget esistenti (salvo ricablarli su provider)
 - Ogni widget nuovo usa `Theme.of(context)` — zero colori hardcoded
 - JSON snake_case → Dart camelCase nei fromJson
@@ -206,6 +227,9 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 | Unit test provider | B4 | ProviderContainer + mock |
 | Smoke test manuale | B5+ | App parte senza crash |
 | Integration test | B10 | Flusso E2E con backend reale |
+| Unit test SSE parser | B11 | Stream mockato con tutti i tipi evento |
+| SSE streaming manuale | B12+ | Testo tutor in tempo reale |
+| Integration test Loop 2 | B16 | Flusso E2E con SSE reale |
 
 ## Log Decisioni
 

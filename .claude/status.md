@@ -6,8 +6,8 @@
 
 **Ultimo aggiornamento**: 2026-02-18
 **Ultima sessione**: S6 (Blocco 10 — Test E2E con backend reale) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B10, pronto per commit)
-**Prossima sessione**: Nessuna — tutti i 11 blocchi frontend completati. Prossimo: Loop 2 (SSE streaming reale).
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B10)
+**Prossima sessione**: S7 — Blocco 11 (SSE Client + Modelli eventi). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
 
 ## Blocchi Completati
 
@@ -56,6 +56,19 @@ Flusso completo testato manualmente:
 
 ### Analisi statica
 - `flutter analyze` → 0 errori, 0 warning
+
+## Loop 2 — Piano (B11-B16)
+
+| Blocco | Contenuto | Stato | Sessione |
+|--------|-----------|-------|----------|
+| B11 — SSE Client + Modelli eventi | `sse_client.dart`, `sse_events.dart`, parsing tutti i tipi evento | TODO | S7 |
+| B12 — Studio con SSE reale | Testo tutor in streaming, rimuovere placeholder | TODO | S8 |
+| B13 — Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE, achievement toast | TODO | S9 |
+| B14 — Onboarding reale con SSE | Onboarding con tutor AI, registrazione conversione utente_temp | TODO | S10 |
+| B15 — Recap + App lifecycle | Recap post-sessione, sospensione in background | TODO | S11 |
+| B16 — Test E2E Loop 2 | Flusso completo SSE reale senza crash | TODO | S12 |
+
+Dettaglio completo in `.claude/plans/frontend-integration.md`.
 
 ## Problemi Aperti
 

@@ -287,6 +287,290 @@ Usare `@JsonSerializable()` + `@JsonKey(name: 'snake_case')`.
 **Test B10**: Tutto il flusso funziona senza crash. Screenshots documentati.
 
 ---
+---
+
+# LOOP 2 — SSE Streaming + Azioni Tutor + Onboarding Reale
+
+> Il Loop 1 (B0-B10) ha costruito l'architettura completa e collegato tutte le API REST.
+> Il Loop 2 porta l'app da "demo funzionante" a "app usabile": il tutor risponde in tempo reale,
+> le azioni (esercizi, formule, backtrack) appaiono nel canvas, l'onboarding e reale.
+
+## Cosa esiste gia (da Loop 1)
+
+- `SessionService.start()` parsa la risposta SSE come testo piatto per estrarre `sessione_id`
+- `SessionService.sendTurn()` chiama POST ma ignora lo stream di risposta
+- `TutorMessageWidget` ha gia supporto per `isStreaming: true` (animazione char-by-char)
+- Widget `exercise_card_widget.dart`, `formula_card_widget.dart`, `backtrack_card_widget.dart` esistono (rimossi dal layout in S5)
+- `OnboardingScreen` ha struttura completa con chat, mascotte, progress bar, ma usa dati mock
+- Modello `Sessione` con tutti i campi (nodoFocaleId, nodoFocaleNome, attivitaCorrente)
+- `SessionNotifier` con `addTutorMessage()`, `setActiveSession()` gia pronti
+- `OnboardingService` con `start()`, `sendTurn()`, `complete()` gia implementati
+
+## Cosa va costruito
+
+| # | Componente | Descrizione |
+|---|---|---|
+| 1 | **SSE Client** | Servizio per ricevere e parsare stream `text/event-stream` in tempo reale |
+| 2 | **Studio SSE** | StudioScreen riceve `text_delta`, `azione`, `achievement`, `turno_completo`, `errore` in streaming |
+| 3 | **Azioni tutor nel canvas** | Exercise card, formula card, backtrack card riattivate con dati SSE reali |
+| 4 | **Onboarding reale** | OnboardingScreen collegata a SSE onboarding + registrazione con `utente_temp_id` |
+| 5 | **Recap sessione** | Schermata post-sessione con stats e dati reali |
+| 6 | **App lifecycle** | Sospensione sessione in background, ripresa in foreground |
+
+---
+
+## Blocchi Loop 2
+
+### Blocco 11 — SSE Client + Modelli Eventi
+**Dipende da**: Loop 1 completo
+**File da creare**:
+- `lib/services/sse_client.dart` — Client SSE generico basato su `http` package (non Dio)
+- `lib/models/sse_events.dart` — Modelli tipizzati per tutti gli eventi SSE
+
+**SSE Client** (`sse_client.dart`):
+```
+- Usa il package `http` per fare POST con `Accept: text/event-stream`
+- Parsa lo stream linea per linea: `event: <tipo>\ndata: <json>\n\n`
+- Ritorna uno `Stream<SseEvent>` tipizzato
+- Aggiunge header `Authorization: Bearer <token>` dalle StorageService
+- Gestisce timeout (90s turno, 120s primo turno)
+- Gestisce errori di connessione e stream interrotto
+- Metodo: `Stream<SseEvent> stream(String path, {Map<String, dynamic>? body})`
+```
+
+**Modelli SSE** (`sse_events.dart`):
+```dart
+// SseEvent — sealed class/union con sottotipi:
+// - SessioneCreataEvent {sessioneId, nodoId, nodoNome}
+// - OnboardingIniziatoEvent {utenteTempId, sessioneId}
+// - TextDeltaEvent {testo}
+// - AzioneEvent {tipo, params} con sottotipi:
+//   - ProponiEsercizioAction {esercizioId, testo, difficolta, nodoId, nessunoDisponibile}
+//   - MostraFormulaAction {latex, etichetta}
+//   - SuggerisciBacktrackAction {nodoId, motivo}
+//   - ChiudiSessioneAction {riepilogo, prossimiPassi}
+// - AchievementEvent {id, nome, tipo}
+// - TurnoCompletoEvent {turnoId, nodoFocale}
+// - ErroreEvent {codice, messaggio}
+```
+
+**pubspec.yaml**: aggiungere `http: ^1.2.0` (per SSE streaming, Dio non supporta bene stream line-by-line)
+
+**Test B11**: Unit test SSE client con stream mockato — verifica parsing di tutti i tipi di evento.
+
+---
+
+### Blocco 12 — Studio Screen con SSE Reale
+**Dipende da**: B11 (SSE Client)
+**File da modificare**:
+- `lib/services/session_service.dart` — Aggiungere metodi SSE per `start()` e `sendTurn()`
+- `lib/providers/session_provider.dart` — Gestire stream SSE, accumulare testo, gestire azioni
+- `lib/presentation/studio_screen/studio_screen.dart` — Mostrare testo streaming in tempo reale
+
+**SessionService** — nuovi metodi:
+```dart
+// startStream() → Stream<SseEvent> che fa POST /sessione/inizia come SSE
+// sendTurnStream(sessioneId, messaggio) → Stream<SseEvent> che fa POST /sessione/{id}/turno come SSE
+// I metodi REST start()/sendTurn() restano come fallback
+```
+
+**SessionNotifier** — aggiornamenti:
+```dart
+// startSessionStream() — ascolta lo stream SSE:
+//   - sessione_creata → setta activeSession
+//   - text_delta → accumula testo nel messaggio corrente (concatena tutti i .testo)
+//   - azione → aggiunge azione alla lista azioni del turno corrente
+//   - achievement → aggiunge alla lista achievement del turno
+//   - turno_completo → finalizza il messaggio tutor, aggiorna nodoFocale
+//   - errore → setta errore, chiude stream
+//
+// sendTurnStream(messaggio) — stessa logica per i turni successivi
+//
+// Nuovo stato:
+//   - String currentTutorText (testo in accumulo durante streaming)
+//   - bool isStreaming
+//   - List<AzioneEvent> currentTurnActions
+//   - List<AchievementEvent> currentTurnAchievements
+```
+
+**StudioScreen** — aggiornamenti:
+```dart
+// Il messaggio tutor si costruisce in tempo reale:
+//   - Durante streaming: mostra currentTutorText che cresce token per token
+//   - A turno_completo: il messaggio viene finalizzato nella lista _messages
+//   - Cursore ambra pulsante durante lo streaming (come da direzione visiva)
+//   - Auto-scroll durante streaming
+//
+// Rimuovere: il placeholder "Messaggio ricevuto. La risposta in tempo reale..."
+// Rimuovere: il Future.delayed finto
+```
+
+**Test B12**: App crea sessione e mostra il primo messaggio tutor in streaming reale. Invio messaggio e risposta streaming funzionano.
+
+---
+
+### Blocco 13 — Azioni Tutor nel Canvas
+**Dipende da**: B12 (SSE funzionante nella studio)
+**File da modificare**:
+- `lib/presentation/studio_screen/studio_screen.dart` — Riattivare card nel layout
+- `lib/presentation/studio_screen/widgets/exercise_card_widget.dart` — Ricablare su dati SSE reali
+- `lib/presentation/studio_screen/widgets/formula_card_widget.dart` — Ricablare su dati SSE reali
+- `lib/presentation/studio_screen/widgets/backtrack_card_widget.dart` — Ricablare su dati SSE reali
+
+**File da creare**:
+- `lib/presentation/studio_screen/widgets/achievement_toast_widget.dart` — Toast per achievement sbloccato
+
+**Come funziona**:
+```
+Quando SessionNotifier riceve un evento `azione`:
+- proponi_esercizio → ExerciseCard appare inline nel flusso chat
+  - Se nessunoDisponibile: true → niente card (il tutor genera nel testo)
+  - Altrimenti: card con testo esercizio, badge difficolta, campo input, bottone "Verifica"
+  - "Verifica" invia la risposta come messaggio al tutor via sendTurnStream()
+- mostra_formula → FormulaCard appare inline (testo raw della formula, placeholder LaTeX)
+- suggerisci_backtrack → BacktrackCard con motivo + bottoni "Ok, rivediamolo" / "Continua qui"
+  - "Ok, rivediamolo" invia messaggio al tutor
+- chiudi_sessione → Mostra riepilogo, bottone "Vai al riepilogo" → naviga a recap
+
+Quando SessionNotifier riceve un evento `achievement`:
+- AchievementToast appare come overlay (tipo SnackBar ma piu elaborato)
+- Icona differenziata per tipo (sigillo/medaglia/costellazione)
+- Auto-dismiss dopo 4 secondi
+```
+
+**Test B13**: Durante una sessione reale, le azioni del tutor (esercizi, formule) appaiono nel canvas. Achievement toast funziona.
+
+---
+
+### Blocco 14 — Onboarding Reale con SSE
+**Dipende da**: B11 (SSE Client)
+**File da modificare**:
+- `lib/services/onboarding_service.dart` — Aggiungere metodi SSE streaming
+- `lib/providers/onboarding_provider.dart` — Gestire stream SSE onboarding
+- `lib/presentation/onboarding_screen/onboarding_screen.dart` — Collegare a SSE reale
+- `lib/presentation/registration_screen/registration_screen.dart` — Passare `utente_temp_id`
+
+**OnboardingService** — nuovi metodi:
+```dart
+// startStream() → Stream<SseEvent> per POST /onboarding/inizia
+//   - Primo evento: onboarding_iniziato {utente_temp_id, sessione_id}
+//   - Poi: text_delta, turno_completo
+// sendTurnStream(sessioneId, messaggio) → Stream<SseEvent> per POST /onboarding/turno
+// complete() → gia implementato (REST, non SSE)
+```
+
+**OnboardingNotifier** — aggiornamenti:
+```dart
+// startOnboarding() — chiama startStream():
+//   - onboarding_iniziato → salva utenteTempId e sessioneId
+//   - text_delta → accumula testo tutor in tempo reale
+//   - turno_completo → finalizza messaggio, incrementa contatore turni
+//
+// sendMessage(messaggio) — chiama sendTurnStream():
+//   - Stessa logica di accumulo testo
+//   - Progress bar avanza in base al numero di turni (~10 turni totali)
+//
+// completeOnboarding() — chiama complete() REST:
+//   - Salva percorso_id
+//   - Naviga a registrazione con utenteTempId
+```
+
+**OnboardingScreen** — aggiornamenti:
+```
+- Rimuovere: _simulateAiResponse() e tutti i messaggi mock
+- Collegare a onboardingProvider
+- Convertire a ConsumerStatefulWidget
+- initState() chiama startOnboarding()
+- Progress bar collegata a turni reali (turno/10)
+- Gestione errore SSE con retry
+```
+
+**RegistrationScreen** — aggiornamenti:
+```
+- Ricevere utenteTempId (via provider o route extra)
+- Passarlo a authProvider.register(utenteTempId: ...)
+- Dopo successo: il JWT contiene lo stesso UUID, percorso gia collegato
+```
+
+**Test B14**: Onboarding reale con tutor AI. Messaggi in streaming. Registrazione con conversione utente temporaneo. Percorso creato.
+
+---
+
+### Blocco 15 — Recap Sessione + App Lifecycle
+**Dipende da**: B12, B13
+**File da creare**:
+- `lib/presentation/studio_screen/recap_session_screen.dart` — Schermata post-sessione
+
+**File da modificare**:
+- `lib/presentation/studio_screen/studio_screen.dart` — Navigare a recap dopo terminazione
+- `lib/routes/app_router.dart` — Aggiungere route /recap/:sessioneId
+- `lib/main.dart` — WidgetsBindingObserver per app lifecycle
+
+**Recap Screen**:
+```
+- Riceve sessioneId dalla route
+- Carica dati: GET /sessione/{id} + GET /utente/me/statistiche
+- Mostra: durata effettiva, nodi lavorati, statistiche aggiornate
+- Card con numeri grandi (stile gamification dal design)
+- Bottone "Torna alla home" → naviga a /studio
+```
+
+**App Lifecycle**:
+```
+- WidgetsBindingObserver in main.dart (o in StudioScreen)
+- didChangeAppLifecycleState:
+  - paused/inactive → se sessione attiva, chiama suspend()
+  - resumed → se sessione era sospesa, chiama startSession() per riprendere
+```
+
+**Test B15**: Terminazione sessione mostra recap con dati reali. App in background sospende sessione.
+
+---
+
+### Blocco 16 — Test E2E Loop 2 + Polish
+**Dipende da**: B11-B15
+
+**Flusso E2E Loop 2**:
+1. App parte → splash → login
+2. (Nuovo utente) Onboarding reale con tutor AI streaming → registrazione → percorso creato
+3. Tab Studio: crea sessione → testo tutor in streaming → esercizio proposto → risposta → feedback
+4. Achievement sbloccato → toast
+5. Termina sessione → recap con statistiche
+6. Tab Percorso: progresso aggiornato
+7. Tab Profilo: statistiche aggiornate, achievement visibili
+8. App in background → sessione sospesa → riapri → sessione ripresa
+9. Logout → login → dev quick login
+
+**Test B16**: Tutto il flusso E2E funziona con SSE reale. `flutter analyze` → 0 errori.
+
+---
+
+## Pipeline Sessioni Loop 2
+
+| Sessione | Blocchi | Deliverable | Gate di uscita | Branch |
+|----------|---------|-------------|----------------|--------|
+| **S7** | B11 | SSE Client + Modelli eventi | Unit test SSE parser + `flutter analyze` 0 errori | `feature/frontend-sse-client` |
+| **S8** | B12 | Studio con SSE reale | Testo tutor in streaming reale nel canvas | `feature/frontend-studio-sse` |
+| **S9** | B13 | Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE | `feature/frontend-azioni-tutor` |
+| **S10** | B14 | Onboarding reale | Onboarding completo con tutor AI + registrazione conversione | `feature/frontend-onboarding` |
+| **S11** | B15 | Recap + lifecycle | Recap post-sessione + sospensione in background | `feature/frontend-recap-lifecycle` |
+| **S12** | B16 | Test E2E Loop 2 | Flusso completo con SSE reale senza crash | `feature/frontend-e2e-loop2` |
+
+**Regola**: stessa del Loop 1 — branch per sessione, PR verso main dopo test verdi.
+
+---
+
+## Cosa NON fa il Loop 2
+
+- **LaTeX rendering** (`flutter_math_fork`) — rimandato a Loop 3. Le formule restano come testo raw.
+- **Animazioni celebrative** (particelle, glow, burst) — rimandato a Loop 3. Feedback basico (toast, colore bordo).
+- **Mascotte animata** (stati emotivi, Rive) — rimandato a Loop 3. Resta il placeholder circolare.
+- **Spaced Repetition** — il backend ha i campi predisposti ma la logica non e attiva.
+- **Feynman/Connessioni** — livelli `comprensivo` e `connesso` non raggiungibili.
+- **Input voce** — placeholder "Prossimamente".
+- **Calcolatrice nel tools tray** — placeholder.
+
+---
 
 ## Regole di Sessione
 
