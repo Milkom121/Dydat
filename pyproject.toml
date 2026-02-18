@@ -44,6 +44,9 @@ select = ["E", "F", "I", "W"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: test con LLM reale (richiede ANTHROPIC_API_KEY, eseguire con --run-integration)",
+]
 
 [build-system]
 requires = ["setuptools>=75"]

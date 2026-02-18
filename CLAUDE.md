@@ -287,7 +287,7 @@ dydat-backend/          (root del progetto = root del repo)
 
 ## Stato attuale
 
-**Fase**: Sviluppo — Blocchi 1-10 completati, prossimo Blocco 11
+**Fase**: Sviluppo — Blocchi 1-11 completati (Loop 1 completo), prossimo: review e deploy
 **Ultimo aggiornamento**: 2026-02-18
 
 ### Completato
@@ -306,24 +306,24 @@ dydat-backend/          (root del progetto = root del repo)
 - [x] **Blocco 8**: API sessione con SSE — Session Manager + 5 endpoint HTTP + schemas Pydantic + 29 test
 - [x] **Blocco 9**: Onboarding — Onboarding Manager + 3 endpoint SSE + fasi auto (accoglienza→conoscenza→conclusione) + punto di partenza personalizzato + inizializzazione stato nodi + 24 test
 - [x] **Blocco 10**: Gamification — 8 achievement (seed al startup), verifica condizioni dopo ogni turno, calcolo streak (HARD CONSTRAINT), statistiche giornaliere, API `GET /achievement` con progresso + 26 test
+- [x] **Blocco 11**: API restanti + test — `GET /percorsi` + mappa nodi, `GET /temi` + dettaglio con progresso, `GET /me/statistiche` (settimana/mese/sempre), test E2E mock (walkthrough sez.18, 8 test), test integrazione LLM reale (3 smoke test con `--run-integration`) + 8 test E2E + 3 integration
 
-### Test: 188 passed, 7 skipped (DB integration), ruff clean
+### Test: 196 passed, 10 skipped (7 DB integration + 3 LLM integration), ruff clean
 
 ### Prossimo passo
-- **Blocco 11**: API restanti + rifinitura
-  - `app/api/percorsi.py` — `GET /percorsi`, `GET /percorsi/{id}/mappa` (nodi con stato per mappa visuale)
-  - `app/api/temi.py` — `GET /temi/{id}` (dettaglio tema con nodi e progresso)
-  - `app/api/utente.py` — `GET /utente/me/statistiche` (stats settimana/mese/sempre, attualmente stub 501)
-  - Test end-to-end completo (walkthrough sezione 18 del brief)
-  - Review generale, cleanup TODO, documentazione endpoint
-  - Sezioni brief da leggere: 13 (API endpoints), 18 (walkthrough E2E)
-  - File core da usare: `app/core/gamification.py` (statistiche), `app/grafo/stato.py`, `app/db/models/`
+- **Loop 1 completo**: Tutti gli 11 blocchi della roadmap sono implementati
+- Il backend è funzionalmente completo per il Loop 1: onboarding → studio → esercizi → B+C → promozione → gamification
+- Prossimi passi possibili:
+  1. **Deploy**: Docker Compose in produzione, CI/CD pipeline
+  2. **Loop 2**: FSRS spaced repetition, notifiche, ripasso interleaving (stub già predisposti)
+  3. **Loop 3**: Feynman verification, assessment, memoria RAG (stub già predisposti)
+  4. **Test con DB reale**: attivare i 7 test DB skippati, creare fixture con PostgreSQL di test
 
 ### Note per nuova sessione
 - Il brief completo è in `dydat_brief_backend_v3.md` — cercarlo nel worktree che lo contiene
 - La roadmap dettagliata è in `docs/roadmap.md` dentro il worktree
-- Per il Blocco 11, leggere sezione 13 (API endpoints) e 18 (walkthrough E2E) del brief
-- I file API stub da completare: `app/api/percorsi.py`, `app/api/temi.py`, `app/api/utente.py` (stats)
+- Loop 1 è completo: tutti i blocchi 1-11 implementati e testati
+- Per i test LLM reale: `pytest tests/ --run-integration` (richiede ANTHROPIC_API_KEY in .env)
 
 ## Log decisioni
 
@@ -346,3 +346,6 @@ dydat-backend/          (root del progetto = root del repo)
 | 2026-02-18 | Cache metriche nel checker achievement | Evita query ripetute se più achievement usano la stessa condizione |
 | 2026-02-18 | `nodi_completati` esclude `presunto=true` | I nodi marcati presunti dall'onboarding non contano come achievement |
 | 2026-02-18 | Temi completati via join `nodi_temi` (non campo diretto) | Il modello Nodo non ha `tema_id` diretto, usa tabella ponte `nodi_temi` |
+| 2026-02-18 | Test integrazione LLM con marker `@pytest.mark.integration` | Skip di default, eseguibili con `--run-integration`, evita costi accidentali |
+| 2026-02-18 | `_stats_periodo` come helper privato in utente.py | Riuso per settimana/mese/sempre, aggregazione da `statistiche_giornaliere` |
+| 2026-02-18 | Mappa nodi esclude nodi contesto (`tipo_nodo != "contesto"`) | I nodi contesto non appaiono nella mappa visuale, come da brief |

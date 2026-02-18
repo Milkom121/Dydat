@@ -200,13 +200,15 @@ Knowledge graph deterministico.
 
 ---
 
-## Blocco 11: API restanti + rifinitura (Sessione 7)
+## Blocco 11: API restanti + rifinitura + test (Sessione 7)
 
-- ⬚ `app/api/percorsi.py` — lista percorsi, mappa nodi
-- ⬚ `app/api/temi.py` — dettaglio tema con progresso
-- ⬚ `GET /utente/me/statistiche` — stats settimana/mese/sempre
-- ⬚ Test end-to-end completo (walkthrough sezione 18 del brief)
-- ⬚ Review generale, cleanup TODO, documentazione endpoint
+- ✅ `app/api/percorsi.py` — `GET /percorsi` (lista percorsi utente) + `GET /percorsi/{id}/mappa` (nodi con stato utente, tema, livello per mappa visuale)
+- ✅ `app/api/temi.py` — `GET /temi/` (lista temi con progresso sintetico) + `GET /temi/{id}` (dettaglio tema con stato per-nodo)
+- ✅ `GET /utente/me/statistiche` — stats settimana/mese/sempre (streak, nodi_completati, sessioni, aggregazioni da statistiche_giornaliere)
+- ✅ Test end-to-end completo con mock (`tests/test_e2e.py`) — walkthrough sezione 18: spiegazione→esercizio→promozione+achievement→errore LLM. 8 test (4 flusso E2E + 3 router check + 1 helper stats)
+- ✅ Test integrazione LLM reale (`tests/test_integration_llm.py`) — 3 smoke test con Anthropic API: spiegazione+segnale, esercizio+azione, validazione 16 tool schemas. Marcati `@pytest.mark.integration`, eseguibili con `--run-integration`
+- ✅ `tests/conftest.py` — flag `--run-integration` per test con LLM reale
+- ✅ `pyproject.toml` — marker `integration` registrato
 
 ---
 
