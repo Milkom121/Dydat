@@ -75,7 +75,7 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 
 | Blocco | Contenuto | Stato | Sessione |
 |---|---|---|---|
-| 11 | SSE Client + Modelli eventi | TODO | S7 |
+| 11 | SSE Client + Modelli eventi | DONE | S7 |
 | 12 | Studio Screen con SSE reale | TODO | S8 |
 | 13 | Azioni tutor nel canvas (exercise/formula/backtrack) | TODO | S9 |
 | 14 | Onboarding reale con SSE | TODO | S10 |
@@ -83,7 +83,7 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | 16 | Test E2E Loop 2 | TODO | S12 |
 
 ### Prossima sessione
-**S7 — Blocco 11**: SSE Client + Modelli eventi. Creare `sse_client.dart` e `sse_events.dart` con parsing di tutti i tipi di evento backend (sessione_creata, text_delta, azione, achievement, turno_completo, errore).
+**S8 — Blocco 12**: Studio Screen con SSE reale. Aggiungere metodi SSE a SessionService e SessionNotifier, ricablare StudioScreen per mostrare testo tutor in streaming reale.
 
 ## Pipeline Sessioni
 

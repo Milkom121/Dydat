@@ -5,9 +5,9 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-18
-**Ultima sessione**: S6 (Blocco 10 — Test E2E con backend reale) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B10)
-**Prossima sessione**: S7 — Blocco 11 (SSE Client + Modelli eventi). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
+**Ultima sessione**: S7 (Blocco 11 — SSE Client + Modelli eventi) — COMPLETATA
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B11)
+**Prossima sessione**: S8 — Blocco 12 (Studio Screen con SSE reale). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
 
 ## Blocchi Completati
 
@@ -24,6 +24,7 @@
 | B8 — Tab Profilo | DONE | S5 | ProfileScreen con dati reali, stats, achievement, tema, logout |
 | B9 — Tab Studio | DONE | S5 | StudioScreen ricablato su session_provider REST, timer, placeholder SSE |
 | B10 — Test E2E | DONE | S6 | Flusso completo testato con backend reale — tutti i passi superati |
+| B11 — SSE Client + Modelli eventi | DONE | S7 | sse_client.dart + sse_events.dart + 33 unit test tutti verdi |
 
 ## Risultati Test E2E (S6)
 
@@ -61,7 +62,7 @@ Flusso completo testato manualmente:
 
 | Blocco | Contenuto | Stato | Sessione |
 |--------|-----------|-------|----------|
-| B11 — SSE Client + Modelli eventi | `sse_client.dart`, `sse_events.dart`, parsing tutti i tipi evento | TODO | S7 |
+| B11 — SSE Client + Modelli eventi | `sse_client.dart`, `sse_events.dart`, parsing tutti i tipi evento | DONE | S7 |
 | B12 — Studio con SSE reale | Testo tutor in streaming, rimuovere placeholder | TODO | S8 |
 | B13 — Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE, achievement toast | TODO | S9 |
 | B14 — Onboarding reale con SSE | Onboarding con tutor AI, registrazione conversione utente_temp | TODO | S10 |
@@ -69,6 +70,23 @@ Flusso completo testato manualmente:
 | B16 — Test E2E Loop 2 | Flusso completo SSE reale senza crash | TODO | S12 |
 
 Dettaglio completo in `.claude/plans/frontend-integration.md`.
+
+## Risultati S7 (B11 — SSE Client + Modelli eventi)
+
+### File creati
+- `lib/models/sse_events.dart` — sealed class `SseEvent` con 7 sottotipi tipizzati (SessioneCreataEvent, OnboardingIniziatoEvent, TextDeltaEvent, AzioneEvent, AchievementEvent, TurnoCompletoEvent, ErroreEvent) + 4 typed action data classes (ProponiEsercizio, MostraFormula, SuggerisciBacktrack, ChiudiSessione)
+- `lib/services/sse_client.dart` — client SSE generico basato su `http` package, metodo `stream()` che ritorna `Stream<SseEvent>`, parsing line-by-line con `sseLineTransformer()`, gestione errori HTTP/timeout/connessione
+- `test/models/sse_events_test.dart` — 20 unit test per tutti i tipi di evento + edge case
+- `test/services/sse_client_test.dart` — 13 unit test (line transformer, raw stream parsing, pipeline completa, chunked delivery)
+
+### Dipendenze aggiunte
+- `http: ^1.2.0` (risolto come 1.6.0) — per SSE streaming line-by-line
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning
+
+### Test
+- 33 test nuovi — tutti verdi
 
 ## Problemi Aperti
 
@@ -123,3 +141,7 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 | 2026-02-18 | validateStatus per 409 in SessionService.start() | DioClient _onError interceptor trasformava l'errore perdendo il body strutturato |
 | 2026-02-18 | Dev quick login con login-first | Login piu veloce per utente esistente; register come fallback se utente non esiste |
 | 2026-02-18 | _formatNodeId() per nomi nodo leggibili | Backend puo ritornare ID tecnico come nodo_focale_nome; formatter li rende umani |
+| 2026-02-18 | http package per SSE (non Dio) | Dio non supporta streaming line-by-line di text/event-stream |
+| 2026-02-18 | sealed class SseEvent con factory fromRawEvent | Pattern matching Dart 3 per gestire tutti i tipi evento in modo type-safe |
+| 2026-02-18 | sseLineTransformer() come funzione globale | Necessario per evitare problemi di stato con StreamTransformer statici |
+| 2026-02-18 | AzioneEvent con typed accessors (asProponiEsercizio, etc.) | Mantiene params generico ma offre accessori tipizzati per ogni tipo azione |
