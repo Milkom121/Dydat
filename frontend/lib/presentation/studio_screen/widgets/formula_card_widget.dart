@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/sizer_extensions.dart';
-
-import '../../../core/app_export.dart';
+import '../../../models/sse_events.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 class FormulaCardWidget extends StatelessWidget {
-  final Map<String, dynamic> formula;
+  final MostraFormulaAction formula;
   final ThemeData theme;
   final VoidCallback onDismiss;
 
@@ -49,7 +48,7 @@ class FormulaCardWidget extends StatelessWidget {
               SizedBox(width: 3.w),
               Expanded(
                 child: Text(
-                  formula['name'],
+                  formula.etichetta ?? 'Formula',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -79,20 +78,12 @@ class FormulaCardWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              formula['formula'],
+              formula.latex,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.primary,
               ),
               textAlign: TextAlign.center,
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            formula['description'],
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.55,
             ),
           ),
           SizedBox(height: 2.h),
@@ -102,11 +93,12 @@ class FormulaCardWidget extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    Clipboard.setData(ClipboardData(text: formula['formula']));
+                    Clipboard.setData(ClipboardData(text: formula.latex));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Formula copiata negli appunti'),
                         duration: Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
@@ -116,31 +108,6 @@ class FormulaCardWidget extends StatelessWidget {
                     size: 16,
                   ),
                   label: Text('Copia', style: theme.textTheme.labelLarge),
-                ),
-              ),
-              SizedBox(width: 2.w),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Formula salvata'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: CustomIconWidget(
-                    iconName: 'bookmark_border',
-                    color: theme.colorScheme.onPrimary,
-                    size: 16,
-                  ),
-                  label: Text(
-                    'Salva',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
                 ),
               ),
             ],

@@ -5,9 +5,9 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-18
-**Ultima sessione**: S7 (Blocco 11 — SSE Client + Modelli eventi) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B11)
-**Prossima sessione**: S8 — Blocco 12 (Studio Screen con SSE reale). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
+**Ultima sessione**: S9 (Blocco 13 — Azioni tutor nel canvas) — COMPLETATA
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B13)
+**Prossima sessione**: S10 — Blocco 14 (Onboarding reale con SSE). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
 
 ## Blocchi Completati
 
@@ -25,6 +25,8 @@
 | B9 — Tab Studio | DONE | S5 | StudioScreen ricablato su session_provider REST, timer, placeholder SSE |
 | B10 — Test E2E | DONE | S6 | Flusso completo testato con backend reale — tutti i passi superati |
 | B11 — SSE Client + Modelli eventi | DONE | S7 | sse_client.dart + sse_events.dart + 33 unit test tutti verdi |
+| B12 — Studio con SSE reale | DONE | S8 | SSE streaming in StudioScreen, cursore ambra, auto-scroll |
+| B13 — Azioni tutor nel canvas | DONE | S9 | ExerciseCard, FormulaCard, BacktrackCard, ChiudiSessioneCard, AchievementToast con dati SSE reali |
 
 ## Risultati Test E2E (S6)
 
@@ -63,8 +65,8 @@ Flusso completo testato manualmente:
 | Blocco | Contenuto | Stato | Sessione |
 |--------|-----------|-------|----------|
 | B11 — SSE Client + Modelli eventi | `sse_client.dart`, `sse_events.dart`, parsing tutti i tipi evento | DONE | S7 |
-| B12 — Studio con SSE reale | Testo tutor in streaming, rimuovere placeholder | TODO | S8 |
-| B13 — Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE, achievement toast | TODO | S9 |
+| B12 — Studio con SSE reale | Testo tutor in streaming, rimuovere placeholder | DONE | S8 |
+| B13 — Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE, achievement toast | DONE | S9 |
 | B14 — Onboarding reale con SSE | Onboarding con tutor AI, registrazione conversione utente_temp | TODO | S10 |
 | B15 — Recap + App lifecycle | Recap post-sessione, sospensione in background | TODO | S11 |
 | B16 — Test E2E Loop 2 | Flusso completo SSE reale senza crash | TODO | S12 |
@@ -88,12 +90,49 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 ### Test
 - 33 test nuovi — tutti verdi
 
+## Risultati S8 (B12 — Studio Screen con SSE reale)
+
+### File modificati
+- `lib/services/session_service.dart` — Aggiunto `SseClient` come dipendenza, nuovi metodi `startStream()` e `sendTurnStream()` che ritornano `Stream<SseEvent>`
+- `lib/providers/session_provider.dart` — Nuovo stato: `isStreaming`, `currentTutorText`, `currentTurnActions`, `currentTurnAchievements`. Nuovi metodi: `startSessionStream()`, `sendTurnStream()`, `_handleSseEvent()`, `_finalizeTutorMessage()`. Gestione subscription lifecycle con `_cancelSubscription()`.
+- `lib/presentation/studio_screen/studio_screen.dart` — Rimosso placeholder SSE. `_startSession()` usa `startSessionStream()`. `_sendMessage()` usa `sendTurnStream()`. Streaming bubble con cursore ambra pulsante (`_AmberCursor`). Auto-scroll durante streaming. Input disabilitato durante streaming.
+- `lib/main.dart` — Iniettato `SseClient` in `SessionService`
+- `test/services/session_service_test.dart` — Aggiunto `SseClient` nella setUp
+- `test/providers/session_provider_test.dart` — Aggiunto `SseClient` nella setUp
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning
+
+### Test
+- 153 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock)
+- 10 test session_provider — tutti verdi
+- 33 test SSE — tutti verdi
+
+## Risultati S9 (B13 — Azioni tutor nel canvas)
+
+### File modificati
+- `lib/presentation/studio_screen/widgets/exercise_card_widget.dart` — Riscritto: accetta `ProponiEsercizioAction` da SSE, campo input risposta, bottone "Verifica" che invia via `sendTurnStream()`
+- `lib/presentation/studio_screen/widgets/formula_card_widget.dart` — Riscritto: accetta `MostraFormulaAction` da SSE, mostra formula raw (no LaTeX), bottone "Copia"
+- `lib/presentation/studio_screen/widgets/backtrack_card_widget.dart` — Riscritto: accetta `SuggerisciBacktrackAction` da SSE, bottoni "Ok, rivediamolo" / "Continua qui" che inviano messaggio al tutor
+- `lib/presentation/studio_screen/studio_screen.dart` — `_messages` ora supporta tipi: user, tutor, exercise, formula, backtrack, chiudi. `_syncTutorMessages()` sincronizza anche azioni e achievement. `_buildChatItem()` renderizza il widget corretto per tipo. Achievement toast via `WidgetsBinding.instance.addPostFrameCallback`.
+
+### File creati
+- `lib/presentation/studio_screen/widgets/achievement_toast_widget.dart` — Overlay toast con slide-in/fade, icona per tipo (sigillo/medaglia/costellazione), auto-dismiss 4s
+- `lib/presentation/studio_screen/widgets/chiudi_sessione_card_widget.dart` — Card riepilogo sessione con testo riepilogo, prossimi passi, bottone "Termina sessione"
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- 153 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock — invariati da S8)
+- Nessun nuovo test fallito
+
 ## Problemi Aperti
 
 - `custom_error_widget.dart` ha colori hardcoded — da fixare in futuro
 - PUB_CACHE deve essere settato a `C:\PubCache` per aggirare sandbox Windows di Claude Code (junction AppContainer)
-- Exercise/formula/backtrack card rimosse dallo StudioScreen — saranno riattivate con SSE (Loop 2)
-- Risposta tutor e placeholder locale — SSE streaming da implementare in Loop 2
+- Exercise/formula/backtrack card riattivate con dati SSE reali (B13 DONE)
+- Classi evento duplicate in sessione.dart e api_response.dart (B2) vs sse_events.dart (B11) — risolto con `hide` nelle import, ma le vecchie classi restano per retrocompatibilita test B2
 
 ## Cosa Esiste Gia
 
@@ -145,3 +184,15 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 | 2026-02-18 | sealed class SseEvent con factory fromRawEvent | Pattern matching Dart 3 per gestire tutti i tipi evento in modo type-safe |
 | 2026-02-18 | sseLineTransformer() come funzione globale | Necessario per evitare problemi di stato con StreamTransformer statici |
 | 2026-02-18 | AzioneEvent con typed accessors (asProponiEsercizio, etc.) | Mantiene params generico ma offre accessori tipizzati per ogni tipo azione |
+| 2026-02-18 | SessionService con SseClient iniettato | DI dell'SseClient nel costruttore di SessionService per SSE streaming |
+| 2026-02-18 | SessionNotifier._sseSubscription per gestire stream lifecycle | Cancel subscription su suspend/end/clear/dispose |
+| 2026-02-18 | _syncTutorMessages() in StudioScreen.build() | Sincronizza messaggi tutor finalizzati dal provider allo state locale _messages |
+| 2026-02-18 | _AmberCursor widget con AnimationController.repeat | Cursore ambra pulsante durante streaming SSE, come da direzione visiva |
+| 2026-02-18 | hide nelle import di session_provider.dart | Risolve ambiguita tra classi evento in sessione.dart/api_response.dart e sse_events.dart |
+| 2026-02-18 | Placeholder SSE rimosso da StudioScreen | "Messaggio ricevuto. La risposta in tempo reale..." eliminato, sostituito da SSE reale |
+| 2026-02-18 | Card widget accettano typed SSE data (non Map) | ExerciseCard prende ProponiEsercizioAction, FormulaCard prende MostraFormulaAction, etc. |
+| 2026-02-18 | _messages list con campo 'type' per tipi diversi | Supporta user, tutor, exercise, formula, backtrack, chiudi nello stesso flusso chat |
+| 2026-02-18 | AchievementToast come OverlayEntry con addPostFrameCallback | Evita build-during-build, slide-in dall'alto, auto-dismiss 4s |
+| 2026-02-18 | BacktrackCard bottoni inviano messaggio al tutor | "Ok, rivediamolo" e "Continua qui" usano sendMessage() per comunicare la scelta al tutor |
+| 2026-02-18 | ExerciseCard con TextField per risposta | Input inline nella card, "Verifica" invia la risposta come turno SSE |
+| 2026-02-18 | theme.colorScheme.tertiary per BacktrackCard | Sostituito colore hardcoded #7EA8C9 con colore dal tema |

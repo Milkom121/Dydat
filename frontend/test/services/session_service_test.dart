@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:dydat/services/session_service.dart';
 import 'package:dydat/services/dio_client.dart';
+import 'package:dydat/services/sse_client.dart';
 import 'package:dydat/services/storage_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -28,7 +29,8 @@ void main() {
     dioAdapter = DioAdapter(dio: dio);
     final storageService = StorageService(storage: FakeSecureStorage());
     final client = DioClient(storageService: storageService, dio: dio);
-    sessionService = SessionService(client: client);
+    final sseClient = SseClient(storageService: storageService);
+    sessionService = SessionService(client: client, sseClient: sseClient);
   });
 
   final sessionJson = {

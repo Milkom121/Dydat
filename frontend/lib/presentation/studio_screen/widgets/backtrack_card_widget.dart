@@ -1,33 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/sizer_extensions.dart';
-
-import '../../../core/app_export.dart';
+import '../../../models/sse_events.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 class BacktrackCardWidget extends StatelessWidget {
-  final Map<String, dynamic> suggestion;
+  final SuggerisciBacktrackAction suggestion;
   final ThemeData theme;
-  final VoidCallback onDismiss;
   final VoidCallback onAccept;
+  final VoidCallback onDismiss;
 
   const BacktrackCardWidget({
     super.key,
     required this.suggestion,
     required this.theme,
-    required this.onDismiss,
     required this.onAccept,
+    required this.onDismiss,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = theme.colorScheme.tertiary;
+
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF7EA8C9).withValues(alpha: 0.3),
+          color: accentColor.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -39,12 +40,12 @@ class BacktrackCardWidget extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(2.w),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7EA8C9).withValues(alpha: 0.1),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: CustomIconWidget(
                   iconName: 'arrow_back',
-                  color: const Color(0xFF7EA8C9),
+                  color: accentColor,
                   size: 20,
                 ),
               ),
@@ -77,47 +78,27 @@ class BacktrackCardWidget extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
-              color: const Color(0xFF7EA8C9).withValues(alpha: 0.05),
+              color: accentColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    CustomIconWidget(
-                      iconName: 'info_outline',
-                      color: const Color(0xFF7EA8C9),
-                      size: 16,
-                    ),
-                    SizedBox(width: 2.w),
-                    Expanded(
-                      child: Text(
-                        'Sembra che tu abbia bisogno di rivedere un concetto precedente',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
+                CustomIconWidget(
+                  iconName: 'info_outline',
+                  color: accentColor,
+                  size: 16,
                 ),
-                SizedBox(height: 1.h),
-                Text(
-                  'Equazioni di primo grado',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF7EA8C9),
-                    fontWeight: FontWeight.w600,
+                SizedBox(width: 2.w),
+                Expanded(
+                  child: Text(
+                    suggestion.motivo,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      height: 1.55,
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            'Prima di continuare con le equazioni di secondo grado, potrebbe essere utile ripassare le basi delle equazioni di primo grado.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.55,
             ),
           ),
           SizedBox(height: 2.h),
@@ -142,13 +123,10 @@ class BacktrackCardWidget extends StatelessWidget {
                     HapticFeedback.lightImpact();
                     onAccept();
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7EA8C9),
-                  ),
                   child: Text(
-                    'Ripassa',
+                    'Ok, rivediamolo',
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),

@@ -15,6 +15,7 @@ import 'services/auth_service.dart';
 import 'services/dio_client.dart';
 import 'services/path_service.dart';
 import 'services/session_service.dart';
+import 'services/sse_client.dart';
 import 'services/storage_service.dart';
 import 'services/user_service.dart';
 import 'theme/app_theme.dart';
@@ -44,7 +45,11 @@ void main() async {
   final userService = UserService(client: dioClient);
   final pathService = PathService(client: dioClient);
   final achievementService = AchievementService(client: dioClient);
-  final sessionService = SessionService(client: dioClient);
+  final sseClient = SseClient(storageService: storageService);
+  final sessionService = SessionService(
+    client: dioClient,
+    sseClient: sseClient,
+  );
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 

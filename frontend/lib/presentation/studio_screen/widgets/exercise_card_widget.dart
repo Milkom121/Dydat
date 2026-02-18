@@ -1,30 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/sizer_extensions.dart';
-
-import '../../../core/app_export.dart';
+import '../../../models/sse_events.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
-class ExerciseCardWidget extends StatelessWidget {
-  final Map<String, dynamic> exercise;
+class ExerciseCardWidget extends StatefulWidget {
+  final ProponiEsercizioAction exercise;
   final ThemeData theme;
+  final void Function(String risposta) onVerify;
   final VoidCallback onDismiss;
 
   const ExerciseCardWidget({
     super.key,
     required this.exercise,
     required this.theme,
+    required this.onVerify,
     required this.onDismiss,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final difficulty = exercise['difficulty'] as String;
-    final difficultyColor = difficulty == 'facile'
+  State<ExerciseCardWidget> createState() => _ExerciseCardWidgetState();
+}
+
+class _ExerciseCardWidgetState extends State<ExerciseCardWidget> {
+  final TextEditingController _answerController = TextEditingController();
+
+  @override
+  void dispose() {
+    _answerController.dispose();
+    super.dispose();
+  }
+
+  String get _difficultyLabel {
+    final d = widget.exercise.difficolta;
+    if (d == null) return 'medio';
+    if (d <= 3) return 'facile';
+    if (d <= 6) return 'medio';
+    return 'difficile';
+  }
+
+  Color get _difficultyColor {
+    final label = _difficultyLabel;
+    return label == 'facile'
         ? const Color(0xFF7EBF8E)
-        : difficulty == 'medio'
-        ? theme.colorScheme.primary
-        : const Color(0xFFC97070);
+        : label == 'medio'
+            ? widget.theme.colorScheme.primary
+            : const Color(0xFFC97070);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = widget.theme;
 
     return Container(
       padding: EdgeInsets.all(4.w),
@@ -42,9 +68,10 @@ class ExerciseCardWidget extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                padding:
+                    EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
                 decoration: BoxDecoration(
-                  color: difficultyColor.withValues(alpha: 0.1),
+                  color: _difficultyColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -52,14 +79,14 @@ class ExerciseCardWidget extends StatelessWidget {
                   children: [
                     CustomIconWidget(
                       iconName: 'assignment',
-                      color: difficultyColor,
+                      color: _difficultyColor,
                       size: 16,
                     ),
                     SizedBox(width: 1.w),
                     Text(
-                      difficulty.toUpperCase(),
+                      _difficultyLabel.toUpperCase(),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: difficultyColor,
+                        color: _difficultyColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -75,7 +102,7 @@ class ExerciseCardWidget extends StatelessWidget {
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  onDismiss();
+                  widget.onDismiss();
                 },
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -84,7 +111,7 @@ class ExerciseCardWidget extends StatelessWidget {
           ),
           SizedBox(height: 2.h),
           Text(
-            exercise['title'],
+            'Esercizio',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -98,74 +125,46 @@ class ExerciseCardWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              exercise['problem'],
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+              widget.exercise.testo ?? 'Esercizio proposto dal tutor',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
                 color: theme.colorScheme.primary,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
           SizedBox(height: 2.h),
-          Row(
-            children: [
-              CustomIconWidget(
-                iconName: 'lightbulb_outline',
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 16,
+          TextField(
+            controller: _answerController,
+            decoration: InputDecoration(
+              hintText: 'Scrivi la tua risposta...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              SizedBox(width: 2.w),
-              Expanded(
-                child: Text(
-                  exercise['hint'],
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 4.w,
+                vertical: 1.5.h,
               ),
-            ],
+            ),
+            maxLines: null,
+            textInputAction: TextInputAction.done,
           ),
           SizedBox(height: 2.h),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Suggerimento richiesto'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Suggerimento',
-                    style: theme.textTheme.labelLarge,
-                  ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                final answer = _answerController.text.trim();
+                if (answer.isEmpty) return;
+                HapticFeedback.lightImpact();
+                widget.onVerify(answer);
+              },
+              child: Text(
+                'Verifica',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
-              SizedBox(width: 2.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Verifica risposta'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Verifica',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

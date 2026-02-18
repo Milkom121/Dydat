@@ -3,12 +3,19 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:dydat/config/api_config.dart';
 import 'package:dydat/models/sessione.dart';
+import 'package:dydat/models/sse_events.dart';
 import 'package:dydat/services/dio_client.dart';
+import 'package:dydat/services/sse_client.dart';
 
 class SessionService {
   final DioClient _client;
+  final SseClient _sseClient;
 
-  SessionService({required DioClient client}) : _client = client;
+  SessionService({
+    required DioClient client,
+    required SseClient sseClient,
+  })  : _client = client,
+        _sseClient = sseClient;
 
   /// Starts a study session. The backend returns SSE stream.
   /// We request as plain text, parse the sessione_creata event to extract
@@ -142,7 +149,31 @@ class SessionService {
     return null;
   }
 
-  /// Sends a student message during a session.
+  /// Starts a study session via SSE streaming.
+  /// Returns a [Stream<SseEvent>] with sessione_creata, text_delta, etc.
+  Stream<SseEvent> startStream({
+    String tipo = 'media',
+    int? durataPrevistaMin,
+  }) {
+    final Map<String, dynamic> body = {'tipo': tipo};
+    if (durataPrevistaMin != null) {
+      body['durata_prevista_min'] = durataPrevistaMin;
+    }
+    return _sseClient.stream(ApiConfig.sessionStart, body: body);
+  }
+
+  /// Sends a student message and returns the tutor response as SSE stream.
+  Stream<SseEvent> sendTurnStream({
+    required String sessioneId,
+    required String messaggio,
+  }) {
+    return _sseClient.stream(
+      ApiConfig.sessionTurn(sessioneId),
+      body: {'messaggio': messaggio},
+    );
+  }
+
+  /// Sends a student message during a session (REST fallback).
   Future<void> sendTurn({
     required String sessioneId,
     required String messaggio,

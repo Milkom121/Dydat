@@ -5,6 +5,7 @@ import 'package:dydat/models/sessione.dart';
 import 'package:dydat/providers/session_provider.dart';
 import 'package:dydat/services/dio_client.dart';
 import 'package:dydat/services/session_service.dart';
+import 'package:dydat/services/sse_client.dart';
 import 'package:dydat/services/storage_service.dart';
 import '../helpers/fake_secure_storage.dart';
 
@@ -30,8 +31,9 @@ void main() {
     dioAdapter = DioAdapter(dio: dio);
     final storageService = StorageService(storage: FakeSecureStorage());
     final client = DioClient(storageService: storageService, dio: dio);
+    final sseClient = SseClient(storageService: storageService);
     sessionNotifier = SessionNotifier(
-      sessionService: SessionService(client: client),
+      sessionService: SessionService(client: client, sseClient: sseClient),
     );
   });
 

@@ -5,9 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/sizer_extensions.dart';
+import '../../models/sse_events.dart';
 import '../../providers/session_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_icon_widget.dart';
+import './widgets/achievement_toast_widget.dart';
+import './widgets/backtrack_card_widget.dart';
+import './widgets/chiudi_sessione_card_widget.dart';
+import './widgets/exercise_card_widget.dart';
+import './widgets/formula_card_widget.dart';
 import './widgets/mascotte_widget.dart';
 import './widgets/tools_tray_widget.dart';
 import './widgets/tutor_message_widget.dart';
@@ -27,15 +33,19 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
 
   bool _isToolsTrayVisible = false;
   bool _isTutorPanelVisible = false;
-  bool _isTyping = false;
 
-  // Local chat messages (user + tutor placeholder).
+  // Local chat items (user messages + finalized tutor messages + action cards).
   final List<Map<String, dynamic>> _messages = [];
 
   // Timer state
   Timer? _timer;
   int _sessionSeconds = 0;
   String _sessionTime = '00:00';
+
+  // Track synced state for detecting new finalized messages and actions.
+  int _prevTutorMessagesCount = 0;
+  int _prevActionsCount = 0;
+  int _prevAchievementsCount = 0;
 
   @override
   void dispose() {
@@ -53,24 +63,18 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
 
   String get _currentNode {
     final session = ref.read(sessionProvider).activeSession;
-    // Prefer nodoFocaleNome, but if it looks like a raw ID, format it.
     final nome = session?.nodoFocaleNome;
     if (nome != null && !nome.contains('_')) {
       return nome;
     }
-    // Format whichever raw ID we have (nome that looks like ID, or actual ID).
     return _formatNodeId(nome ?? session?.nodoFocaleId) ?? 'Nessun nodo';
   }
 
   /// Makes a raw node ID more readable:
-  /// "mat_MatematicaC3_Algebra1_numeri_naturali" → "Numeri naturali"
+  /// "mat_MatematicaC3_Algebra1_numeri_naturali" -> "Numeri naturali"
   String? _formatNodeId(String? id) {
     if (id == null) return null;
-    // Take the part after the last underscore-group that looks like a topic
-    // e.g. "mat_MatematicaC3_Algebra1_numeri_naturali"
-    // Split by underscore, drop prefix tokens (mat, MatematicaC3, Algebra1), join rest
     final parts = id.split('_');
-    // Find first part that is all lowercase (the actual name starts there)
     int start = 0;
     for (int i = 0; i < parts.length; i++) {
       if (parts[i].isNotEmpty &&
@@ -82,9 +86,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
     }
     if (start == 0 && parts.length > 1) start = parts.length > 3 ? 3 : 1;
     final name = parts.sublist(start).join(' ');
-    return name.isNotEmpty
-        ? name[0].toUpperCase() + name.substring(1)
-        : id;
+    return name.isNotEmpty ? name[0].toUpperCase() + name.substring(1) : id;
   }
 
   void _startTimer() {
@@ -108,18 +110,27 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
 
   Future<void> _startSession() async {
     HapticFeedback.lightImpact();
-    await ref.read(sessionProvider.notifier).startSession();
+
+    // Reset local state before starting
+    setState(() {
+      _sessionSeconds = 0;
+      _sessionTime = '00:00';
+      _messages.clear();
+      _prevTutorMessagesCount = 0;
+      _prevActionsCount = 0;
+      _prevAchievementsCount = 0;
+    });
+
+    // Start SSE streaming (returns immediately, events arrive async)
+    await ref.read(sessionProvider.notifier).startSessionStream();
+
+    // Start the timer — the session will be set active when sessione_creata
+    // arrives via SSE. We start the timer now since the session is being created.
+    _startTimer();
 
     final sessionState = ref.read(sessionProvider);
-    if (sessionState.activeSession != null &&
-        sessionState.activeSession!.stato == 'attiva') {
-      setState(() {
-        _sessionSeconds = 0;
-        _sessionTime = '00:00';
-        _messages.clear();
-      });
-      _startTimer();
-    } else if (sessionState.error != null) {
+    if (sessionState.error != null) {
+      _stopTimer();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -133,7 +144,6 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
 
   Future<void> _toggleSession() async {
     if (_isSessionActive) {
-      // Suspend
       HapticFeedback.lightImpact();
       _stopTimer();
       await ref.read(sessionProvider.notifier).suspend();
@@ -142,44 +152,30 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
     }
   }
 
-  Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty || !_isSessionActive) return;
+  Future<void> _sendMessage([String? overrideText]) async {
+    final text = overrideText ?? _messageController.text.trim();
+    if (text.isEmpty || !_isSessionActive) return;
+
+    final sessionState = ref.read(sessionProvider);
+    if (sessionState.isStreaming) return;
 
     HapticFeedback.lightImpact();
 
-    final text = _messageController.text.trim();
     setState(() {
       _messages.add({
-        'id': _messages.length + 1,
+        'type': 'user',
         'sender': 'user',
         'content': text,
         'timestamp': DateTime.now(),
         'isStreaming': false,
       });
-      _messageController.clear();
-      _isTyping = true;
+      if (overrideText == null) _messageController.clear();
     });
 
     _scrollToBottom();
 
-    // Send via REST
-    await ref.read(sessionProvider.notifier).sendTurn(text);
-
-    if (mounted) {
-      // Add placeholder tutor response (SSE not implemented yet)
-      setState(() {
-        _messages.add({
-          'id': _messages.length + 1,
-          'sender': 'tutor',
-          'content':
-              'Messaggio ricevuto. La risposta in tempo reale arrivera con SSE (prossima versione).',
-          'timestamp': DateTime.now(),
-          'isStreaming': false,
-        });
-        _isTyping = false;
-      });
-      _scrollToBottom();
-    }
+    // Send via SSE streaming
+    await ref.read(sessionProvider.notifier).sendTurnStream(text);
   }
 
   void _scrollToBottom() {
@@ -298,12 +294,180 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
     );
   }
 
+  /// Syncs finalized tutor messages, actions, and achievements from provider
+  /// state into the local _messages list.
+  void _syncTutorMessages(SessionScreenState sessionState) {
+    // Sync finalized tutor messages
+    final tutorMessages = sessionState.tutorMessages;
+    if (tutorMessages.length > _prevTutorMessagesCount) {
+      for (int i = _prevTutorMessagesCount; i < tutorMessages.length; i++) {
+        _messages.add({
+          'type': 'tutor',
+          'sender': 'tutor',
+          'content': tutorMessages[i],
+          'timestamp': DateTime.now(),
+          'isStreaming': false,
+        });
+      }
+      _prevTutorMessagesCount = tutorMessages.length;
+      _scrollToBottom();
+    }
+
+    // Sync action cards (appear inline after tutor message)
+    final actions = sessionState.currentTurnActions;
+    if (actions.length > _prevActionsCount) {
+      for (int i = _prevActionsCount; i < actions.length; i++) {
+        final action = actions[i];
+        final itemType = switch (action.tipo) {
+          'proponi_esercizio' => 'exercise',
+          'mostra_formula' => 'formula',
+          'suggerisci_backtrack' => 'backtrack',
+          'chiudi_sessione' => 'chiudi',
+          _ => null,
+        };
+
+        // Skip proponi_esercizio with nessunoDisponibile
+        if (action.tipo == 'proponi_esercizio') {
+          final ex = action.asProponiEsercizio;
+          if (ex != null && ex.nessunoDisponibile) continue;
+        }
+
+        if (itemType != null) {
+          _messages.add({
+            'type': itemType,
+            'data': action,
+            'timestamp': DateTime.now(),
+          });
+        }
+      }
+      _prevActionsCount = actions.length;
+      _scrollToBottom();
+    }
+
+    // Trigger achievement toasts
+    final achievements = sessionState.currentTurnAchievements;
+    if (achievements.length > _prevAchievementsCount) {
+      for (int i = _prevAchievementsCount; i < achievements.length; i++) {
+        // Schedule toast after build
+        final achievement = achievements[i];
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) showAchievementToast(context, achievement);
+        });
+      }
+      _prevAchievementsCount = achievements.length;
+    }
+  }
+
+  /// Builds a chat item widget based on its type.
+  Widget _buildChatItem(Map<String, dynamic> item, ThemeData theme) {
+    final type = item['type'] as String?;
+
+    switch (type) {
+      case 'user':
+      case 'tutor':
+        return TutorMessageWidget(message: item, theme: theme);
+
+      case 'exercise':
+        final action = item['data'] as AzioneEvent;
+        final exercise = action.asProponiEsercizio;
+        if (exercise == null) return const SizedBox.shrink();
+        return Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: ExerciseCardWidget(
+            exercise: exercise,
+            theme: theme,
+            onVerify: (risposta) {
+              _sendMessage(risposta);
+            },
+            onDismiss: () {
+              setState(() => _messages.remove(item));
+            },
+          ),
+        );
+
+      case 'formula':
+        final action = item['data'] as AzioneEvent;
+        final formula = action.asMostraFormula;
+        if (formula == null) return const SizedBox.shrink();
+        return Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: FormulaCardWidget(
+            formula: formula,
+            theme: theme,
+            onDismiss: () {
+              setState(() => _messages.remove(item));
+            },
+          ),
+        );
+
+      case 'backtrack':
+        final action = item['data'] as AzioneEvent;
+        final backtrack = action.asSuggerisciBacktrack;
+        if (backtrack == null) return const SizedBox.shrink();
+        return Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: BacktrackCardWidget(
+            suggestion: backtrack,
+            theme: theme,
+            onAccept: () {
+              _sendMessage('Ok, rivediamolo');
+            },
+            onDismiss: () {
+              _sendMessage('Continua qui');
+            },
+          ),
+        );
+
+      case 'chiudi':
+        final action = item['data'] as AzioneEvent;
+        final chiudi = action.asChiudiSessione;
+        if (chiudi == null) return const SizedBox.shrink();
+        return Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: ChiudiSessioneCardWidget(
+            data: chiudi,
+            theme: theme,
+            onEnd: () async {
+              _stopTimer();
+              await ref.read(sessionProvider.notifier).endSession();
+              if (mounted) {
+                setState(() {
+                  _sessionSeconds = 0;
+                  _sessionTime = '00:00';
+                });
+              }
+            },
+          ),
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sessionState = ref.watch(sessionProvider);
     final session = sessionState.activeSession;
     final isActive = session != null && session.stato == 'attiva';
+    final isStreaming = sessionState.isStreaming;
+    final currentTutorText = sessionState.currentTutorText;
+
+    // Sync finalized tutor messages, actions, achievements into local list
+    _syncTutorMessages(sessionState);
+
+    // Auto-scroll when streaming text grows
+    if (isStreaming && currentTutorText.isNotEmpty) {
+      _scrollToBottom();
+    }
+
+    // Calculate total items: _messages + streaming bubble (if any)
+    final showStreamingBubble = isStreaming && currentTutorText.isNotEmpty;
+    final showTypingIndicator = isStreaming && currentTutorText.isEmpty;
+    final extraItems =
+        showStreamingBubble ? 1 : (showTypingIndicator ? 1 : 0);
+    final totalItems = _messages.length + extraItems;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -395,7 +559,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: _messages.isEmpty && !isActive
+                    child: _messages.isEmpty && !isActive && !isStreaming
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -421,17 +585,25 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
                         : ListView.builder(
                             controller: _scrollController,
                             padding: EdgeInsets.only(bottom: 2.h),
-                            itemCount:
-                                _messages.length + (_isTyping ? 1 : 0),
+                            itemCount: totalItems,
                             itemBuilder: (context, index) {
-                              if (_isTyping &&
-                                  index == _messages.length) {
-                                return _buildTypingIndicator(theme);
+                              // Streaming bubble or typing indicator at the end
+                              if (index == _messages.length) {
+                                if (showStreamingBubble) {
+                                  return _buildStreamingBubble(
+                                    theme,
+                                    currentTutorText,
+                                  );
+                                }
+                                if (showTypingIndicator) {
+                                  return _buildTypingIndicator(theme);
+                                }
                               }
-                              return TutorMessageWidget(
-                                message: _messages[index],
-                                theme: theme,
-                              );
+                              if (index < _messages.length) {
+                                return _buildChatItem(
+                                    _messages[index], theme);
+                              }
+                              return const SizedBox.shrink();
                             },
                           ),
                   ),
@@ -458,11 +630,13 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
                         child: TextField(
                           controller: _messageController,
                           focusNode: _messageFocusNode,
-                          enabled: isActive,
+                          enabled: isActive && !isStreaming,
                           decoration: InputDecoration(
-                            hintText: isActive
-                                ? 'Scrivi un messaggio...'
-                                : 'Inizia la sessione per chattare',
+                            hintText: isStreaming
+                                ? 'Il tutor sta rispondendo...'
+                                : isActive
+                                    ? 'Scrivi un messaggio...'
+                                    : 'Inizia la sessione per chattare',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide.none,
@@ -483,6 +657,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
                       Container(
                         decoration: BoxDecoration(
                           color: isActive &&
+                                  !isStreaming &&
                                   _messageController.text.isNotEmpty
                               ? theme.colorScheme.primary
                               : theme.colorScheme.surface,
@@ -492,12 +667,14 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
                           icon: CustomIconWidget(
                             iconName: 'send',
                             color: isActive &&
+                                    !isStreaming &&
                                     _messageController.text.isNotEmpty
                                 ? theme.colorScheme.onPrimary
                                 : theme.colorScheme.onSurfaceVariant,
                             size: 20,
                           ),
-                          onPressed: isActive ? _sendMessage : null,
+                          onPressed:
+                              isActive && !isStreaming ? _sendMessage : null,
                         ),
                       ),
                     ],
@@ -579,6 +756,65 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
     );
   }
 
+  /// Builds the streaming tutor message bubble with amber pulsating cursor.
+  Widget _buildStreamingBubble(ThemeData theme, String text) {
+    return Padding(
+      padding: EdgeInsets.only(top: 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.school,
+              size: 4.w,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          SizedBox(width: 2.w),
+          Flexible(
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 4.w,
+                vertical: 1.5.h,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      theme.colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: Text(
+                      text,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        height: 1.55,
+                      ),
+                    ),
+                  ),
+                  const _AmberCursor(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTypingIndicator(ThemeData theme) {
     return Padding(
       padding: EdgeInsets.only(top: 2.h),
@@ -617,6 +853,53 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Amber pulsating cursor shown at the end of streaming text.
+class _AmberCursor extends StatefulWidget {
+  const _AmberCursor();
+
+  @override
+  State<_AmberCursor> createState() => _AmberCursorState();
+}
+
+class _AmberCursorState extends State<_AmberCursor>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _animation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        width: 2,
+        height: 16,
+        margin: const EdgeInsets.only(left: 2, bottom: 2),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.tertiary,
+          borderRadius: BorderRadius.circular(1),
+        ),
       ),
     );
   }
