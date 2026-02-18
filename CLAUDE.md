@@ -287,7 +287,7 @@ dydat-backend/          (root del progetto = root del repo)
 
 ## Stato attuale
 
-**Fase**: Sviluppo — Blocchi 1-11 completati (Loop 1 completo), prossimo: review e deploy
+**Fase**: Sviluppo — Loop 1 completo, mergiato su main, testato E2E con DB e LLM reali
 **Ultimo aggiornamento**: 2026-02-18
 
 ### Completato
@@ -310,20 +310,30 @@ dydat-backend/          (root del progetto = root del repo)
 
 ### Test: 196 passed, 10 skipped (7 DB integration + 3 LLM integration), ruff clean
 
+### Test manuale E2E completato (DB + LLM reali)
+- ✅ Health check, registrazione, login
+- ✅ Onboarding completo (3 turni SSE con LLM reale, tutor risponde in italiano, tono naturale)
+- ✅ Sessione di studio (path planner sceglie nodo, tutor spiega con esempi, emette `mostra_formula` con LaTeX)
+- ✅ API dati: `/temi` (25 temi con progresso), `/achievement` (8 con progresso), `/me/statistiche`, `/me`
+- ⚠️ Fix trovato e applicato: `contesto.py` — primo turno mandava `messages=[]` → iniettato messaggio placeholder
+- ✅ PR #5 mergiata su main (2026-02-18)
+
 ### Prossimo passo
-- **Loop 1 completo**: Tutti gli 11 blocchi della roadmap sono implementati
-- Il backend è funzionalmente completo per il Loop 1: onboarding → studio → esercizi → B+C → promozione → gamification
-- Prossimi passi possibili:
-  1. **Deploy**: Docker Compose in produzione, CI/CD pipeline
-  2. **Loop 2**: FSRS spaced repetition, notifiche, ripasso interleaving (stub già predisposti)
-  3. **Loop 3**: Feynman verification, assessment, memoria RAG (stub già predisposti)
-  4. **Test con DB reale**: attivare i 7 test DB skippati, creare fixture con PostgreSQL di test
+- **Frontend**: il backend è pronto. Serve un brief frontend (`dydat_brief_frontend_v1.md`) nella root del repo
+- Il backend non richiede modifiche per supportare il frontend — API stabili, eventi SSE definiti
+- Prossimi passi backend possibili (non urgenti):
+  1. **Loop 2**: FSRS spaced repetition, notifiche, ripasso interleaving (stub già predisposti)
+  2. **Loop 3**: Feynman verification, assessment, memoria RAG (stub già predisposti)
+  3. **Test con DB reale**: attivare i 7 test DB skippati, creare fixture con PostgreSQL di test
 
 ### Note per nuova sessione
-- Il brief completo è in `dydat_brief_backend_v3.md` — cercarlo nel worktree che lo contiene
+- Il brief backend è in `dydat_brief_backend_v3.md` — cercarlo nel worktree `focused-margulis`
 - La roadmap dettagliata è in `docs/roadmap.md` dentro il worktree
-- Loop 1 è completo: tutti i blocchi 1-11 implementati e testati
+- Loop 1 è completo, mergiato su main, testato E2E con DB e LLM reali
 - Per i test LLM reale: `pytest tests/ --run-integration` (richiede ANTHROPIC_API_KEY in .env)
+- Docker: `docker compose up --build -d`, poi `alembic upgrade head`, poi `python scripts/import_extraction.py data/Algebra1 data/Algebra2`
+- I dati KB (`data/Algebra1`, `data/Algebra2`) vanno copiati dal worktree `focused-margulis` se non presenti
+- Il path di gh CLI è `/c/Program Files/GitHub CLI/gh`
 
 ## Log decisioni
 
@@ -349,3 +359,5 @@ dydat-backend/          (root del progetto = root del repo)
 | 2026-02-18 | Test integrazione LLM con marker `@pytest.mark.integration` | Skip di default, eseguibili con `--run-integration`, evita costi accidentali |
 | 2026-02-18 | `_stats_periodo` come helper privato in utente.py | Riuso per settimana/mese/sempre, aggregazione da `statistiche_giornaliere` |
 | 2026-02-18 | Mappa nodi esclude nodi contesto (`tipo_nodo != "contesto"`) | I nodi contesto non appaiono nella mappa visuale, come da brief |
+| 2026-02-18 | Messaggio placeholder per primo turno (`contesto.py`) | Anthropic API richiede almeno 1 messaggio; onboarding/sessione partono senza input utente |
+| 2026-02-18 | Merge PR #5 su main — Loop 1 completo | Tutti gli 11 blocchi testati con DB+LLM reali, pronti per frontend |
