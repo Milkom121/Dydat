@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.pytest_cache/
+.ruff_cache/
+*.egg
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets — MAI committare
+.env
+env.json
+*.key
+*.pem
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json
+
+# Knowledge Base (troppo grande per git)
+backend/data/
+
+# Generated
+*.lock
+!pubspec.lock
