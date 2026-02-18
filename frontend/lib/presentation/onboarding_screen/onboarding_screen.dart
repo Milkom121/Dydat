@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
 
 import '../../core/app_export.dart';
@@ -149,10 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // Navigate to registration after completion
       await Future.delayed(const Duration(milliseconds: 2000));
       if (mounted) {
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).pushReplacementNamed('/registration-screen');
+        context.go('/registration');
       }
     }
   }

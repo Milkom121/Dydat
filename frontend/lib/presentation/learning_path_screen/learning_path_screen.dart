@@ -1,103 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
 
+import '../../models/tema.dart';
+import '../../providers/path_provider.dart';
 import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
 import './widgets/empty_state_widget.dart';
 import './widgets/tema_card_widget.dart';
 import './widgets/tema_detail_bottom_sheet.dart';
 
 /// Learning Path Screen - Visualizes personalized STEM learning progression
-/// Tab 1 in bottom navigation with pull-to-refresh capability
-class LearningPathScreen extends StatefulWidget {
+/// Tab 1 in bottom navigation with pull-to-refresh capability.
+/// Uses path_provider to load real data from the API.
+class LearningPathScreen extends ConsumerStatefulWidget {
   const LearningPathScreen({super.key});
 
   @override
-  State<LearningPathScreen> createState() => _LearningPathScreenState();
+  ConsumerState<LearningPathScreen> createState() =>
+      _LearningPathScreenState();
 }
 
-class _LearningPathScreenState extends State<LearningPathScreen> {
+class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   final ScrollController _scrollController = ScrollController();
-  bool _isRefreshing = false;
-  final String _selectedSubject = 'Matematica';
-  final int _currentTemaIndex = 2; // Current tema being studied
-
-  // Mock data for learning path
-  final List<Map<String, dynamic>> _temaList = [
-    {
-      "id": 1,
-      "title": "Equazioni di Primo Grado",
-      "progress": 1.0,
-      "status": "completed",
-      "nodes": [
-        {"name": "Introduzione alle equazioni", "completed": true},
-        {"name": "Risoluzione base", "completed": true},
-        {"name": "Problemi applicativi", "completed": true},
-      ],
-    },
-    {
-      "id": 2,
-      "title": "Sistemi Lineari",
-      "progress": 1.0,
-      "status": "completed",
-      "nodes": [
-        {"name": "Metodo di sostituzione", "completed": true},
-        {"name": "Metodo di eliminazione", "completed": true},
-        {"name": "Interpretazione geometrica", "completed": true},
-      ],
-    },
-    {
-      "id": 3,
-      "title": "Funzioni Quadratiche",
-      "progress": 0.65,
-      "status": "current",
-      "nodes": [
-        {"name": "Forma standard", "completed": true},
-        {"name": "Vertice e asse di simmetria", "completed": true},
-        {"name": "Grafico della parabola", "completed": false},
-        {"name": "Applicazioni pratiche", "completed": false},
-      ],
-    },
-    {
-      "id": 4,
-      "title": "Trigonometria Base",
-      "progress": 0.0,
-      "status": "next",
-      "nodes": [
-        {"name": "Angoli e radianti", "completed": false},
-        {"name": "Funzioni trigonometriche", "completed": false},
-        {"name": "Identità fondamentali", "completed": false},
-      ],
-    },
-    {
-      "id": 5,
-      "title": "Limiti e Continuità",
-      "progress": 0.0,
-      "status": "future",
-      "nodes": [
-        {"name": "Concetto di limite", "completed": false},
-        {"name": "Calcolo dei limiti", "completed": false},
-        {"name": "Funzioni continue", "completed": false},
-      ],
-    },
-    {
-      "id": 6,
-      "title": "Derivate",
-      "progress": 0.0,
-      "status": "future",
-      "nodes": [
-        {"name": "Definizione di derivata", "completed": false},
-        {"name": "Regole di derivazione", "completed": false},
-        {"name": "Applicazioni delle derivate", "completed": false},
-      ],
-    },
-  ];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToCurrentTema();
+    // Load topics on first build
+    Future.microtask(() {
+      ref.read(pathProvider.notifier).loadTopics();
     });
   }
 
@@ -107,32 +39,13 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
     super.dispose();
   }
 
-  /// Auto-scroll to current tema with smooth animation
-  void _scrollToCurrentTema() {
-    if (_currentTemaIndex >= 0 && _currentTemaIndex < _temaList.length) {
-      final double itemHeight = 20.h; // Approximate card height
-      final double targetOffset = _currentTemaIndex * itemHeight - (30.h);
-
-      _scrollController.animateTo(
-        targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  /// Handle pull-to-refresh
+  /// Handle pull-to-refresh — reload topics from API
   Future<void> _handleRefresh() async {
-    setState(() => _isRefreshing = true);
-
-    // Simulate network request
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() => _isRefreshing = false);
+    await ref.read(pathProvider.notifier).loadTopics();
   }
 
   /// Show tema detail bottom sheet
-  void _showTemaDetail(Map<String, dynamic> tema) {
+  void _showTemaDetail(Tema tema) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -141,102 +54,148 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
         tema: tema,
         onStudyPressed: () {
           Navigator.pop(context);
-          Navigator.of(
-            context,
-            rootNavigator: true,
-          ).pushNamed('/studio-screen');
+          context.go('/studio');
         },
       ),
     );
   }
 
-  /// Calculate overall progress
-  double _calculateOverallProgress() {
-    if (_temaList.isEmpty) return 0.0;
-    double totalProgress = _temaList.fold(
-      0.0,
-      (sum, tema) => sum + (tema["progress"] as double),
-    );
-    return totalProgress / _temaList.length;
+  /// Calculate overall progress from all topics
+  double _calculateOverallProgress(List<Tema> topics) {
+    if (topics.isEmpty) return 0.0;
+    int totalNodi = 0;
+    int completedNodi = 0;
+    for (final t in topics) {
+      totalNodi += t.nodiTotali;
+      completedNodi += t.nodiCompletati;
+    }
+    if (totalNodi == 0) return 0.0;
+    return completedNodi / totalNodi;
+  }
+
+  /// Find the index of the first "current" (in-progress) tema
+  int _findCurrentTemaIndex(List<Tema> topics) {
+    for (int i = 0; i < topics.length; i++) {
+      if (!topics[i].completato && topics[i].nodiCompletati > 0) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final overallProgress = _calculateOverallProgress();
+    final pathState = ref.watch(pathProvider);
+    final topics = pathState.topics;
+    final isLoading = pathState.isLoading;
+    final error = pathState.error;
+    final overallProgress = _calculateOverallProgress(topics);
+    final currentTemaIndex = _findCurrentTemaIndex(topics);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CustomPercorsoAppBar(
         progress: overallProgress,
-        onFilter: () {
-          // Filter functionality placeholder
-        },
+        onFilter: () {},
         activeFilters: 0,
       ),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
-          child: _temaList.isEmpty
-              ? EmptyStateWidget(
-                  onStartLearning: () {
-                    Navigator.of(
-                      context,
-                      rootNavigator: true,
-                    ).pushNamed('/studio-screen');
-                  },
-                )
-              : RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  color: theme.colorScheme.primary,
-                  child: ListView.separated(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(vertical: 2.h),
-                    itemCount: _temaList.length,
-                    separatorBuilder: (context, index) => SizedBox(height: 2.h),
-                    itemBuilder: (context, index) {
-                      final tema = _temaList[index];
-                      final isCurrent = index == _currentTemaIndex;
-
-                      return TemaCardWidget(
-                        tema: tema,
-                        isCurrent: isCurrent,
-                        onTap: () => _showTemaDetail(tema),
-                        onLongPress: tema["status"] == "completed"
-                            ? () {
-                                // Show review options context menu
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Opzioni di revisione per ${tema["title"]}',
-                                      style: theme.textTheme.bodyMedium,
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            : null,
-                      );
-                    },
-                  ),
-                ),
+          child: _buildBody(
+            theme,
+            topics,
+            isLoading,
+            error,
+            currentTemaIndex,
+          ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 2.w),
-        child: CustomBottomBar(
-          currentIndex: 1,
-          onTap: (index) {
-            if (index != 1) {
-              final route = CustomBottomBarNavigation.getRouteForIndex(index);
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).pushReplacementNamed(route);
-            }
-          },
+    );
+  }
+
+  Widget _buildBody(
+    ThemeData theme,
+    List<Tema> topics,
+    bool isLoading,
+    String? error,
+    int currentTemaIndex,
+  ) {
+    // Initial loading state
+    if (isLoading && topics.isEmpty) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: theme.colorScheme.primary,
         ),
+      );
+    }
+
+    // Error state with no data
+    if (error != null && topics.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              error,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 2.h),
+            ElevatedButton(
+              onPressed: () => ref.read(pathProvider.notifier).loadTopics(),
+              child: Text('Riprova'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Empty state
+    if (topics.isEmpty) {
+      return EmptyStateWidget(
+        onStartLearning: () {
+          context.go('/studio');
+        },
+      );
+    }
+
+    // Data loaded — show topic list
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      color: theme.colorScheme.primary,
+      child: ListView.separated(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(vertical: 2.h),
+        itemCount: topics.length,
+        separatorBuilder: (context, index) => SizedBox(height: 2.h),
+        itemBuilder: (context, index) {
+          final tema = topics[index];
+          final isCurrent = index == currentTemaIndex;
+
+          return TemaCardWidget(
+            tema: tema,
+            isCurrent: isCurrent,
+            onTap: () => _showTemaDetail(tema),
+            onLongPress: tema.completato
+                ? () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Opzioni di revisione per ${tema.nome}',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                : null,
+          );
+        },
       ),
     );
   }

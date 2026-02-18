@@ -61,19 +61,19 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | Blocco | Contenuto | Stato | Sessione |
 |---|---|---|---|
 | 0 | Pulizia repo, monorepo, CLAUDE.md, fix sizer | DONE | S0 |
-| 1 | Dipendenze + config | TODO | S1 |
-| 2 | Modelli dati (9 file) | TODO | S1 |
-| 3 | Servizi API (8 file) | TODO | S2 |
-| 4 | Provider Riverpod (8 file) | TODO | S2 |
-| 5 | GoRouter + shell app | TODO | S3 |
-| 6 | Schermate auth (login, registrazione, splash) | TODO | S4 |
-| 7 | Tab Percorso (dati reali) | TODO | S4 |
+| 1 | Dipendenze + config | DONE | S1 |
+| 2 | Modelli dati (9 file) | DONE | S1 |
+| 3 | Servizi API (8 file) | DONE | S2 |
+| 4 | Provider Riverpod (8 file) | DONE | S2 |
+| 5 | GoRouter + shell app | DONE | S3 |
+| 6 | Schermate auth (login, registrazione, splash) | DONE | S4 |
+| 7 | Tab Percorso (dati reali) | DONE | S4 |
 | 8 | Tab Profilo (da zero) | TODO | S5 |
 | 9 | Tab Studio (SSE placeholder) | TODO | S5 |
 | 10 | Test E2E con backend | TODO | S6 |
 
 ### Prossima sessione
-**S1 — Blocchi 1+2**: Dipendenze (flutter_riverpod, go_router, flutter_secure_storage) + 9 modelli dati con unit test fromJson/toJson.
+**S5 — Blocchi 8+9**: Tab Profilo (creare profile_screen con dati reali da user_provider, stats_provider, achievement_provider) + Tab Studio (ricablare studio_screen su session_provider con REST, timer, placeholder SSE).
 
 ## Pipeline Sessioni
 
@@ -139,9 +139,14 @@ flutter run
 - [ ] **PROMPT SESSIONE SUCCESSIVA** — generare e mostrare al fondatore un prompt copia-incolla per avviare la prossima sessione (formato sotto)
 
 ### Formato prompt sessione successiva
-Alla fine di ogni sessione, DEVI generare un prompt con questo formato:
+Alla fine di ogni sessione, DEVI:
+1. Generare il prompt copia-incolla (formato sotto)
+2. Suggerire il **nome sessione** da dare alla conversazione: `Dydat — BX+BY — [attivita svolta]`
+   Esempi: `Dydat — B1+B2 — Config e Modelli`, `Dydat — B5 — GoRouter e Shell App`
+
 ```
 Sessione SX — Dydat Frontend, Blocchi Y+Z ([titolo])
+NOME SESSIONE: Dydat — BY+BZ — [attivita]
 
 PRIMA DI SCRIVERE CODICE, leggi questi file in ordine:
 1. CLAUDE.md

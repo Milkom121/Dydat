@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/app_export.dart';
+import 'providers/auth_provider.dart';
+import 'providers/path_provider.dart';
+import 'providers/theme_provider.dart';
+import 'routes/app_router.dart';
+import 'services/auth_service.dart';
+import 'services/dio_client.dart';
+import 'services/path_service.dart';
+import 'services/storage_service.dart';
+import 'services/user_service.dart';
+import 'theme/app_theme.dart';
 import 'widgets/custom_error_widget.dart';
 
 void main() async {
@@ -9,50 +19,69 @@ void main() async {
 
   bool hasShownError = false;
 
-  // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
+  // Custom error handling
   ErrorWidget.builder = (FlutterErrorDetails details) {
     if (!hasShownError) {
       hasShownError = true;
-
-      // Reset flag after 3 seconds to allow error widget on new screens
-      Future.delayed(Duration(seconds: 5), () {
+      Future.delayed(const Duration(seconds: 5), () {
         hasShownError = false;
       });
-
       return CustomErrorWidget(errorDetails: details);
     }
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   };
 
-  // 🚨 CRITICAL: Device orientation lock - DO NOT REMOVE
-  Future.wait([
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]),
-  ]).then((value) {
-    runApp(MyApp());
-  });
+  // Create services for dependency injection.
+  final storageService = StorageService();
+  final dioClient = DioClient(storageService: storageService);
+  final authService = AuthService(client: dioClient);
+  final userService = UserService(client: dioClient);
+  final pathService = PathService(client: dioClient);
+
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        authProvider.overrideWith(
+          (ref) => AuthNotifier(
+            authService: authService,
+            userService: userService,
+            storageService: storageService,
+          ),
+        ),
+        pathProvider.overrideWith(
+          (ref) => PathNotifier(pathService: pathService),
+        ),
+      ],
+      child: const DydatApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DydatApp extends ConsumerWidget {
+  const DydatApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'dydat',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
+      title: 'Dydat',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: themeMode,
+      routerConfig: router,
       builder: (context, child) {
         return MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(1.0)),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.0),
+          ),
           child: child!,
         );
       },
       debugShowCheckedModeBanner: false,
-      routes: AppRoutes.routes,
-      initialRoute: AppRoutes.initial,
     );
   }
 }

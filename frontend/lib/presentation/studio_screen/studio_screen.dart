@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
 import '../../widgets/custom_icon_widget.dart';
 import './widgets/backtrack_card_widget.dart';
 import './widgets/exercise_card_widget.dart';
@@ -28,7 +28,6 @@ class _StudioScreenState extends State<StudioScreen>
   final FocusNode _messageFocusNode = FocusNode();
 
   bool _isSessionActive = false;
-  bool _isBottomBarVisible = true;
   bool _isToolsTrayVisible = false;
   bool _isTutorPanelVisible = false;
   bool _isTyping = false;
@@ -120,7 +119,6 @@ class _StudioScreenState extends State<StudioScreen>
     HapticFeedback.lightImpact();
     setState(() {
       _isSessionActive = !_isSessionActive;
-      _isBottomBarVisible = !_isSessionActive;
     });
 
     if (_isSessionActive) {
@@ -275,10 +273,7 @@ class _StudioScreenState extends State<StudioScreen>
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.of(
-                  context,
-                  rootNavigator: true,
-                ).pushNamed('/learning-path-screen');
+                context.go('/percorso');
               },
               child: Text(
                 'Termina',
@@ -632,24 +627,6 @@ class _StudioScreenState extends State<StudioScreen>
                 ),
               ),
           ],
-        ),
-      ),
-      bottomNavigationBar: AnimatedSlide(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.fastOutSlowIn,
-        offset: _isBottomBarVisible ? Offset.zero : const Offset(0, 1),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4.w),
-          child: CustomBottomBar(
-            currentIndex: 0,
-            onTap: (index) {
-              if (index == 0) return;
-
-              final route = CustomBottomBarNavigation.getRouteForIndex(index);
-              Navigator.of(context, rootNavigator: true).pushNamed(route);
-            },
-            isVisible: _isBottomBarVisible,
-          ),
         ),
       ),
     );

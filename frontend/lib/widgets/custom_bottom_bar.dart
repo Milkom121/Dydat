@@ -113,25 +113,3 @@ class CustomBottomBar extends StatelessWidget {
   }
 }
 
-/// Extension to provide navigation helper methods
-extension CustomBottomBarNavigation on CustomBottomBar {
-  /// Get the route path for a given tab index
-  static String getRouteForIndex(int index) {
-    switch (index) {
-      case 0:
-        return '/studio-screen';
-      case 1:
-        return '/learning-path-screen';
-      case 2:
-        return '/profile-screen'; // Note: This route is not in the provided list
-      default:
-        return '/studio-screen';
-    }
-  }
-
-  /// Navigate to a specific tab
-  static void navigateToTab(BuildContext context, int index) {
-    final route = getRouteForIndex(index);
-    Navigator.pushReplacementNamed(context, route);
-  }
-}

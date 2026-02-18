@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
 
 import './widgets/registration_form_widget.dart';
 import './widgets/registration_header_widget.dart';
+import '../../providers/auth_provider.dart';
 
 /// Registration screen for new user account creation
 /// Handles temporary user conversion and mobile-optimized form inputs
-class RegistrationScreen extends StatefulWidget {
+class RegistrationScreen extends ConsumerStatefulWidget {
   const RegistrationScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _RegistrationScreenState();
+  ConsumerState<RegistrationScreen> createState() =>
+      _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nomeController = TextEditingController();
 
   bool _isPasswordVisible = false;
-  bool _isLoading = false;
-  String? _errorMessage;
 
   @override
   void dispose() {
@@ -72,71 +74,43 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return null;
   }
 
-  /// Handles account creation with temporary user conversion
+  /// Handles account creation via auth_provider.register()
   Future<void> _handleRegistration() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    ref.read(authProvider.notifier).clearError();
 
-    try {
-      // Simulate API call for registration
-      await Future.delayed(const Duration(seconds: 2));
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final nome = _nomeController.text.trim();
 
-      // Mock registration logic
-      final email = _emailController.text.trim();
-      final password = _passwordController.text;
-      final nome = _nomeController.text.trim();
+    await ref.read(authProvider.notifier).register(
+          email: email,
+          password: password,
+          nome: nome,
+        );
 
-      // Simulate duplicate email check
-      if (email == 'test@example.com') {
-        throw Exception('duplicate_email');
-      }
-
-      // Success - provide haptic feedback
+    // On success, GoRouter redirect handles navigation automatically.
+    // On error, authProvider.error is set and the UI rebuilds via ref.watch.
+    if (!mounted) return;
+    if (ref.read(authProvider).isAuthenticated) {
       HapticFeedback.mediumImpact();
-
-      // Navigate to studio screen
-      if (mounted) {
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).pushNamedAndRemoveUntil('/studio-screen', (route) => false);
-      }
-    } catch (e) {
-      setState(() {
-        if (e.toString().contains('duplicate_email')) {
-          _errorMessage = 'Questa email è già registrata. Prova ad accedere.';
-        } else if (e.toString().contains('network')) {
-          _errorMessage = 'Errore di connessione. Verifica la tua rete.';
-        } else {
-          _errorMessage = 'Si è verificato un errore. Riprova più tardi.';
-        }
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 
   /// Navigates to login screen
   void _navigateToLogin() {
-    Navigator.of(
-      context,
-      rootNavigator: true,
-    ).pushReplacementNamed('/login-screen');
+    context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authState = ref.watch(authProvider);
+    final isLoading = authState.isLoading;
+    final errorMessage = authState.error;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -162,8 +136,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     passwordController: _passwordController,
                     nomeController: _nomeController,
                     isPasswordVisible: _isPasswordVisible,
-                    isLoading: _isLoading,
-                    errorMessage: _errorMessage,
+                    isLoading: isLoading,
+                    errorMessage: errorMessage,
                     onPasswordVisibilityToggle: () {
                       setState(() {
                         _isPasswordVisible = !_isPasswordVisible;

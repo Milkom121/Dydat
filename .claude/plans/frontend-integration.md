@@ -314,10 +314,13 @@ Usare `@JsonSerializable()` + `@JsonKey(name: 'snake_case')`.
 ```
 
 ### Prompt sessione successiva — OBBLIGATORIO
-Alla fine di ogni sessione, DEVI generare e mostrare al fondatore un prompt copia-incolla
-con questo formato esatto:
+Alla fine di ogni sessione, DEVI:
+1. Generare il prompt copia-incolla (formato sotto)
+2. Suggerire il **nome sessione**: `Dydat — BX+BY — [attivita svolta]`
+
 ```
 Sessione SX — Dydat Frontend, Blocchi Y+Z ([titolo])
+NOME SESSIONE: Dydat — BY+BZ — [attivita]
 
 PRIMA DI SCRIVERE CODICE, leggi questi file in ordine:
 1. CLAUDE.md
@@ -334,8 +337,8 @@ GATE DI USCITA:
 
 NON fare: commit, push, toccare backend, toccare widget UI esistenti.
 ```
-Questo prompt e l'UNICA cosa che il fondatore deve incollare per avviare la sessione successiva.
-La sessione successiva sa automaticamente cosa fare leggendo i file indicati.
+Il fondatore rinomina la conversazione con il NOME SESSIONE suggerito.
+Questo prompt e l'UNICA cosa che deve incollare per avviare la sessione successiva.
 
 ### Test manuale del fondatore
 Da B5 in poi, quando serve test manuale sull'emulatore/device, comunicarlo con blocco visibile:

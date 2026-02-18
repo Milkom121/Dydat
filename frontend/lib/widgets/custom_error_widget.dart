@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-
-import '../core/app_export.dart';
-import '../routes/app_routes.dart';
+import 'package:go_router/go_router.dart';
 
 // custom_error_widget.dart
 
@@ -53,11 +51,10 @@ class CustomErrorWidget extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () {
-                    bool canBeBack = Navigator.canPop(context);
-                    if (canBeBack) {
+                    if (Navigator.canPop(context)) {
                       Navigator.of(context).pop();
                     } else {
-                      Navigator.pushNamed(context, AppRoutes.initial);
+                      context.go('/');
                     }
                   },
                   icon: const Icon(

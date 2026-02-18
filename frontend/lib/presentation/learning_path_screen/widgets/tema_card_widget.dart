@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
 
 import '../../../core/app_export.dart';
+import '../../../models/tema.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
-/// Individual tema card with visual state indicators
+/// Individual tema card with visual state indicators.
+/// Accepts a [Tema] model from the API instead of raw Map data.
 class TemaCardWidget extends StatelessWidget {
-  final Map<String, dynamic> tema;
+  final Tema tema;
   final bool isCurrent;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
@@ -19,18 +21,26 @@ class TemaCardWidget extends StatelessWidget {
     this.onLongPress,
   });
 
+  /// Derive visual status from Tema model fields.
+  String _deriveStatus() {
+    if (tema.completato) return 'completed';
+    if (tema.nodiCompletati > 0) return 'current';
+    return 'future';
+  }
+
+  /// Derive progress (0.0 - 1.0) from Tema model fields.
+  double _deriveProgress() {
+    if (tema.nodiTotali == 0) return 0.0;
+    return tema.nodiCompletati / tema.nodiTotali;
+  }
+
   Color _getStatusColor(BuildContext context, String status) {
     final theme = Theme.of(context);
     switch (status) {
       case 'completed':
-        return const Color(0xFF7EBF8E); // Success green
-      case 'in-progress':
+        return const Color(0xFF7EBF8E);
       case 'current':
-        return theme.colorScheme.primary; // Amber accent
-      case 'next':
-        return theme.colorScheme.surface;
-      case 'future':
-        return theme.colorScheme.surface;
+        return theme.colorScheme.primary;
       default:
         return theme.colorScheme.surface;
     }
@@ -56,9 +66,9 @@ class TemaCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final status = tema["status"] as String;
-    final progress = tema["progress"] as double;
-    final title = tema["title"] as String;
+    final status = _deriveStatus();
+    final progress = _deriveProgress();
+    final title = tema.nome;
     final isFuture = status == 'future';
 
     return GestureDetector(
@@ -117,10 +127,8 @@ class TemaCardWidget extends StatelessWidget {
                             iconName: status == 'completed'
                                 ? 'check_circle'
                                 : status == 'current'
-                                ? 'play_circle_filled'
-                                : status == 'next'
-                                ? 'radio_button_unchecked'
-                                : 'lock',
+                                    ? 'play_circle_filled'
+                                    : 'lock',
                             color: _getStatusColor(context, status),
                             size: 5.w,
                           ),
@@ -154,7 +162,7 @@ class TemaCardWidget extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Progresso',
+                            '${tema.nodiCompletati}/${tema.nodiTotali} nodi',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),

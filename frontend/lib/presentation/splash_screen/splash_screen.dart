@@ -1,34 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
-import 'dart:async'; // Add this import for TimeoutException
+import 'dart:async';
 
 import '../../core/app_export.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/custom_icon_widget.dart';
 
 /// Splash Screen for Dydat AI tutoring application
 ///
-/// Performs JWT validation and determines user navigation path:
-/// - Authenticated users → StudioScreen (Tab 0)
-/// - New users → OnboardingScreen
-/// - Expired tokens → LoginScreen
+/// Performs JWT validation via auth_provider.checkAuth() and determines navigation:
+/// - Authenticated users → StudioScreen (Tab 0) via GoRouter redirect
+/// - New/expired users → LoginScreen via GoRouter redirect
 ///
 /// Features:
 /// - Full-screen branded experience with dark theme
 /// - Centered mascotte placeholder with subtle animation
-/// - Platform-native loading indicator
-/// - Background tasks: JWT check, theme loading, cache preparation
-/// - Smooth fade transition to next screen
-/// - Handles network timeout with retry option
-/// - Respects reduced motion accessibility preferences
-class SplashScreen extends StatefulWidget {
+/// - Real JWT check against backend
+/// - Timeout handling with retry option
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -44,7 +43,6 @@ class _SplashScreenState extends State<SplashScreen>
     _performStartupTasks();
   }
 
-  /// Initialize mascotte animations with reduced motion support
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
@@ -52,30 +50,25 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+      CurvedAnimation(
+          parent: _animationController, curve: Curves.easeOutBack),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    // Start animation if reduced motion is not enabled
     _animationController.forward();
   }
 
-  /// Perform critical startup tasks with timeout handling
+  /// Perform startup tasks: real JWT check + minimum display time
   Future<void> _performStartupTasks() async {
     try {
-      // Simulate JWT validation and initialization tasks
       await Future.wait([
-        _checkAuthentication(),
-        _loadThemePreferences(),
-        _prepareCachedData(),
-        Future.delayed(
-          const Duration(milliseconds: 2500),
-        ), // Minimum display time
+        ref.read(authProvider.notifier).checkAuth(),
+        Future.delayed(const Duration(milliseconds: 2000)),
       ]).timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 8),
         onTimeout: () {
           if (mounted) {
             setState(() => _isTimeout = true);
@@ -88,61 +81,33 @@ class _SplashScreenState extends State<SplashScreen>
         await _navigateToNextScreen();
       }
     } catch (e) {
+      if (e is TimeoutException) return;
+      // checkAuth can fail silently (no token, 401) — navigate normally
       if (mounted && !_isTimeout) {
-        setState(() => _isTimeout = true);
+        await _navigateToNextScreen();
       }
     }
   }
 
-  /// Check JWT authentication status
-  Future<void> _checkAuthentication() async {
-    // Simulate JWT validation from secure storage
-    await Future.delayed(const Duration(milliseconds: 800));
-  }
-
-  /// Load user theme preferences
-  Future<void> _loadThemePreferences() async {
-    // Simulate theme preference loading
-    await Future.delayed(const Duration(milliseconds: 500));
-  }
-
-  /// Prepare cached data
-  Future<void> _prepareCachedData() async {
-    // Simulate cache preparation
-    await Future.delayed(const Duration(milliseconds: 600));
-  }
-
-  /// Navigate to appropriate screen based on authentication status
+  /// Navigate based on auth state — GoRouter redirect handles the logic
   Future<void> _navigateToNextScreen() async {
     if (_isNavigating) return;
     _isNavigating = true;
 
-    // Fade out animation
     await _animationController.reverse();
 
     if (!mounted) return;
 
-    // Mock authentication logic - in production, check actual JWT
-    final bool isAuthenticated = false; // Mock: no stored JWT
-    final bool isNewUser = true; // Mock: first time user
+    // Read auth state after checkAuth() completed
+    final isAuthenticated = ref.read(authProvider).isAuthenticated;
 
-    String targetRoute;
     if (isAuthenticated) {
-      targetRoute = '/studio-screen';
-    } else if (isNewUser) {
-      targetRoute = '/onboarding-screen';
+      context.go('/studio');
     } else {
-      targetRoute = '/login-screen';
+      context.go('/login');
     }
-
-    // Navigate with smooth transition
-    await Navigator.of(
-      context,
-      rootNavigator: true,
-    ).pushReplacementNamed(targetRoute);
   }
 
-  /// Retry startup tasks after timeout
   Future<void> _retryStartup() async {
     setState(() {
       _isTimeout = false;
@@ -162,7 +127,6 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Set system UI overlay style for dark theme
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -181,8 +145,8 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFF1A1A1E), // darkBackground
-              const Color(0xFF242428), // darkSurface
+              const Color(0xFF1A1A1E),
+              const Color(0xFF242428),
             ],
           ),
         ),
@@ -195,14 +159,12 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  /// Build main splash content with mascotte and loading indicator
   Widget _buildSplashContent(ThemeData theme) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Spacer(flex: 2),
 
-        // Animated mascotte placeholder
         AnimatedBuilder(
           animation: _animationController,
           builder: (context, child) {
@@ -218,12 +180,10 @@ class _SplashScreenState extends State<SplashScreen>
 
         const Spacer(),
 
-        // Loading indicator
         _buildLoadingIndicator(theme),
 
         SizedBox(height: 4.h),
 
-        // App version
         Text(
           'Versione 1.0.0',
           style: theme.textTheme.labelSmall?.copyWith(
@@ -236,7 +196,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  /// Build mascotte placeholder with Dydat branding
   Widget _buildMascottePlaceholder(ThemeData theme) {
     return Container(
       width: 40.w,
@@ -278,7 +237,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  /// Build platform-native loading indicator
   Widget _buildLoadingIndicator(ThemeData theme) {
     return SizedBox(
       width: 8.w,
@@ -290,7 +248,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  /// Build timeout view with retry option
   Widget _buildTimeoutView(ThemeData theme) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.w),
@@ -299,7 +256,6 @@ class _SplashScreenState extends State<SplashScreen>
         children: [
           const Spacer(flex: 2),
 
-          // Error icon
           Container(
             width: 20.w,
             height: 20.w,
@@ -318,7 +274,6 @@ class _SplashScreenState extends State<SplashScreen>
 
           SizedBox(height: 3.h),
 
-          // Error message
           Text(
             'Connessione non riuscita',
             style: theme.textTheme.titleLarge?.copyWith(
@@ -339,7 +294,6 @@ class _SplashScreenState extends State<SplashScreen>
 
           const Spacer(),
 
-          // Retry button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
