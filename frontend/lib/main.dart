@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'providers/achievement_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/path_provider.dart';
+import 'providers/session_provider.dart';
+import 'providers/stats_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/user_provider.dart';
 import 'routes/app_router.dart';
+import 'services/achievement_service.dart';
 import 'services/auth_service.dart';
 import 'services/dio_client.dart';
 import 'services/path_service.dart';
+import 'services/session_service.dart';
 import 'services/storage_service.dart';
 import 'services/user_service.dart';
 import 'theme/app_theme.dart';
@@ -37,6 +43,8 @@ void main() async {
   final authService = AuthService(client: dioClient);
   final userService = UserService(client: dioClient);
   final pathService = PathService(client: dioClient);
+  final achievementService = AchievementService(client: dioClient);
+  final sessionService = SessionService(client: dioClient);
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
@@ -52,6 +60,18 @@ void main() async {
         ),
         pathProvider.overrideWith(
           (ref) => PathNotifier(pathService: pathService),
+        ),
+        userProvider.overrideWith(
+          (ref) => UserNotifier(userService: userService),
+        ),
+        statsProvider.overrideWith(
+          (ref) => StatsNotifier(userService: userService),
+        ),
+        achievementProvider.overrideWith(
+          (ref) => AchievementNotifier(achievementService: achievementService),
+        ),
+        sessionProvider.overrideWith(
+          (ref) => SessionNotifier(sessionService: sessionService),
         ),
       ],
       child: const DydatApp(),

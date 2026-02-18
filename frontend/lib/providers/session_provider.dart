@@ -42,6 +42,27 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
       : _sessionService = sessionService,
         super(const SessionScreenState());
 
+  /// Creates a new study session via REST.
+  Future<void> startSession({int? durataPrevistaMin}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final session = await _sessionService.start(
+        durataPrevistaMin: durataPrevistaMin,
+      );
+      state = state.copyWith(
+        activeSession: session,
+        isLoading: false,
+        tutorMessages: [],
+      );
+    } on DioException catch (e) {
+      final apiError = e.error;
+      final msg = apiError is ApiException
+          ? apiError.message
+          : 'Errore creazione sessione';
+      state = state.copyWith(isLoading: false, error: msg);
+    }
+  }
+
   /// Sets the active session from an SSE sessione_creata event.
   void setActiveSession(Sessione session) {
     state = state.copyWith(activeSession: session);

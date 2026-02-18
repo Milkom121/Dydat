@@ -5,9 +5,9 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-18
-**Ultima sessione**: S4 (Blocchi 6+7 — Auth Screens + Tab Percorso) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B7, non ancora committato)
-**Prossima sessione**: S5 (Blocchi 8+9 — Tab Profilo + Tab Studio)
+**Ultima sessione**: S6 (Blocco 10 — Test E2E con backend reale) — COMPLETATA
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B10, pronto per commit)
+**Prossima sessione**: Nessuna — tutti i 11 blocchi frontend completati. Prossimo: Loop 2 (SSE streaming reale).
 
 ## Blocchi Completati
 
@@ -21,92 +21,70 @@
 | B5 — GoRouter + Shell | DONE | S3 | GoRouter con shell route, auth redirect, mock login, 3 tab funzionanti |
 | B6 — Schermate Auth | DONE | S4 | Login, Registration e Splash ricablati su auth_provider reale |
 | B7 — Tab Percorso | DONE | S4 | LearningPathScreen + widget ricablati su path_provider con dati API |
-| B8 — Tab Profilo | TODO | S5 | |
-| B9 — Tab Studio | TODO | S5 | |
-| B10 — Test E2E | TODO | S6 | |
+| B8 — Tab Profilo | DONE | S5 | ProfileScreen con dati reali, stats, achievement, tema, logout |
+| B9 — Tab Studio | DONE | S5 | StudioScreen ricablato su session_provider REST, timer, placeholder SSE |
+| B10 — Test E2E | DONE | S6 | Flusso completo testato con backend reale — tutti i passi superati |
 
-## Problemi Aperti
+## Risultati Test E2E (S6)
 
-- `custom_error_widget.dart` ha colori hardcoded — da fixare in futuro
-- StudioScreen ha overflow di 71px nel Column a riga 339 — fix in B9
-- PUB_CACHE deve essere settato a `C:\PubCache` per aggirare sandbox Windows di Claude Code (junction AppContainer)
+### Backend API (curl)
+Tutti gli endpoint testati e funzionanti:
+- `POST /auth/registrazione` → 201, JWT ottenuto
+- `POST /auth/login` → 200, JWT ottenuto
+- `GET /utente/me` → 200, profilo corretto
+- `GET /utente/me/statistiche` → 200, stats corrette
+- `GET /percorsi/` → 200, lista percorsi
+- `GET /temi/` → 200, 25 temi matematica
+- `GET /achievement/` → 200, 8 achievement prossimi
+- `POST /sessione/inizia` → 200, SSE con sessione_creata + text_delta
+- `POST /sessione/{id}/turno` → 200, SSE con risposta tutor
+- `POST /sessione/{id}/sospendi` → 200, sessione sospesa
+- `POST /sessione/{id}/termina` → 200, sessione completata
 
-## Cosa e Stato Fatto in S4
+### Frontend E2E (emulatore Android)
+Flusso completo testato manualmente:
+1. Splash → Login: redirect corretto
+2. Dev quick login: funzionante (login-first, register come fallback)
+3. Tab Studio: creazione sessione, invio messaggio, timer, termina sessione — OK
+4. Tab Percorso: 25 temi visibili, dettaglio nodi, pull-to-refresh — OK
+5. Tab Profilo: dati reali, stats, achievement, cambio tema, logout — OK
+6. Re-login: funzionante dopo logout
+7. 409 handling: ripresa sessione attiva — OK
 
-### B6 — Schermate Auth (ricablate su auth_provider reale)
-- **LoginScreen** (`login_screen.dart`):
-  - Rimossi stato locale `_isLoading`, `_errorMessage`, mock credentials
-  - Usa `ref.watch(authProvider)` per isLoading e error (reactive)
-  - `_handleLogin()` chiama `ref.read(authProvider.notifier).login()` reale
-  - GoRouter redirect gestisce la navigazione post-login automaticamente
-  - HapticFeedback solo su successo
-  - Rimosso box "Credenziali Demo" (non serve piu con auth reale)
-
-- **RegistrationScreen** (`registration_screen.dart`):
-  - Convertito da `StatefulWidget` a `ConsumerStatefulWidget`
-  - Rimossi stato locale `_isLoading`, `_errorMessage`, logica mock
-  - Usa `ref.watch(authProvider)` per isLoading e error
-  - `_handleRegistration()` chiama `ref.read(authProvider.notifier).register()` reale
-  - GoRouter redirect gestisce la navigazione post-registrazione
-
-- **SplashScreen** (`splash_screen.dart`):
-  - Convertito da `StatefulWidget` a `ConsumerStatefulWidget`
-  - `_checkAuthentication()` ora chiama `ref.read(authProvider.notifier).checkAuth()` reale
-  - Verifica JWT salvato contro backend → se valido: go('/studio'), se no: go('/login')
-  - Timeout aumentato a 8s (checkAuth puo essere lento)
-  - Rimossi mock `_loadThemePreferences()` e `_prepareCachedData()`
-  - Gestione errori: se checkAuth fallisce (non 401), naviga comunque al login
-
-### B7 — Tab Percorso (dati reali da API)
-- **LearningPathScreen** (`learning_path_screen.dart`):
-  - Convertito da `StatefulWidget` a `ConsumerStatefulWidget`
-  - Rimossi tutti i dati mock hardcodati (6 temi finti)
-  - Usa `ref.watch(pathProvider)` per topics, isLoading, error
-  - `initState()` chiama `loadTopics()` al primo build
-  - Pull-to-refresh chiama `loadTopics()` da API
-  - Stato loading con CircularProgressIndicator
-  - Stato errore con bottone Riprova
-  - Stato empty con EmptyStateWidget
-  - Progresso calcolato da nodi reali (nodiCompletati/nodiTotali)
-  - Tema "corrente" = primo tema non completato con nodiCompletati > 0
-
-- **TemaCardWidget** (`tema_card_widget.dart`):
-  - Accetta `Tema` model (non piu `Map<String, dynamic>`)
-  - Status derivato: completato → completed, nodiCompletati>0 → current, else → future
-  - Progresso: nodiCompletati/nodiTotali
-  - Mostra "X/Y nodi" al posto di "Progresso"
-
-- **TemaDetailBottomSheet** (`tema_detail_bottom_sheet.dart`):
-  - Convertito a `ConsumerStatefulWidget`
-  - Accetta `Tema` model (non piu `Map<String, dynamic>`)
-  - `initState()` chiama `loadTopicDetail(temaId)` per caricare la lista nodi
-  - Nodi mostrati da `TemaDettaglio.nodi` (dati API)
-  - Stato nodo: livello operativo/comprensivo/connesso = completato
-  - Stato loading e errore gestiti inline
-
-- **main.dart**:
-  - Aggiunto `PathService` e override di `pathProvider` nel `ProviderScope`
+### Bug fix in S6
+- **Dev quick login**: invertita logica da register-first a login-first per evitare flash errore "Email gia' registrata" quando l'utente dev esiste gia
 
 ### Analisi statica
 - `flutter analyze` → 0 errori, 0 warning
 
+## Problemi Aperti
+
+- `custom_error_widget.dart` ha colori hardcoded — da fixare in futuro
+- PUB_CACHE deve essere settato a `C:\PubCache` per aggirare sandbox Windows di Claude Code (junction AppContainer)
+- Exercise/formula/backtrack card rimosse dallo StudioScreen — saranno riattivate con SSE (Loop 2)
+- Risposta tutor e placeholder locale — SSE streaming da implementare in Loop 2
+
 ## Cosa Esiste Gia
 
-### UI funzionante (da Rocket.new)
+### UI funzionante
 - Theme completo (light + dark, 690 righe)
 - SplashScreen, OnboardingScreen, LoginScreen, RegistrationScreen
 - LearningPathScreen + widget (tema_card, tema_detail, empty_state)
-- StudioScreen + widget (exercise, formula, backtrack, mascotte, tools_tray, tutor_message, tutor_panel)
+- StudioScreen + widget (mascotte, tools_tray, tutor_message, tutor_panel)
+- ProfileScreen con dati reali (user, stats, achievement, tema, logout)
 - CustomAppBar (3 varianti), CustomBottomBar (3 tab), CustomImageWidget, CustomIconWidget
 
-### Architettura (B1-B7 done)
+### Architettura (B1-B10 done)
 - Config: api_config.dart, app_config.dart
 - 9 modelli Dart con @JsonSerializable + .g.dart generati
-- 8 servizi API con Dio
-- 8 provider Riverpod (auth e path con override reali nel main)
+- 8 servizi API con Dio (session_service ora parsa SSE per sessioneId)
+- 8 provider Riverpod (tutti con override reali nel main)
 - GoRouter con shell route + auth redirect
 - Login, Registration e Splash collegati ad auth reale
 - Tab Percorso collegata a path API reale
+- Tab Profilo collegata a user/stats/achievement API reali
+- Tab Studio collegata a session API reale (REST, no SSE streaming)
+- Test E2E completo superato con backend Docker
 
 ## Decisioni Prese
 
@@ -125,3 +103,10 @@
 | 2026-02-18 | TemaCardWidget deriva status da completato/nodiCompletati | Niente campo "status" dall'API, lo deduciamo dal modello |
 | 2026-02-18 | TemaDetailBottomSheet carica nodi on-demand via loadTopicDetail | Evita di caricare tutti i dettagli nella lista temi |
 | 2026-02-18 | pathProvider con overrideWith nel ProviderScope | Stessa DI pattern di authProvider |
+| 2026-02-18 | Tutti i 8 provider con overrideWith nel main.dart | Pattern DI consistente per tutti i provider |
+| 2026-02-18 | SessionService.start() parsa SSE text per sessioneId | Workaround REST per estrarre sessioneId senza client SSE |
+| 2026-02-18 | Exercise/formula/backtrack card rimosse da StudioScreen | Causavano overflow 71px, saranno riattivate con SSE |
+| 2026-02-18 | Risposta tutor placeholder locale in StudioScreen | SSE non implementato, placeholder per B9 |
+| 2026-02-18 | validateStatus per 409 in SessionService.start() | DioClient _onError interceptor trasformava l'errore perdendo il body strutturato |
+| 2026-02-18 | Dev quick login con login-first | Login piu veloce per utente esistente; register come fallback se utente non esiste |
+| 2026-02-18 | _formatNodeId() per nomi nodo leggibili | Backend puo ritornare ID tecnico come nodo_focale_nome; formatter li rende umani |

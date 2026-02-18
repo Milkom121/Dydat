@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../config/app_config.dart';
 import '../../core/sizer_extensions.dart';
 
 import '../../core/app_export.dart';
@@ -136,6 +138,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Registration Link
                   _buildRegistrationLink(theme, isLoading),
+
+                  // Dev quick login (debug only)
+                  if (kDebugMode) ...[
+                    SizedBox(height: 2.h),
+                    _buildDevLoginButton(theme, isLoading),
+                  ],
 
                   SizedBox(height: 2.h),
                 ],
@@ -355,6 +363,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _handleDevLogin() async {
+    ref.read(authProvider.notifier).clearError();
+
+    // Try login first (faster path when user already exists)
+    await ref.read(authProvider.notifier).login(
+          email: AppConfig.devEmail,
+          password: AppConfig.devPassword,
+        );
+
+    if (!mounted) return;
+
+    // If login failed (user doesn't exist yet), register instead
+    if (!ref.read(authProvider).isAuthenticated) {
+      ref.read(authProvider.notifier).clearError();
+      await ref.read(authProvider.notifier).register(
+            email: AppConfig.devEmail,
+            password: AppConfig.devPassword,
+            nome: AppConfig.devNome,
+          );
+    }
+
+    if (!mounted) return;
+    if (ref.read(authProvider).isAuthenticated) {
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  Widget _buildDevLoginButton(ThemeData theme, bool isLoading) {
+    return OutlinedButton.icon(
+      onPressed: isLoading ? null : _handleDevLogin,
+      icon: CustomIconWidget(
+        iconName: 'bug_report',
+        color: theme.colorScheme.onSurfaceVariant,
+        size: 18,
+      ),
+      label: Text(
+        'Login rapido dev',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size(double.infinity, 5.h),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 }

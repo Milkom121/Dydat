@@ -68,12 +68,12 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | 5 | GoRouter + shell app | DONE | S3 |
 | 6 | Schermate auth (login, registrazione, splash) | DONE | S4 |
 | 7 | Tab Percorso (dati reali) | DONE | S4 |
-| 8 | Tab Profilo (da zero) | TODO | S5 |
-| 9 | Tab Studio (SSE placeholder) | TODO | S5 |
-| 10 | Test E2E con backend | TODO | S6 |
+| 8 | Tab Profilo (da zero) | DONE | S5 |
+| 9 | Tab Studio (SSE placeholder) | DONE | S5 |
+| 10 | Test E2E con backend | DONE | S6 |
 
 ### Prossima sessione
-**S5 — Blocchi 8+9**: Tab Profilo (creare profile_screen con dati reali da user_provider, stats_provider, achievement_provider) + Tab Studio (ricablare studio_screen su session_provider con REST, timer, placeholder SSE).
+**Tutti i blocchi frontend completati (B0-B10).** Prossimo passo: Loop 2 — SSE streaming reale, LaTeX rendering, animazioni celebrative.
 
 ## Pipeline Sessioni
 
@@ -84,7 +84,7 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | S3 | B5 | app parte + navigazione + auth redirect | `feat(frontend): B5` |
 | S4 | B6+B7 | login/register reali + percorso con dati API | `feat(frontend): B6+B7` |
 | S5 | B8+B9 | tutte le tab con dati reali | `feat(frontend): B8+B9` |
-| S6 | B10 | flusso E2E completo con backend | `feat(frontend): B10` |
+| S6 | B10 | flusso E2E completo con backend | `feat(frontend): B10` — DONE |
 
 **Regola**: ogni sessione crea branch da main, PR a fine sessione dopo test verdi.
 
