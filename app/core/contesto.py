@@ -464,6 +464,11 @@ async def assembla_context_package(
     messages = await _carica_conversazione(db, sessione_id)
     messages = tronca_conversazione(messages)
 
+    # Anthropic API richiede almeno un messaggio.
+    # Al primo turno (onboarding/sessione) il tutor parla per primo senza input utente.
+    if not messages:
+        messages = [{"role": "user", "content": "[Inizia la conversazione]"}]
+
     # Determina modello
     modello = settings.LLM_MODEL_TUTOR
 
