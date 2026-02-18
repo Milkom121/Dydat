@@ -287,7 +287,7 @@ dydat-backend/          (root del progetto = root del repo)
 
 ## Stato attuale
 
-**Fase**: Sviluppo — Blocchi 1-9 completati, prossimo Blocco 10
+**Fase**: Sviluppo — Blocchi 1-10 completati, prossimo Blocco 11
 **Ultimo aggiornamento**: 2026-02-18
 
 ### Completato
@@ -305,22 +305,25 @@ dydat-backend/          (root del progetto = root del repo)
 - [x] **Blocco 7**: Flusso del turno (IL CUORE) — `esegui_turno()` 3 fasi, Action Executor, Signal Processor, promozione (3 condizioni), cascata sblocco, conversation manager
 - [x] **Blocco 8**: API sessione con SSE — Session Manager + 5 endpoint HTTP + schemas Pydantic + 29 test
 - [x] **Blocco 9**: Onboarding — Onboarding Manager + 3 endpoint SSE + fasi auto (accoglienza→conoscenza→conclusione) + punto di partenza personalizzato + inizializzazione stato nodi + 24 test
+- [x] **Blocco 10**: Gamification — 8 achievement (seed al startup), verifica condizioni dopo ogni turno, calcolo streak (HARD CONSTRAINT), statistiche giornaliere, API `GET /achievement` con progresso + 26 test
 
-### Test: 162 passed, 7 skipped (DB integration), ruff clean
+### Test: 188 passed, 7 skipped (DB integration), ruff clean
 
 ### Prossimo passo
-- **Blocco 10**: Gamification
-  - `app/core/gamification.py` — Achievement checker, seed definizioni, calcolo streak, statistiche giornaliere
-  - `app/api/achievement.py` — `GET /achievement` (sbloccati + prossimi)
-  - Sezioni brief da leggere: 14 (gamification), 18 (walkthrough E2E)
-  - File core da usare: `app/core/elaborazione.py` (achievement_check), `app/db/models/gamification.py`
-- Poi: Blocco 11 (API restanti + rifinitura + test E2E)
+- **Blocco 11**: API restanti + rifinitura
+  - `app/api/percorsi.py` — `GET /percorsi`, `GET /percorsi/{id}/mappa` (nodi con stato per mappa visuale)
+  - `app/api/temi.py` — `GET /temi/{id}` (dettaglio tema con nodi e progresso)
+  - `app/api/utente.py` — `GET /utente/me/statistiche` (stats settimana/mese/sempre, attualmente stub 501)
+  - Test end-to-end completo (walkthrough sezione 18 del brief)
+  - Review generale, cleanup TODO, documentazione endpoint
+  - Sezioni brief da leggere: 13 (API endpoints), 18 (walkthrough E2E)
+  - File core da usare: `app/core/gamification.py` (statistiche), `app/grafo/stato.py`, `app/db/models/`
 
 ### Note per nuova sessione
 - Il brief completo è in `dydat_brief_backend_v3.md` — cercarlo nel worktree che lo contiene
 - La roadmap dettagliata è in `docs/roadmap.md` dentro il worktree
-- Per il Blocco 10, leggere sezioni 14 (gamification) e 18 (walkthrough E2E) del brief
-- I file core esistenti da usare: `app/core/elaborazione.py`, `app/db/models/gamification.py`
+- Per il Blocco 11, leggere sezione 13 (API endpoints) e 18 (walkthrough E2E) del brief
+- I file API stub da completare: `app/api/percorsi.py`, `app/api/temi.py`, `app/api/utente.py` (stats)
 
 ## Log decisioni
 
@@ -339,3 +342,7 @@ dydat-backend/          (root del progetto = root del repo)
 | 2026-02-18 | SSE con `sse-starlette` EventSourceResponse | Formato standard SSE, unidirezionale server→client, come da brief sezione 19 |
 | 2026-02-18 | `_trova_nodo_per_tema` normalizza spazi→underscore | I tema_id nel grafo usano underscore (es. `equazioni_secondo_grado`) ma il tutor può suggerire con spazi |
 | 2026-02-18 | `_inizializza_stato_nodi` con `pg_insert` ON CONFLICT DO NOTHING | UPSERT sicuro per inizializzazione idempotente dei nodi utente |
+| 2026-02-18 | Seed achievement al startup (lifespan) con UPSERT | Idempotente, nessun rischio di duplicati, definizioni sempre aggiornate |
+| 2026-02-18 | Cache metriche nel checker achievement | Evita query ripetute se più achievement usano la stessa condizione |
+| 2026-02-18 | `nodi_completati` esclude `presunto=true` | I nodi marcati presunti dall'onboarding non contano come achievement |
+| 2026-02-18 | Temi completati via join `nodi_temi` (non campo diretto) | Il modello Nodo non ha `tema_id` diretto, usa tabella ponte `nodi_temi` |

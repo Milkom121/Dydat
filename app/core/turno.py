@@ -188,7 +188,10 @@ async def esegui_turno(
             nodo_promosso, prossimo_nodo,
         )
 
-    # Achievement check (Blocco 10 — stub, non solleva errore)
+    # Aggiorna statistiche giornaliere
+    await _aggiorna_stats_safe(utente_id, db)
+
+    # Achievement check
     achievement_nuovi = await _verifica_achievement_safe(utente_id, db)
     for ach in achievement_nuovi:
         yield _evento_sse("achievement", ach)
@@ -233,17 +236,29 @@ def _evento_errore(codice: str, messaggio: str) -> dict:
     return _evento_sse("errore", {"codice": codice, "messaggio": messaggio})
 
 
+async def _aggiorna_stats_safe(
+    utente_id: uuid.UUID,
+    db: AsyncSession,
+) -> None:
+    """Wrapper safe per aggiornamento statistiche giornaliere."""
+    try:
+        from app.core.gamification import aggiorna_statistiche_giornaliere
+        await aggiorna_statistiche_giornaliere(utente_id, db)
+    except Exception:
+        logger.warning(
+            "Errore aggiornamento statistiche (non bloccante)",
+            exc_info=True,
+        )
+
+
 async def _verifica_achievement_safe(
     utente_id: uuid.UUID,
     db: AsyncSession,
 ) -> list[dict]:
-    """Wrapper safe per verifica achievement (Blocco 10 stub)."""
+    """Wrapper safe per verifica achievement — non bloccante se fallisce."""
     try:
         from app.core.gamification import verifica_achievement
-        return await verifica_achievement(utente_id)
-    except NotImplementedError:
-        # Blocco 10 non ancora implementato — ok
-        return []
+        return await verifica_achievement(utente_id, db)
     except Exception:
         logger.warning(
             "Errore verifica achievement (non bloccante)",

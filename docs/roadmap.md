@@ -183,15 +183,20 @@ Knowledge graph deterministico.
 
 ---
 
-## Blocco 10: Gamification (Sessione 6)
+## Blocco 10: Gamification (Sessione 7)
 
-- ⬚ `app/core/gamification.py`
-  - ⬚ Achievement checker (verifica condizioni dopo ogni turno)
-  - ⬚ Seed definizioni achievement iniziali (8 achievement dal brief)
-  - ⬚ Calcolo streak (giorni consecutivi obiettivo raggiunto)
-  - ⬚ Aggiornamento statistiche_giornaliere
-- ⬚ `app/api/achievement.py` — `GET /achievement` (sbloccati + prossimi)
-- ⬚ Test: condizioni achievement, calcolo streak
+- ✅ `app/core/gamification.py`
+  - ✅ Achievement checker (`verifica_achievement`) — verifica condizioni dopo ogni turno, sblocca automaticamente
+  - ✅ Seed definizioni achievement iniziali (8 dal brief, UPSERT idempotente al startup)
+  - ✅ Calcolo streak (HARD CONSTRAINT: giorni consecutivi all'indietro, gap=interruzione)
+  - ✅ Aggiornamento `statistiche_giornaliere` (esercizi, nodi, minuti, obiettivo_raggiunto)
+  - ✅ `lista_achievement_utente` — sbloccati + prossimi con progresso
+  - ✅ Cache metriche per evitare query ripetute nello stesso turno
+- ✅ `app/api/achievement.py` — `GET /achievement` (autenticato, response model Pydantic)
+- ✅ `app/schemas/achievement.py` — 4 schemas (ProgressoAchievement, Sbloccato, Prossimo, ListaResponse)
+- ✅ `app/core/turno.py` — integrazione: `_verifica_achievement_safe` + `_aggiorna_stats_safe` nel post-processing
+- ✅ `app/main.py` — seed achievement al startup (lifespan)
+- ✅ Test: 26/26 pass — seed (6), streak HARD CONSTRAINT (7), verifica achievement (6), lista progresso (1), schemas (3), integrazione turno (3)
 
 ---
 

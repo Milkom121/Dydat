@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     async with async_session() as db:
         await grafo_knowledge.carica(db)
+        # Seed achievement definizioni (UPSERT idempotente)
+        from app.core.gamification import seed_achievement
+        await seed_achievement(db)
+        await db.commit()
     yield
 
 
