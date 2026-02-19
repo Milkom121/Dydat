@@ -104,3 +104,38 @@ class AzioneEvent {
       _$AzioneEventFromJson(json);
   Map<String, dynamic> toJson() => _$AzioneEventToJson(this);
 }
+
+@JsonSerializable()
+class SessioneListItem {
+  final String id;
+  final String stato;
+  final String? tipo;
+  @JsonKey(name: 'nodo_focale_id')
+  final String? nodoFocaleId;
+  @JsonKey(name: 'nodo_focale_nome')
+  final String? nodoFocaleNome;
+  @JsonKey(name: 'durata_effettiva_min')
+  final int? durataEffettivaMin;
+  @JsonKey(name: 'nodi_lavorati')
+  final List<String>? nodiLavorati;
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+  @JsonKey(name: 'completed_at')
+  final String? completedAt;
+
+  const SessioneListItem({
+    required this.id,
+    required this.stato,
+    this.tipo,
+    this.nodoFocaleId,
+    this.nodoFocaleNome,
+    this.durataEffettivaMin,
+    this.nodiLavorati,
+    this.createdAt,
+    this.completedAt,
+  });
+
+  factory SessioneListItem.fromJson(Map<String, dynamic> json) =>
+      _$SessioneListItemFromJson(json);
+  Map<String, dynamic> toJson() => _$SessioneListItemToJson(this);
+}

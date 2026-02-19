@@ -1,6 +1,7 @@
 """Schemas Pydantic v2 per sessione."""
 
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -24,6 +25,20 @@ class SessioneResponse(BaseModel):
     durata_prevista_min: int | None = None
     durata_effettiva_min: int | None = None
     nodi_lavorati: list[str] | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class SessioneListItemResponse(BaseModel):
+    id: uuid.UUID
+    stato: str
+    tipo: str | None = None
+    nodo_focale_id: str | None = None
+    nodo_focale_nome: str | None = None
+    durata_effettiva_min: int | None = None
+    nodi_lavorati: list[str] | None = None
+    created_at: datetime | None = None
+    completed_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

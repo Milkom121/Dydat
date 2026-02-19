@@ -107,4 +107,67 @@ void main() {
       expect(back['tipo'], 'proponi_esercizio');
     });
   });
+
+  group('SessioneListItem', () {
+    test('fromJson → toJson roundtrip full', () {
+      final json = {
+        'id': 'sess-uuid-456',
+        'stato': 'completata',
+        'tipo': 'media',
+        'nodo_focale_id': 'potenza_numeri',
+        'nodo_focale_nome': 'Potenza di un numero relativo',
+        'durata_effettiva_min': 25,
+        'nodi_lavorati': ['potenza_numeri', 'espressioni_algebriche'],
+        'created_at': '2026-02-19T10:00:00+00:00',
+        'completed_at': '2026-02-19T10:25:00+00:00',
+      };
+      final s = SessioneListItem.fromJson(json);
+      expect(s.id, 'sess-uuid-456');
+      expect(s.stato, 'completata');
+      expect(s.tipo, 'media');
+      expect(s.nodoFocaleId, 'potenza_numeri');
+      expect(s.nodoFocaleNome, 'Potenza di un numero relativo');
+      expect(s.durataEffettivaMin, 25);
+      expect(s.nodiLavorati, hasLength(2));
+      expect(s.createdAt, '2026-02-19T10:00:00+00:00');
+      expect(s.completedAt, '2026-02-19T10:25:00+00:00');
+
+      final back = s.toJson();
+      expect(back['nodo_focale_id'], 'potenza_numeri');
+      expect(back['durata_effettiva_min'], 25);
+      expect(back['created_at'], '2026-02-19T10:00:00+00:00');
+    });
+
+    test('fromJson minimal', () {
+      final s = SessioneListItem.fromJson({
+        'id': 'x',
+        'stato': 'attiva',
+      });
+      expect(s.tipo, isNull);
+      expect(s.nodoFocaleId, isNull);
+      expect(s.nodoFocaleNome, isNull);
+      expect(s.durataEffettivaMin, isNull);
+      expect(s.nodiLavorati, isNull);
+      expect(s.createdAt, isNull);
+      expect(s.completedAt, isNull);
+    });
+
+    test('fromJson sospesa without completed_at', () {
+      final json = {
+        'id': 'sess-uuid-789',
+        'stato': 'sospesa',
+        'tipo': 'media',
+        'nodo_focale_id': 'equazioni_primo_grado',
+        'nodo_focale_nome': 'Equazioni di primo grado',
+        'durata_effettiva_min': 10,
+        'nodi_lavorati': ['equazioni_primo_grado'],
+        'created_at': '2026-02-19T14:00:00+00:00',
+        'completed_at': null,
+      };
+      final s = SessioneListItem.fromJson(json);
+      expect(s.stato, 'sospesa');
+      expect(s.completedAt, isNull);
+      expect(s.durataEffettivaMin, 10);
+    });
+  });
 }

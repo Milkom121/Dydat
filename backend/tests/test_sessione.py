@@ -28,6 +28,7 @@ from app.core.sessione import (
 from app.schemas.sessione import (
     IniziaSessioneRequest,
     SessioneConflittoResponse,
+    SessioneListItemResponse,
     SessioneResponse,
     TurnoRequest,
 )
@@ -489,3 +490,119 @@ class TestFlussoSessioneE2E:
         stato = sessione.stato_orchestratore
         assert stato["nodo_focale_id"] is None
         assert stato["attivita_corrente"] is None
+
+
+# ===================================================================
+# Test: SessioneListItemResponse schema
+# ===================================================================
+
+
+class TestSessioneListItemSchema:
+    def test_list_item_minimal(self):
+        sid = uuid.uuid4()
+        resp = SessioneListItemResponse(
+            id=sid,
+            stato="completata",
+        )
+        data = resp.model_dump(mode="json")
+        assert data["id"] == str(sid)
+        assert data["stato"] == "completata"
+        assert data["created_at"] is None
+        assert data["completed_at"] is None
+
+    def test_list_item_full(self):
+        sid = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        resp = SessioneListItemResponse(
+            id=sid,
+            stato="completata",
+            tipo="media",
+            nodo_focale_id="nodo_1",
+            nodo_focale_nome="Primo Nodo",
+            durata_effettiva_min=25,
+            nodi_lavorati=["nodo_1", "nodo_2"],
+            created_at=now,
+            completed_at=now,
+        )
+        data = resp.model_dump(mode="json")
+        assert data["id"] == str(sid)
+        assert data["tipo"] == "media"
+        assert data["nodo_focale_nome"] == "Primo Nodo"
+        assert data["durata_effettiva_min"] == 25
+        assert len(data["nodi_lavorati"]) == 2
+        assert data["created_at"] is not None
+        assert data["completed_at"] is not None
+
+    def test_list_item_json_roundtrip(self):
+        sid = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        resp = SessioneListItemResponse(
+            id=sid,
+            stato="sospesa",
+            tipo="media",
+            nodo_focale_id="nodo_A",
+            nodo_focale_nome="Nodo A",
+            durata_effettiva_min=10,
+            nodi_lavorati=["nodo_A"],
+            created_at=now,
+            completed_at=None,
+        )
+        data = resp.model_dump(mode="json")
+        serialized = json.dumps(data)
+        parsed = json.loads(serialized)
+        assert parsed["id"] == str(sid)
+        assert parsed["stato"] == "sospesa"
+        assert parsed["completed_at"] is None
+
+
+# ===================================================================
+# Test: _sessione_to_list_item helper
+# ===================================================================
+
+
+class TestSessioneToListItem:
+    def test_converts_mock_sessione(self):
+        from app.api.sessione import _sessione_to_list_item
+
+        now = datetime.now(timezone.utc)
+        sess = _mock_sessione(
+            stato="completata",
+            tipo="media",
+            stato_orchestratore={"nodo_focale_id": None},
+            nodi_lavorati=["nodo_1"],
+            durata_effettiva_min=15,
+            completed_at=now,
+        )
+        sess.created_at = now - timedelta(minutes=15)
+
+        data = _sessione_to_list_item(sess)
+        assert data["stato"] == "completata"
+        assert data["durata_effettiva_min"] == 15
+        assert data["nodi_lavorati"] == ["nodo_1"]
+        assert data["completed_at"] is not None
+
+    def test_list_item_with_nodo_nome(self):
+        from app.api.sessione import _sessione_to_list_item
+
+        sess = _mock_sessione(
+            stato="completata",
+            stato_orchestratore={"nodo_focale_id": "test_nodo"},
+        )
+        sess.created_at = datetime.now(timezone.utc)
+
+        # Without grafo loaded, nodo_nome will be None
+        data = _sessione_to_list_item(sess)
+        assert data["nodo_focale_id"] == "test_nodo"
+
+    def test_list_item_no_orchestratore(self):
+        from app.api.sessione import _sessione_to_list_item
+
+        sess = _mock_sessione(
+            stato="attiva",
+            stato_orchestratore=None,
+        )
+        sess.created_at = datetime.now(timezone.utc)
+
+        data = _sessione_to_list_item(sess)
+        assert data["nodo_focale_id"] is None
+        assert data["nodo_focale_nome"] is None

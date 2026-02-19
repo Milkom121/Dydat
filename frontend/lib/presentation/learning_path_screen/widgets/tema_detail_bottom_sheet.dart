@@ -196,10 +196,7 @@ class _TemaDetailBottomSheetState
       separatorBuilder: (context, index) => SizedBox(height: 1.5.h),
       itemBuilder: (context, index) {
         final node = nodi[index];
-        // A node is "completed" if its level is operativo or higher
-        final isCompleted = node.livello == 'operativo' ||
-            node.livello == 'comprensivo' ||
-            node.livello == 'connesso';
+        final nodeState = _getNodeState(node.livello);
 
         return Row(
           children: [
@@ -207,32 +204,53 @@ class _TemaDetailBottomSheetState
               width: 6.w,
               height: 6.w,
               decoration: BoxDecoration(
-                color: isCompleted
-                    ? const Color(0xFF7EBF8E).withValues(alpha: 0.2)
-                    : theme.colorScheme.outline.withValues(alpha: 0.1),
+                color: _nodeCircleColor(theme, nodeState),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: CustomIconWidget(
-                  iconName: isCompleted ? 'check' : 'radio_button_unchecked',
-                  color: isCompleted
-                      ? const Color(0xFF7EBF8E)
-                      : theme.colorScheme.onSurfaceVariant,
+                  iconName: _nodeIcon(nodeState),
+                  color: _nodeIconColor(theme, nodeState),
                   size: 4.w,
                 ),
               ),
             ),
             SizedBox(width: 3.w),
             Expanded(
-              child: Text(
-                node.nome,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isCompleted
-                      ? theme.colorScheme.onSurface
-                      : theme.colorScheme.onSurfaceVariant,
-                  decoration:
-                      isCompleted ? TextDecoration.lineThrough : null,
-                ),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      node.nome,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: nodeState == _NodeState.nonIniziato
+                            ? theme.colorScheme.onSurfaceVariant
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  if (node.presunto) ...[
+                    SizedBox(width: 2.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 1.5.w,
+                        vertical: 0.3.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.tertiary
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'presunto',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.tertiary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
@@ -240,4 +258,52 @@ class _TemaDetailBottomSheetState
       },
     );
   }
+
+  _NodeState _getNodeState(String livello) {
+    switch (livello) {
+      case 'in_corso':
+        return _NodeState.inCorso;
+      case 'operativo':
+      case 'comprensivo':
+      case 'connesso':
+        return _NodeState.completato;
+      default:
+        return _NodeState.nonIniziato;
+    }
+  }
+
+  Color _nodeCircleColor(ThemeData theme, _NodeState state) {
+    switch (state) {
+      case _NodeState.nonIniziato:
+        return theme.colorScheme.outline.withValues(alpha: 0.1);
+      case _NodeState.inCorso:
+        return theme.colorScheme.primary.withValues(alpha: 0.15);
+      case _NodeState.completato:
+        return theme.colorScheme.secondary.withValues(alpha: 0.2);
+    }
+  }
+
+  Color _nodeIconColor(ThemeData theme, _NodeState state) {
+    switch (state) {
+      case _NodeState.nonIniziato:
+        return theme.colorScheme.outline;
+      case _NodeState.inCorso:
+        return theme.colorScheme.primary;
+      case _NodeState.completato:
+        return theme.colorScheme.secondary;
+    }
+  }
+
+  String _nodeIcon(_NodeState state) {
+    switch (state) {
+      case _NodeState.nonIniziato:
+        return 'radio_button_unchecked';
+      case _NodeState.inCorso:
+        return 'timelapse';
+      case _NodeState.completato:
+        return 'check_circle';
+    }
+  }
 }
+
+enum _NodeState { nonIniziato, inCorso, completato }

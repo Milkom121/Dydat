@@ -78,3 +78,31 @@ AzioneEvent _$AzioneEventFromJson(Map<String, dynamic> json) => AzioneEvent(
 
 Map<String, dynamic> _$AzioneEventToJson(AzioneEvent instance) =>
     <String, dynamic>{'tipo': instance.tipo, 'params': instance.params};
+
+SessioneListItem _$SessioneListItemFromJson(Map<String, dynamic> json) =>
+    SessioneListItem(
+      id: json['id'] as String,
+      stato: json['stato'] as String,
+      tipo: json['tipo'] as String?,
+      nodoFocaleId: json['nodo_focale_id'] as String?,
+      nodoFocaleNome: json['nodo_focale_nome'] as String?,
+      durataEffettivaMin: (json['durata_effettiva_min'] as num?)?.toInt(),
+      nodiLavorati: (json['nodi_lavorati'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      createdAt: json['created_at'] as String?,
+      completedAt: json['completed_at'] as String?,
+    );
+
+Map<String, dynamic> _$SessioneListItemToJson(SessioneListItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'stato': instance.stato,
+      'tipo': instance.tipo,
+      'nodo_focale_id': instance.nodoFocaleId,
+      'nodo_focale_nome': instance.nodoFocaleNome,
+      'durata_effettiva_min': instance.durataEffettivaMin,
+      'nodi_lavorati': instance.nodiLavorati,
+      'created_at': instance.createdAt,
+      'completed_at': instance.completedAt,
+    };

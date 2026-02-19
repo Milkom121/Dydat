@@ -5,11 +5,11 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-19
-**Ultima sessione**: S13 (B17 — LaTeX Rendering) — COMPLETATA
-**Branch attivo**: feature/frontend-b17 (contiene B17)
+**Ultima sessione**: S14 (B18 — Node Progression + History Backend) — COMPLETATA
+**Branch attivo**: feature/frontend-b18 (contiene B17+B18)
 **Loop 2 COMPLETATO**: tutti i 6 blocchi B11-B16 implementati e testati E2E con SSE reale.
-**Loop 3 IN CORSO**: B17 DONE, B18-B21 TODO.
-**Prossima sessione**: S14 — B18 (Node Progression + History Backend)
+**Loop 3 IN CORSO**: B17-B18 DONE, B19-B21 TODO.
+**Prossima sessione**: S15 — B19 (Session History Frontend + Recap Improvements)
 
 ## Blocchi Completati
 
@@ -315,12 +315,46 @@ Estendere l'onboarding da 3 fasi a 5 fasi: accoglienza → conoscenza → **plac
 - **Fallback on error**: `Math.tex()` con `onErrorFallback` → monospace italic, mai crash
 - **Fast path**: se nessun `$` nel testo, `LatexText` delega direttamente a `MarkdownText` (zero overhead)
 
+## Risultati S14 (B18 — Node Progression + History Backend)
+
+### Backend — GET /sessione/ list endpoint
+- `app/api/sessione.py` — Aggiunta route `GET /sessione/` con paginazione (limit/offset), esclude sessioni onboarding, ordina per `created_at` DESC
+- `app/schemas/sessione.py` — Aggiunto `SessioneListItemResponse` con `created_at` e `completed_at`
+- `app/api/sessione.py` — Aggiunto helper `_sessione_to_list_item()` per conversione lightweight
+- `tests/test_sessione.py` — 6 nuovi test (3 schema `SessioneListItemResponse` + 3 helper `_sessione_to_list_item`)
+
+### Frontend — 3 stati nodo nel bottom sheet
+- `tema_detail_bottom_sheet.dart` — Riscritto `_buildNodesList()`:
+  - 3 stati: `non_iniziato` (outline + radio_button_unchecked), `in_corso` (primary + timelapse), `completato` (secondary + check_circle)
+  - Rimosso 3x `Color(0xFF7EBF8E)` hardcoded → `theme.colorScheme.secondary`
+  - Rimosso `TextDecoration.lineThrough` sui nodi completati
+  - Aggiunto badge "presunto" per nodi assunti dall'onboarding (tertiary chip)
+  - Enum `_NodeState` + helper methods per colori/icone tema-based
+
+### Frontend — SessioneListItem model
+- `lib/models/sessione.dart` — Aggiunto `SessioneListItem` con `createdAt`, `completedAt`, `durataEffettivaMin`, `nodiLavorati`
+- `sessione.g.dart` — Rigenerato con build_runner
+- `test/models/sessione_test.dart` — 3 nuovi test (full roundtrip, minimal, sospesa senza completed_at)
+
+### Git
+- Main locale resettato a `origin/main` (commit locale superseded dai PR mergiati)
+- Branch `feature/frontend-b18` creato da `feature/frontend-b17`
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- Frontend: 184 passed, 4 failed (pre-esistenti: 3 path_service + 1 session_service.start mock — invariati)
+- Backend: 31 passed, 4 failed (pre-esistenti: TestCalcoloInattivita signature mismatch — invariati)
+- 3 nuovi test frontend SessioneListItem — tutti verdi
+- 6 nuovi test backend SessioneListItem/helper — tutti verdi
+
 ## Loop 3 — Piano (B17-B21)
 
 | Blocco | Contenuto | Stato | Sessione |
 |--------|-----------|-------|----------|
 | B17 — LaTeX Rendering | `flutter_math_fork`, FormulaCard, LatexText widget, inline math | DONE | S13 |
-| B18 — Node Progression + History Backend | 3 stati nodo, fix hardcoded colors, `GET /sessione/` backend | TODO | S14 |
+| B18 — Node Progression + History Backend | 3 stati nodo, fix hardcoded colors, `GET /sessione/` backend | DONE | S14 |
 | B19 — History Frontend + Recap | SessionHistoryWidget nella home, card "Tema completato" nel recap | TODO | S15 |
 | B20 — Celebrations + Esito SSE | Particle burst (primo_tentativo), glow (con_guida), `esito_esercizio` SSE | TODO | S16 |
 | B21 — E2E Loop 3 + Polish | Test completo, fix hardcoded colors residui, bug fix | TODO | S17 |
@@ -346,9 +380,9 @@ Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
 - **Docker**: lanciare SEMPRE da `backend/`, MAI dal worktree `nostalgic-hertz`. Verificare con `docker ps` che il container si chiami `backend-backend-1`
 - `flutter_markdown` e marcato come "discontinued replaced by flutter_markdown_plus" — monitorare per eventuale migrazione futura
 - **4 test pre-esistenti falliti** in `test_sessione.py`: `TestCalcoloInattivita` — signature mismatch di `_calcola_inattivita()`. NON causati da onboarding continuo
-- **FormulaCard mostra LaTeX raw** — necessita renderer LaTeX in Loop 3
-- **Manca storico sessioni nella home** — necessita endpoint backend `GET /sessione/` (lista sessioni)
-- **Recap non distingue completamento argomento** — miglioramento UX futuro
+- ~~**FormulaCard mostra LaTeX raw**~~ — RISOLTO in B17 con `flutter_math_fork`
+- ~~**Manca storico sessioni nella home**~~ — Backend `GET /sessione/` implementato in B18, frontend in B19
+- **Recap non distingue completamento argomento** — miglioramento UX in B19
 
 ## Cosa Esiste Gia
 
@@ -429,3 +463,8 @@ Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
 | 2026-02-19 | Messaggio "Bentornato!" per sessioni riprese (409) | Canvas vuoto dopo 409 — ora mostra messaggio di benvenuto con nome nodo |
 | 2026-02-19 | Flag `_handling409` per race condition 409 | `onDone` dello SSE stream azzerava stato prima che fallback REST completasse |
 | 2026-02-19 | FormulaCard mostra LaTeX raw — fix rimandato a Loop 3 | Rendering LaTeX richiede pacchetto dedicato, non fix cosmetico temporaneo |
+| 2026-02-19 | 3 stati nodo con enum `_NodeState` | Separa logica (livello→stato) dalla UI (colore/icona), zero colori hardcoded |
+| 2026-02-19 | Badge "presunto" per nodi onboarding | Chip tertiary per distinguere nodi assunti da nodi verificati |
+| 2026-02-19 | `GET /sessione/` esclude onboarding | `tipo != "onboarding"` nel filtro — utente non deve vedere sessioni onboarding nello storico |
+| 2026-02-19 | `SessioneListItem` con timestamps stringa | ISO 8601 come stringhe nel Dart model — parsing in DateTime delegato alla UI |
+| 2026-02-19 | Branch B18 da B17 (non da main) | Main non ha B11-B17 mergiati — branch incrementale necessario |

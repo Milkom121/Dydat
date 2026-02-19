@@ -17,6 +17,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 from sse_starlette.sse import EventSourceResponse
 
+from sqlalchemy import select
+
 from app.api.deps import get_utente_corrente
 from app.core.sessione import (
     SessioneConflitto,
@@ -28,10 +30,11 @@ from app.core.sessione import (
 from app.core.turno import esegui_turno
 from app.core.gamification import aggiorna_statistiche_giornaliere, verifica_achievement
 from app.db.engine import get_db
-from app.db.models.utenti import Utente
+from app.db.models.utenti import Sessione as SessioneModel, Utente
 from app.schemas.sessione import (
     IniziaSessioneRequest,
     SessioneConflittoResponse,
+    SessioneListItemResponse,
     SessioneResponse,
     TurnoRequest,
 )
@@ -242,6 +245,38 @@ async def api_termina_sessione(
 
 
 # ===================================================================
+# GET /sessione/ → lista sessioni utente
+# ===================================================================
+
+
+@router.get("/")
+async def api_list_sessioni(
+    limit: int = 20,
+    offset: int = 0,
+    utente: Utente = Depends(get_utente_corrente),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lista sessioni dell'utente, ordinate per data creazione (più recente prima).
+
+    Esclude sessioni di onboarding. Paginata con limit/offset.
+    """
+    query = (
+        select(SessioneModel)
+        .where(
+            SessioneModel.utente_id == utente.id,
+            SessioneModel.tipo != "onboarding",
+        )
+        .order_by(SessioneModel.created_at.desc())
+        .limit(min(limit, 50))
+        .offset(offset)
+    )
+    result = await db.execute(query)
+    sessioni = result.scalars().all()
+
+    return [_sessione_to_list_item(s) for s in sessioni]
+
+
+# ===================================================================
 # GET /sessione/{id}
 # ===================================================================
 
@@ -262,6 +297,30 @@ async def api_get_sessione(
 # ===================================================================
 # Helper
 # ===================================================================
+
+
+def _sessione_to_list_item(sessione) -> dict:
+    """Converte Sessione ORM → dict di lista (lightweight)."""
+    stato_orch = sessione.stato_orchestratore or {}
+    nodo_id = stato_orch.get("nodo_focale_id")
+
+    nodo_nome = None
+    if nodo_id:
+        from app.grafo.struttura import grafo_knowledge
+        if grafo_knowledge.caricato and nodo_id in grafo_knowledge.grafo.nodes:
+            nodo_nome = grafo_knowledge.grafo.nodes[nodo_id].get("nome", nodo_id)
+
+    return SessioneListItemResponse(
+        id=sessione.id,
+        stato=sessione.stato,
+        tipo=sessione.tipo,
+        nodo_focale_id=nodo_id,
+        nodo_focale_nome=nodo_nome,
+        durata_effettiva_min=sessione.durata_effettiva_min,
+        nodi_lavorati=sessione.nodi_lavorati,
+        created_at=sessione.created_at,
+        completed_at=sessione.completed_at,
+    ).model_dump(mode="json")
 
 
 def _sessione_to_response(sessione) -> dict:

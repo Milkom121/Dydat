@@ -96,13 +96,13 @@ Tutti i 6 blocchi (B11-B16) completati. Flusso E2E completo con SSE reale senza 
 | Blocco | Contenuto | Stato | Sessione |
 |---|---|---|---|
 | 17 | LaTeX rendering (FormulaCard + inline tutor messages) | DONE | S13 |
-| 18 | Node progression visibility + Session history backend | TODO | S14 |
+| 18 | Node progression visibility + Session history backend | DONE | S14 |
 | 19 | Session history frontend + Recap improvements | TODO | S15 |
 | 20 | Celebration animations + esito SSE backend | TODO | S16 |
 | 21 | Test E2E Loop 3 + Polish | TODO | S17 |
 
 ### Prossima sessione
-**S14 — B18**: Node progression visibility + Session history backend. 3 stati nodo visibili, `GET /sessione/` backend, modello `SessioneListItem`.
+**S15 — B19**: Session history frontend + Recap improvements. `SessionHistoryWidget` nella home, `listSessions()` nel service/provider, card "Tema completato" nel recap.
 
 ## Pipeline Sessioni
 
