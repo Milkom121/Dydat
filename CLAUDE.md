@@ -38,10 +38,16 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 - `flutter analyze` → 0 errori
 - `sizer` sostituito con `lib/core/sizer_extensions.dart` custom (compatibile Flutter 3.41)
 
-### Fase attuale: Loop 2 — SSE Streaming
-- **Obiettivo**: streaming reale delle risposte tutor, azioni nel canvas, onboarding reale
-- **Blocchi**: B11-B16 (6 sessioni, S7-S12)
-- **NON implementiamo ora**: LaTeX rendering, animazioni celebrative, mascotte animata — rimandati a Loop 3
+### Loop 2 completato (B11-B16)
+- SSE streaming reale: text_delta, azioni tutor, achievement, turno_completo
+- Onboarding reale con AI (5 fasi: accoglienza, conoscenza, placement, piano, conclusione)
+- Recap sessione + app lifecycle (sospensione/ripresa)
+- Test E2E Loop 2 superato con SSE reale su emulatore Android
+
+### Fase attuale: Loop 3 — UX Polish + LaTeX + Storico
+- **Obiettivo**: formule LaTeX renderizzate, storico sessioni, celebrazioni animate, progressione nodi visibile
+- **Blocchi**: B17-B21 (5 sessioni, S13-S17)
+- **NON implementiamo ora**: mascotte "Creatura di Luce" (mancano asset design), beat-aware canvas styling — rimandati a Loop 4
 
 ### Stack Frontend (HARD CONSTRAINT)
 | Componente | Scelta |
@@ -85,8 +91,18 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 ### Loop 2 COMPLETATO
 Tutti i 6 blocchi (B11-B16) completati. Flusso E2E completo con SSE reale senza crash verificato manualmente su emulatore Android. Bug fix: 409 handling race condition nel session_provider.
 
+## Roadmap Frontend — Loop 3 (B17-B21) — UX Polish + LaTeX + Storico
+
+| Blocco | Contenuto | Stato | Sessione |
+|---|---|---|---|
+| 17 | LaTeX rendering (FormulaCard + inline tutor messages) | DONE | S13 |
+| 18 | Node progression visibility + Session history backend | TODO | S14 |
+| 19 | Session history frontend + Recap improvements | TODO | S15 |
+| 20 | Celebration animations + esito SSE backend | TODO | S16 |
+| 21 | Test E2E Loop 3 + Polish | TODO | S17 |
+
 ### Prossima sessione
-**Loop 3** — Da pianificare. Candidati: LaTeX rendering, animazioni celebrative, mascotte animata, storico sessioni nella home, completamento argomento nel recap.
+**S14 — B18**: Node progression visibility + Session history backend. 3 stati nodo visibili, `GET /sessione/` backend, modello `SessioneListItem`.
 
 ## Pipeline Sessioni
 
@@ -109,6 +125,15 @@ Tutti i 6 blocchi (B11-B16) completati. Flusso E2E completo con SSE reale senza 
 | S10 | B14 | Onboarding completo con tutor AI + registrazione conversione | `feature/frontend-onboarding` |
 | S11 | B15 | Recap post-sessione + sospensione in background | `feature/frontend-recap-lifecycle` |
 | S12 | B16 | Flusso completo con SSE reale senza crash | `feature/frontend-b1-b2` (consolidato) |
+
+### Loop 3 (UX Polish + LaTeX + Storico)
+| Sessione | Blocchi | Gate di uscita | Branch |
+|----------|---------|----------------|--------|
+| S13 | B17 | LaTeX renderizza + inline funziona + unit test | `feature/frontend-b17` |
+| S14 | B18 | 3 stati nodo + backend GET /sessione/ | `feature/frontend-b18` |
+| S15 | B19 | Storico sessioni nella home + recap tema completato | `feature/frontend-b19` |
+| S16 | B20 | Celebrazioni burst/glow + esito SSE backend | `feature/frontend-b20` |
+| S17 | B21 | Flusso E2E Loop 3 completo senza crash | `feature/frontend-b21` |
 
 **Regola**: ogni sessione crea branch da main, PR a fine sessione dopo test verdi.
 
@@ -219,7 +244,7 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 - **NON committare** senza autorizzazione esplicita del fondatore
 - **NON pushare** senza autorizzazione esplicita del fondatore
 - **NON modificare il backend** senza autorizzazione del fondatore (eccezioni: CORS, nuovi tool LLM per feature approvate)
-- **NON implementare** LaTeX rendering, animazioni celebrative (particelle/glow), mascotte animata — rimandati a Loop 3
+- **NON implementare** mascotte "Creatura di Luce" (manca design), beat-aware canvas styling — rimandati a Loop 4
 - **NON toccare** app_theme.dart, widget esistenti (salvo ricablarli su provider)
 - Ogni widget nuovo usa `Theme.of(context)` — zero colori hardcoded
 - JSON snake_case → Dart camelCase nei fromJson
@@ -237,6 +262,10 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 | Unit test SSE parser | B11 | Stream mockato con tutti i tipi evento |
 | SSE streaming manuale | B12+ | Testo tutor in tempo reale |
 | Integration test Loop 2 | B16 | Flusso E2E con SSE reale |
+| Unit test LaTeX parsing | B17 | Delimitatori $...$ e $$...$$ |
+| Unit test SessioneListItem | B19 | fromJson roundtrip |
+| Unit test EsitoEsercizio | B20 | SSE event parsing |
+| Integration test Loop 3 | B21 | Flusso E2E con LaTeX + storico + celebrazioni |
 
 ## Log Decisioni
 
@@ -259,3 +288,9 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 | 2026-02-19 | Flag `_handling409` per race condition 409 | `onDone` del SSE stream azzerava stato prima che il fallback REST completasse |
 | 2026-02-19 | FormulaCard mostra LaTeX raw — fix in Loop 3 | Rendering LaTeX richiede pacchetto dedicato, non fix cosmetico temporaneo |
 | 2026-02-19 | Loop 2 completato — tutti i 6 blocchi B11-B16 | E2E manuale su emulatore: streaming, azioni, lifecycle, 409, recap tutti verificati |
+| 2026-02-19 | Loop 3 pianificato — 5 blocchi B17-B21 | LaTeX, storico sessioni, node progression, recap improvements, celebrazioni |
+| 2026-02-19 | Mascotte deferita a Loop 4 | Mancano asset di design (SVG/Rive), il placeholder circolare resta |
+| 2026-02-19 | Backend modifiche autorizzate per Loop 3 | GET /sessione/ (list) + esito_esercizio SSE event |
+| 2026-02-19 | flutter_math_fork per LaTeX rendering | Non WebView, rendering nativo Flutter |
+| 2026-02-19 | LatexText widget per inline math | Parsa $...$ e $$...$$, fallback su MarkdownText per plain text, fallback monospace per LaTeX malformato |
+| 2026-02-19 | Streaming bubble resta MarkdownText | Delimitatori $ possono arrivare split durante SSE streaming |

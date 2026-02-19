@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
 import 'package:intl/intl.dart';
 
+import '../../../widgets/latex_text.dart';
 import '../../../widgets/markdown_text.dart';
 
 class TutorMessageWidget extends StatefulWidget {
@@ -136,10 +137,17 @@ class _TutorMessageWidgetState extends State<TutorMessageWidget>
                               height: 1.55,
                             ),
                           )
-                        : MarkdownText(
-                            data: _displayedText,
-                            textColor: widget.theme.colorScheme.onSurface,
-                          ),
+                        : widget.message['isStreaming'] == true
+                            ? MarkdownText(
+                                data: _displayedText,
+                                textColor:
+                                    widget.theme.colorScheme.onSurface,
+                              )
+                            : LatexText(
+                                data: _displayedText,
+                                textColor:
+                                    widget.theme.colorScheme.onSurface,
+                              ),
                   ),
                   SizedBox(height: 0.5.h),
                   Text(

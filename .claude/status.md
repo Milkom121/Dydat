@@ -5,10 +5,11 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-19
-**Ultima sessione**: S12 (Test E2E Loop 2) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B16 + B14-bis/ter + onboarding continuo backend)
+**Ultima sessione**: S13 (B17 — LaTeX Rendering) — COMPLETATA
+**Branch attivo**: feature/frontend-b17 (contiene B17)
 **Loop 2 COMPLETATO**: tutti i 6 blocchi B11-B16 implementati e testati E2E con SSE reale.
-**Prossima sessione**: Loop 3 — Da pianificare. Candidati: LaTeX rendering, animazioni celebrative, mascotte animata, storico sessioni nella home, completamento argomento nel recap.
+**Loop 3 IN CORSO**: B17 DONE, B18-B21 TODO.
+**Prossima sessione**: S14 — B18 (Node Progression + History Backend)
 
 ## Blocchi Completati
 
@@ -282,6 +283,59 @@ Estendere l'onboarding da 3 fasi a 5 fasi: accoglienza → conoscenza → **plac
 
 ### Analisi statica finale
 - `flutter analyze` → 0 errori, 0 warning
+
+## Risultati S13 (B17 — LaTeX Rendering)
+
+### File creati
+- `lib/widgets/latex_text.dart` — Widget che parsa `$...$` (inline) e `$$...$$` (block) LaTeX, renderizza con `Math.tex()` da `flutter_math_fork`, plain text via `MarkdownText`, fallback monospace per LaTeX malformato
+- `test/widgets/latex_text_test.dart` — 18 unit test per il parser LaTeX (delimitatori, edge case, formule reali)
+
+### File modificati
+- `pubspec.yaml` — Aggiunto `flutter_math_fork: ^0.7.4`
+- `formula_card_widget.dart` — `Text(formula.latex)` → `Math.tex(formula.latex)` con `onErrorFallback`
+- `tutor_message_widget.dart` — Messaggi tutor finalizzati usano `LatexText`, streaming resta `MarkdownText`
+- `message_bubble_widget.dart` (onboarding) — Messaggi tutor usano `LatexText`
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- 181 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock — invariati)
+- 18 nuovi test LaTeX parser — tutti verdi
+
+### Test manuale superato (emulatore Android)
+1. FormulaCard con `A = πr²` — renderizzata graficamente (non raw LaTeX) — OK
+2. FormulaCard con formula quadratica `x = (-b ± √(b²-4ac)) / 2a` — frazioni e radice renderizzati — OK
+3. Messaggi tutor senza delimitatori LaTeX — markdown normale, nessun artefatto — OK
+4. Streaming bubble — testo markdown, nessun glitch — OK
+
+### Design chiave
+- **Streaming resta MarkdownText**: durante SSE, `$` può arrivare split tra chunk → MarkdownText evita parsing incompleto
+- **Finalized usa LatexText**: messaggio completo → parser ha tutti i delimitatori
+- **Fallback on error**: `Math.tex()` con `onErrorFallback` → monospace italic, mai crash
+- **Fast path**: se nessun `$` nel testo, `LatexText` delega direttamente a `MarkdownText` (zero overhead)
+
+## Loop 3 — Piano (B17-B21)
+
+| Blocco | Contenuto | Stato | Sessione |
+|--------|-----------|-------|----------|
+| B17 — LaTeX Rendering | `flutter_math_fork`, FormulaCard, LatexText widget, inline math | DONE | S13 |
+| B18 — Node Progression + History Backend | 3 stati nodo, fix hardcoded colors, `GET /sessione/` backend | TODO | S14 |
+| B19 — History Frontend + Recap | SessionHistoryWidget nella home, card "Tema completato" nel recap | TODO | S15 |
+| B20 — Celebrations + Esito SSE | Particle burst (primo_tentativo), glow (con_guida), `esito_esercizio` SSE | TODO | S16 |
+| B21 — E2E Loop 3 + Polish | Test completo, fix hardcoded colors residui, bug fix | TODO | S17 |
+
+Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
+
+### Backend modifiche autorizzate (Loop 3)
+1. `GET /sessione/` — list endpoint per storico sessioni (B18)
+2. `esito_esercizio` — nuovo evento SSE con esito esercizio (B20)
+
+### Deferito a Loop 4
+- Mascotte "Creatura di Luce" (servono asset SVG/Rive)
+- Beat-aware canvas styling (shimmer, dimming)
+- Celebrazione promozione nodo (Beat 6)
+- Tools tray funzionale, voice input
 
 ## Problemi Aperti
 

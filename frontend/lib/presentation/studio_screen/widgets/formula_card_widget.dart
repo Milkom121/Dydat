@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/sse_events.dart';
 import '../../../widgets/custom_icon_widget.dart';
@@ -77,13 +78,25 @@ class FormulaCardWidget extends StatelessWidget {
               color: theme.colorScheme.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
+            child: Math.tex(
               formula.latex,
-              style: theme.textTheme.headlineSmall?.copyWith(
+              textStyle: TextStyle(
+                fontSize: theme.textTheme.headlineSmall?.fontSize ?? 24,
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.primary,
               ),
-              textAlign: TextAlign.center,
+              onErrorFallback: (err) {
+                // Fallback: show raw LaTeX as text if malformed
+                return Text(
+                  formula.latex,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary,
+                    fontFamily: 'monospace',
+                  ),
+                  textAlign: TextAlign.center,
+                );
+              },
             ),
           ),
           SizedBox(height: 2.h),

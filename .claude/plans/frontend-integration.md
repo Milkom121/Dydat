@@ -562,13 +562,150 @@ Quando SessionNotifier riceve un evento `achievement`:
 
 ## Cosa NON fa il Loop 2
 
-- **LaTeX rendering** (`flutter_math_fork`) — rimandato a Loop 3. Le formule restano come testo raw.
-- **Animazioni celebrative** (particelle, glow, burst) — rimandato a Loop 3. Feedback basico (toast, colore bordo).
-- **Mascotte animata** (stati emotivi, Rive) — rimandato a Loop 3. Resta il placeholder circolare.
+- ~~**LaTeX rendering** (`flutter_math_fork`)~~ → **FATTO in Loop 3 (B17)**
+- ~~**Animazioni celebrative** (particelle, glow, burst)~~ → **FATTO in Loop 3 (B20)**
+- **Mascotte animata** (stati emotivi, Rive) — rimandato a Loop 4. Servono asset di design.
 - **Spaced Repetition** — il backend ha i campi predisposti ma la logica non e attiva.
 - **Feynman/Connessioni** — livelli `comprensivo` e `connesso` non raggiungibili.
 - **Input voce** — placeholder "Prossimamente".
 - **Calcolatrice nel tools tray** — placeholder.
+
+---
+---
+
+# LOOP 3 — UX Polish + LaTeX + Storico Sessioni + Celebrazioni
+
+> Il Loop 2 (B11-B16) ha portato l'app a funzionare con SSE reale.
+> Il Loop 3 porta l'app da "funzionante" a "raffinata": formule matematiche renderizzate,
+> storico sessioni nella home, progressione nodi visibile, celebrazioni animate.
+
+## Cosa esiste gia (da Loop 2)
+
+- `FormulaCardWidget` mostra LaTeX come testo raw — serve rendering
+- `MascotteWidget` ha scale+pulse animation — resta placeholder circolare
+- `AchievementToast` con slide-in/fade animation — completo
+- `ExerciseCardWidget` con campo input e verifica — ha colori hardcoded da fixare
+- `TemaDetailBottomSheet` mostra nodi con check binario — serve 3 stati
+- `RecapSessionScreen` mostra dati reali — manca rilevamento tema completato
+- `MarkdownText` widget per rendering markdown — base per LatexText
+- Nessuno storico sessioni nella home
+- Backend non ha `GET /sessione/` (list) ne espone `esito` esercizio
+
+## Cosa va costruito
+
+| # | Componente | Descrizione |
+|---|---|---|
+| 1 | **LaTeX Rendering** | `flutter_math_fork` in FormulaCard + `LatexText` widget per inline math |
+| 2 | **Node Progression** | 3 stati nodo nel bottom sheet (non_iniziato/in_corso/operativo+) |
+| 3 | **Session History Backend** | `GET /sessione/` endpoint per listare sessioni passate |
+| 4 | **Session History Frontend** | `SessionHistoryWidget` nella home con card sessioni |
+| 5 | **Recap Improvements** | Rilevamento e card "Tema completato" nel recap |
+| 6 | **Celebration Animations** | Particelle (primo_tentativo) e glow (con_guida) + `esito_esercizio` SSE |
+
+---
+
+## Blocchi Loop 3
+
+### Blocco 17 — LaTeX Rendering
+**Dipende da**: Loop 2 completo
+**File da creare**:
+- `lib/widgets/latex_text.dart` — Widget che parsa `$...$` (inline) e `$$...$$` (block), renderizza con `Math.tex()`
+- `test/widgets/latex_text_test.dart` — Unit test parsing delimitatori
+
+**File da modificare**:
+- `pubspec.yaml` — aggiungere `flutter_math_fork: ^0.7.0`
+- `lib/presentation/studio_screen/widgets/formula_card_widget.dart` — `Text()` → `Math.tex()` con fallback
+- `lib/presentation/studio_screen/studio_screen.dart` — `MarkdownText` → `LatexText` nei messaggi finalizzati
+- `lib/presentation/studio_screen/widgets/tutor_message_widget.dart` — `MarkdownText` → `LatexText`
+
+**NOTA**: LaTeX solo nei messaggi finalizzati (dopo `turno_completo`). Streaming bubble resta con `MarkdownText` (delimitatori possono arrivare split tra text_delta).
+
+**Test B17**: FormulaCard renderizza LaTeX + inline funziona + fallback per malformato + unit test parsing.
+
+---
+
+### Blocco 18 — Node Progression + Session History Backend
+**Dipende da**: B17 completato
+
+**18a — Node Progression Visibility**
+- `lib/presentation/learning_path_screen/widgets/tema_detail_bottom_sheet.dart` — 3 stati nodo:
+  - `non_iniziato` → `theme.colorScheme.outline` + `radio_button_unchecked`
+  - `in_corso` → `theme.colorScheme.primary` + `timelapse`
+  - `operativo+` → `theme.colorScheme.secondary` + `check_circle`
+- Rimuovere `TextDecoration.lineThrough`, 3x `Color(0xFF7EBF8E)` hardcoded
+- Badge `presunto` per nodi assunti dall'onboarding
+
+**18b — Session History Backend** (autorizzazione confermata)
+- `backend/app/api/sessione.py` — route `GET /sessione/`
+- `backend/app/schemas/sessione.py` — `SessioneListItemResponse`
+- `backend/tests/test_sessione.py` — 3+ test
+
+**Test B18**: 3 stati nodo visibili + backend list endpoint funzionante.
+
+---
+
+### Blocco 19 — Session History Frontend + Recap Improvements
+**Dipende da**: B18b (endpoint backend)
+
+**19a — Session History Frontend**
+- `lib/models/sessione.dart` — aggiungere `SessioneListItem` con `createdAt`, `completedAt`
+- `lib/services/session_service.dart` — `listSessions()`
+- `lib/providers/session_provider.dart` — `sessionHistory`, `loadSessionHistory()`
+- `lib/presentation/studio_screen/studio_screen.dart` — aggiungere `SessionHistoryWidget` nella home
+- NUOVO: `lib/presentation/studio_screen/widgets/session_history_widget.dart`
+
+**19b — Recap Improvements**
+- `lib/presentation/studio_screen/recap_session_screen.dart` — fetch `GET /temi/`, cross-reference con `nodiLavorati`, card "Tema completato: [nome]!"
+
+**Test B19**: Storico sessioni nella home + tap → recap + card tema completato.
+
+---
+
+### Blocco 20 — Celebration Animations + Esito SSE
+**Dipende da**: B19 completato, autorizzazione backend confermata
+
+**Backend**:
+- `backend/app/core/elaborazione.py` — emettere evento `esito_esercizio` SSE
+- `backend/tests/test_elaborazione.py` — test
+
+**Frontend**:
+- `lib/models/sse_events.dart` — `EsitoEsercizioEvent`
+- `lib/providers/session_provider.dart` — `latestEsito` nello state
+- `lib/presentation/studio_screen/studio_screen.dart` — trigger celebrazione
+- `lib/presentation/studio_screen/widgets/exercise_card_widget.dart` — fix hardcoded colors
+- NUOVO: `lib/presentation/studio_screen/widgets/celebration_overlay.dart` — particelle (burst) e glow
+
+**Test B20**: Celebrazione burst su primo_tentativo + glow su con_guida + haptic.
+
+---
+
+### Blocco 21 — Test E2E Loop 3 + Polish
+**Dipende da**: B17-B20
+
+**Test E2E**: LaTeX, storico, node progression, recap tema, celebrazioni, lifecycle, 409.
+- Fix hardcoded color residui (mascotte_widget.dart linea 103)
+- `flutter analyze` 0 errori + `flutter test` tutti verdi
+
+---
+
+## Pipeline Sessioni Loop 3
+
+| Sessione | Blocchi | Gate di uscita | Branch |
+|----------|---------|----------------|--------|
+| **S13** | B17 | LaTeX renderizza + inline + unit test + fallback | `feature/frontend-b17` |
+| **S14** | B18 | 3 stati nodo + backend GET /sessione/ + pytest | `feature/frontend-b18` |
+| **S15** | B19 | Storico nella home + recap tema completato | `feature/frontend-b19` |
+| **S16** | B20 | Celebrazioni + esito SSE + haptic | `feature/frontend-b20` |
+| **S17** | B21 | E2E completo senza crash + 0 errori | `feature/frontend-b21` |
+
+## Cosa NON fa il Loop 3
+
+- **Mascotte "Creatura di Luce"** — servono asset di design (SVG/Rive). Il placeholder circolare resta.
+- **Beat-aware canvas styling** (shimmer, background dimming) — alta complessita, dipende dalla mascotte.
+- **Celebrazione promozione nodo** (Beat 6) — serve segnale `promozione` esposto al frontend.
+- **Streak flame animation** — bassa priorita, serve design.
+- **Tools tray funzionale** — placeholders restano.
+- **Voice input** — placeholder resta.
 
 ---
 

@@ -3,7 +3,7 @@ import '../../../core/sizer_extensions.dart';
 
 import '../../../core/app_export.dart';
 import '../../../widgets/custom_icon_widget.dart';
-import '../../../widgets/markdown_text.dart';
+import '../../../widgets/latex_text.dart';
 
 /// Widget that displays a message bubble in the onboarding conversation.
 class MessageBubbleWidget extends StatelessWidget {
@@ -72,7 +72,7 @@ class MessageBubbleWidget extends StatelessWidget {
                       ),
                     )
                   else
-                    MarkdownText(
+                    LatexText(
                       data: text,
                       textColor: theme.colorScheme.onSurface,
                     ),
