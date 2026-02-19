@@ -142,6 +142,7 @@ void main() {
       expect(event.asMostraFormula, isNull);
       expect(event.asSuggerisciBacktrack, isNull);
       expect(event.asChiudiSessione, isNull);
+      expect(event.asOnboardingDomanda, isNull);
     });
 
     test('parses achievement event', () {
@@ -248,6 +249,81 @@ void main() {
 
       final typed = (event as AzioneEvent).asChiudiSessione!;
       expect(typed.prossimiPassi, isNull);
+    });
+  });
+
+  group('AzioneEvent — onboarding_domanda', () {
+    test('parses scelta_singola', () {
+      final event = SseEvent.fromRawEvent(
+        'azione',
+        '{"tipo": "onboarding_domanda", "params": {"tipo_input": "scelta_singola", "domanda": "Chi sei?", "opzioni": ["Studente", "Autodidatta"]}}',
+      );
+
+      expect(event, isA<AzioneEvent>());
+      final e = event as AzioneEvent;
+      expect(e.tipo, 'onboarding_domanda');
+
+      final typed = e.asOnboardingDomanda;
+      expect(typed, isNotNull);
+      expect(typed!.tipoInput, 'scelta_singola');
+      expect(typed.domanda, 'Chi sei?');
+      expect(typed.opzioni, ['Studente', 'Autodidatta']);
+    });
+
+    test('parses testo_libero with placeholder', () {
+      final event = SseEvent.fromRawEvent(
+        'azione',
+        '{"tipo": "onboarding_domanda", "params": {"tipo_input": "testo_libero", "domanda": "Cosa vuoi imparare?", "placeholder": "Es: derivate"}}',
+      );
+
+      final typed = (event as AzioneEvent).asOnboardingDomanda!;
+      expect(typed.tipoInput, 'testo_libero');
+      expect(typed.domanda, 'Cosa vuoi imparare?');
+      expect(typed.placeholder, 'Es: derivate');
+      expect(typed.opzioni, isEmpty);
+    });
+
+    test('parses testo_libero without placeholder', () {
+      final event = SseEvent.fromRawEvent(
+        'azione',
+        '{"tipo": "onboarding_domanda", "params": {"tipo_input": "testo_libero", "domanda": "Parlami di te"}}',
+      );
+
+      final typed = (event as AzioneEvent).asOnboardingDomanda!;
+      expect(typed.placeholder, isNull);
+    });
+
+    test('parses scala with labels', () {
+      final event = SseEvent.fromRawEvent(
+        'azione',
+        '{"tipo": "onboarding_domanda", "params": {"tipo_input": "scala", "domanda": "Quanto ti piace la matematica?", "scala_min": 1, "scala_max": 5, "scala_labels": ["Per niente", "Molto"]}}',
+      );
+
+      final typed = (event as AzioneEvent).asOnboardingDomanda!;
+      expect(typed.tipoInput, 'scala');
+      expect(typed.scalaMin, 1);
+      expect(typed.scalaMax, 5);
+      expect(typed.scalaLabels, ['Per niente', 'Molto']);
+    });
+
+    test('parses scala without labels', () {
+      final event = SseEvent.fromRawEvent(
+        'azione',
+        '{"tipo": "onboarding_domanda", "params": {"tipo_input": "scala", "domanda": "Livello?", "scala_min": 1, "scala_max": 10}}',
+      );
+
+      final typed = (event as AzioneEvent).asOnboardingDomanda!;
+      expect(typed.scalaLabels, isEmpty);
+    });
+
+    test('returns null for non-onboarding_domanda azione', () {
+      final event = SseEvent.fromRawEvent(
+        'azione',
+        '{"tipo": "proponi_esercizio", "params": {"esercizio_id": "e1"}}',
+      );
+
+      final typed = (event as AzioneEvent).asOnboardingDomanda;
+      expect(typed, isNull);
     });
   });
 }

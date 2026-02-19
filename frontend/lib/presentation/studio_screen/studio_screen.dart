@@ -9,6 +9,7 @@ import '../../models/sse_events.dart';
 import '../../providers/session_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/markdown_text.dart';
 import './widgets/achievement_toast_widget.dart';
 import './widgets/backtrack_card_widget.dart';
 import './widgets/chiudi_sessione_card_widget.dart';
@@ -797,12 +798,9 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Flexible(
-                    child: Text(
-                      text,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        height: 1.55,
-                      ),
+                    child: MarkdownText(
+                      data: text,
+                      textColor: theme.colorScheme.onSurface,
                     ),
                   ),
                   const _AmberCursor(),

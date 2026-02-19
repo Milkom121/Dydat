@@ -5,9 +5,13 @@ import '../../core/sizer_extensions.dart';
 
 import '../../providers/onboarding_provider.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/markdown_text.dart';
 import './widgets/mascotte_widget.dart';
 import './widgets/message_bubble_widget.dart';
 import './widgets/progress_indicator_widget.dart';
+import './widgets/scelta_singola_widget.dart';
+import './widgets/scala_widget.dart';
+import './widgets/testo_libero_widget.dart';
 
 /// Onboarding screen that introduces new users to AI-powered tutoring
 /// through conversational interaction with SSE streaming.
@@ -80,6 +84,35 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     // Send via provider (triggers SSE stream).
     ref.read(onboardingProvider.notifier).sendMessage(message);
+  }
+
+  /// Handle answering a structured question (choice/text/scale).
+  void _answerQuestion(String answer) {
+    final onboardingState = ref.read(onboardingProvider);
+    if (onboardingState.isStreaming || onboardingState.isLoading) return;
+
+    // Capture the question text before clearing.
+    final question = onboardingState.currentQuestion;
+
+    // Clear question in provider FIRST — so the card disappears immediately.
+    ref.read(onboardingProvider.notifier).answerQuestion(answer);
+
+    // Then add question + answer to local chat history.
+    setState(() {
+      if (question != null) {
+        _messages.add({
+          'text': question.domanda,
+          'isUser': false,
+          'timestamp': DateTime.now(),
+        });
+      }
+      _messages.add({
+        'text': answer,
+        'isUser': true,
+        'timestamp': DateTime.now(),
+      });
+    });
+    _scrollToBottom();
   }
 
   /// Syncs finalized tutor messages from the provider into the local _messages list.
@@ -234,7 +267,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     if (isStreaming && currentStreamText.isEmpty)
                       _buildTypingIndicator(theme),
 
-                    // Complete onboarding button
+                    // Bottom area: complete button OR question widget OR text input
                     if (showCompleteButton)
                       Padding(
                         padding: EdgeInsets.only(bottom: 1.h),
@@ -270,102 +303,148 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                   ),
                           ),
                         ),
-                      ),
-
-                    // Input area
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 4.w,
-                        vertical: 1.5.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        border: Border(
-                          top: BorderSide(
-                            color: theme.colorScheme.outline,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _messageController,
-                              focusNode: _messageFocusNode,
-                              enabled: !isStreaming && !isLoading,
-                              decoration: InputDecoration(
-                                hintText: 'Scrivi un messaggio...',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: theme.colorScheme.primary,
-                                    width: 2,
-                                  ),
-                                ),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: theme.colorScheme.outline
-                                        .withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 4.w,
-                                  vertical: 1.5.h,
-                                ),
-                                filled: true,
-                                fillColor: theme.colorScheme.surface,
-                              ),
-                              style: theme.textTheme.bodyLarge,
-                              maxLines: null,
-                              textInputAction: TextInputAction.send,
-                              onSubmitted: (_) => _sendMessage(),
-                            ),
-                          ),
-                          SizedBox(width: 2.w),
-                          Material(
-                            color: (isStreaming || isLoading)
-                                ? theme.colorScheme.primary
-                                    .withValues(alpha: 0.5)
-                                : theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
-                              onTap: (isStreaming || isLoading)
-                                  ? null
-                                  : _sendMessage,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: EdgeInsets.all(1.5.h),
-                                child: CustomIconWidget(
-                                  iconName: 'send',
-                                  color: theme.colorScheme.onPrimary,
-                                  size: 24,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                      )
+                    else
+                      _buildBottomArea(theme, onboardingState),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Builds the dynamic bottom area based on current state.
+  /// Shows: nothing (streaming), question widget, or default text input.
+  Widget _buildBottomArea(
+    ThemeData theme,
+    OnboardingScreenState onboardingState,
+  ) {
+    final isStreaming = onboardingState.isStreaming;
+    final isLoading = onboardingState.isLoading;
+    final question = onboardingState.currentQuestion;
+
+    // While streaming or loading, show nothing (typing indicator is separate)
+    if (isStreaming || isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    // If there's an active question, show the appropriate widget
+    if (question != null) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 1.h),
+        child: switch (question.tipoInput) {
+          'scelta_singola' => SceltaSingolaWidget(
+              question: question,
+              onAnswer: _answerQuestion,
+            ),
+          'testo_libero' => TestoLiberoWidget(
+              question: question,
+              onAnswer: _answerQuestion,
+            ),
+          'scala' => ScalaWidget(
+              question: question,
+              onAnswer: _answerQuestion,
+            ),
+          _ => _buildDefaultTextInput(theme),
+        },
+      );
+    }
+
+    // Default: show the standard text input
+    return _buildDefaultTextInput(theme);
+  }
+
+  /// Builds the default free-text input area (fallback when no structured question).
+  Widget _buildDefaultTextInput(ThemeData theme) {
+    final onboardingState = ref.read(onboardingProvider);
+    final isStreaming = onboardingState.isStreaming;
+    final isLoading = onboardingState.isLoading;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 4.w,
+        vertical: 1.5.h,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outline,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              focusNode: _messageFocusNode,
+              enabled: !isStreaming && !isLoading,
+              decoration: InputDecoration(
+                hintText: 'Scrivi un messaggio...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color:
+                        theme.colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 4.w,
+                  vertical: 1.5.h,
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+              ),
+              style: theme.textTheme.bodyLarge,
+              maxLines: null,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _sendMessage(),
+            ),
+          ),
+          SizedBox(width: 2.w),
+          Material(
+            color: (isStreaming || isLoading)
+                ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                : theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: (isStreaming || isLoading) ? null : _sendMessage,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: EdgeInsets.all(1.5.h),
+                child: CustomIconWidget(
+                  iconName: 'send',
+                  color: theme.colorScheme.onPrimary,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -411,12 +490,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Flexible(
-                    child: Text(
-                      text,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        height: 1.55,
-                      ),
+                    child: MarkdownText(
+                      data: text,
+                      textColor: theme.colorScheme.onSurface,
                     ),
                   ),
                   const _AmberCursor(),

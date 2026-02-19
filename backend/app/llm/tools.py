@@ -508,6 +508,12 @@ def get_tool_schemas() -> list[dict]:
     return AZIONI_LOOP_1 + AZIONI_LOOP_2_3 + SEGNALI_LOOP_1 + SEGNALI_LOOP_3
 
 
+def get_onboarding_tools() -> list[dict]:
+    """Tool filtrati per onboarding: solo onboarding_domanda + segnali Loop 1."""
+    onboarding_azioni = [t for t in AZIONI_LOOP_1 if t["name"] == "onboarding_domanda"]
+    return onboarding_azioni + SEGNALI_LOOP_1
+
+
 def is_azione(tool_name: str) -> bool:
     """True se il tool è un'azione (da inoltrare al frontend via SSE)."""
     return tool_name in NOMI_AZIONI

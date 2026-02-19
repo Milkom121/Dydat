@@ -19,14 +19,14 @@ Dydat_V1_2026/
 └── README.md
 ```
 
-## Stato Backend (NON TOCCARE)
+## Stato Backend
 
 Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
-- 11 blocchi implementati, 196 test (186 passed, 10 skipped)
+- 11 blocchi implementati, 198 test (188 passed, 10 skipped)
 - Test E2E manuale con DB + LLM reali superato
 - API stabili — la fonte di verita e `docs/dydat_api_reference.md`
 
-**Non modificare il backend** a meno di bug bloccanti (es: CORS mancante per dev).
+**Regola backend**: il backend e stabile ma puo essere esteso per feature cross-stack (es: nuovi tool LLM, prompt riscritture, filtering). Serve autorizzazione esplicita del fondatore. Le API endpoint e i modelli DB non vanno toccati senza necessita.
 
 ## Stato Frontend — Fase Corrente
 
@@ -78,7 +78,7 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | 11 | SSE Client + Modelli eventi | DONE | S7 |
 | 12 | Studio Screen con SSE reale | DONE | S8 |
 | 13 | Azioni tutor nel canvas (exercise/formula/backtrack) | DONE | S9 |
-| 14 | Onboarding reale con SSE | DONE | S10 |
+| 14 | Onboarding reale con SSE + onboarding adattivo (B14-bis) | DONE | S10 |
 | 15 | Recap sessione + App lifecycle | TODO | S11 |
 | 16 | Test E2E Loop 2 | TODO | S12 |
 
@@ -129,9 +129,13 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 cd backend
 docker compose up --build -d
 # Dentro il container:
-alembic upgrade head
-python scripts/import_extraction.py data/Algebra1 data/Algebra2
+docker exec backend-backend-1 alembic upgrade head
+docker exec backend-backend-1 python scripts/import_extraction.py data/Algebra1 data/Algebra2
+# Se il backend non parte al primo avvio (tabelle mancanti), riavviare:
+docker compose restart backend
 ```
+
+**ATTENZIONE**: lanciare Docker SEMPRE da `backend/`, MAI dal worktree `nostalgic-hertz`. Il worktree ha codice vecchio e non riceve le modifiche. Verificare: `docker ps` deve mostrare `backend-backend-1`, NON `nostalgic-hertz-backend-1`.
 
 ### Frontend
 ```bash
@@ -211,7 +215,7 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 ### Regole ferree
 - **NON committare** senza autorizzazione esplicita del fondatore
 - **NON pushare** senza autorizzazione esplicita del fondatore
-- **NON modificare il backend** (salvo CORS)
+- **NON modificare il backend** senza autorizzazione del fondatore (eccezioni: CORS, nuovi tool LLM per feature approvate)
 - **NON implementare** LaTeX rendering, animazioni celebrative (particelle/glow), mascotte animata — rimandati a Loop 3
 - **NON toccare** app_theme.dart, widget esistenti (salvo ricablarli su provider)
 - Ogni widget nuovo usa `Theme.of(context)` — zero colori hardcoded
@@ -243,3 +247,6 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 | 2026-02-18 | Rimossi web e universal_html | Non necessari, causavano conflitti |
 | 2026-02-18 | Pipeline 6 sessioni da 1-2 blocchi | Contesto pulito, test dopo ogni sessione |
 | 2026-02-18 | Branch per sessione + PR verso main | Rollback facile, review before merge |
+| 2026-02-19 | Backend modificabile per feature cross-stack | B14-bis richiede tool LLM + prompt + filtering nel backend |
+| 2026-02-19 | Docker SEMPRE da backend/, MAI dal worktree | Worktree nostalgic-hertz ha codice vecchio, causa mismatch |
+| 2026-02-19 | Aggiunto flutter_markdown per rendering testo tutor | Raw **, - nel testo senza parsing markdown |

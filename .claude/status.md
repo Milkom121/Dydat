@@ -4,9 +4,9 @@
 
 ## Stato Corrente
 
-**Ultimo aggiornamento**: 2026-02-18
-**Ultima sessione**: S10 (Blocco 14 — Onboarding reale con SSE) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B14)
+**Ultimo aggiornamento**: 2026-02-19
+**Ultima sessione**: S10-bis (Blocco 14-bis — Onboarding adattivo cross-stack) — COMPLETATA
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B14 + B14-bis)
 **Prossima sessione**: S11 — Blocco 15 (Recap sessione + App lifecycle). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
 
 ## Blocchi Completati
@@ -28,6 +28,7 @@
 | B12 — Studio con SSE reale | DONE | S8 | SSE streaming in StudioScreen, cursore ambra, auto-scroll |
 | B13 — Azioni tutor nel canvas | DONE | S9 | ExerciseCard, FormulaCard, BacktrackCard, ChiudiSessioneCard, AchievementToast con dati SSE reali |
 | B14 — Onboarding reale con SSE | DONE | S10 | OnboardingScreen con SSE streaming, conversione utente temp→registrato, cursore ambra |
+| B14-bis — Onboarding adattivo | DONE | S10-bis | Tool `onboarding_domanda` backend + widget UI frontend (scelta/testo/scala) + markdown rendering + Docker fix worktree |
 
 ## Risultati Test E2E (S6)
 
@@ -146,12 +147,50 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 - 153 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock — invariati da S9)
 - Nessun nuovo test fallito
 
+## Risultati S10-bis (B14-bis — Onboarding adattivo cross-stack)
+
+### Backend (modifiche autorizzate dal fondatore)
+- `app/llm/tools.py` — Aggiunto tool `onboarding_domanda` in AZIONI_LOOP_1 + funzione `get_onboarding_tools()` per filtrare tool durante onboarding (7 tool vs 18)
+- `app/core/contesto.py` — Aggiunto campo `tipo_sessione` a `ContextPackage` per distinguere onboarding da studio
+- `app/core/turno.py` — Tool filtering: se `tipo_sessione == "onboarding"`, passa solo tool onboarding al LLM
+- `app/core/elaborazione.py` — Branch esplicito per `onboarding_domanda` in `esegui_azione()`
+- `app/llm/prompts/direttive.py` — Prompt rinforzati con "VINCOLO ASSOLUTO", formato turno obbligatorio, checklist strutturata
+- `tests/test_onboarding.py` — 2 nuovi test (get_onboarding_tools, tipo_sessione)
+- 198 test backend totali — tutti verdi
+
+### Frontend
+- `lib/models/sse_events.dart` — Classe `OnboardingDomandaAction` + accessor `asOnboardingDomanda` su `AzioneEvent`
+- `lib/providers/onboarding_provider.dart` — Campo `currentQuestion` nello state, handler AzioneEvent, metodo `answerQuestion()`
+- `lib/presentation/onboarding_screen/widgets/scelta_singola_widget.dart` — NUOVO: card scelte cliccabili
+- `lib/presentation/onboarding_screen/widgets/testo_libero_widget.dart` — NUOVO: input testo libero
+- `lib/presentation/onboarding_screen/widgets/scala_widget.dart` — NUOVO: scala numerica con label
+- `lib/presentation/onboarding_screen/onboarding_screen.dart` — Bottom area dinamica (domanda strutturata o input libero)
+- `lib/widgets/markdown_text.dart` — NUOVO: widget riutilizzabile per rendering markdown (flutter_markdown)
+- `lib/presentation/onboarding_screen/widgets/message_bubble_widget.dart` — Usa `MarkdownText` per messaggi tutor
+- `lib/presentation/studio_screen/studio_screen.dart` — Streaming bubble con `MarkdownText`
+- `lib/presentation/studio_screen/widgets/tutor_message_widget.dart` — Messaggi tutor con `MarkdownText`
+- `test/models/sse_events_test.dart` — 6 nuovi test onboarding_domanda
+- `test/providers/onboarding_provider_test.dart` — 4 nuovi test (currentQuestion, clearQuestion)
+- 163 test frontend — tutti verdi (4 fallimenti pre-esistenti invariati)
+
+### Dipendenze aggiunte
+- `flutter_markdown: ^0.7.7+1` — rendering markdown nei messaggi tutor
+
+### Bug fix critici
+- **Docker worktree mismatch**: Docker girava dal worktree `nostalgic-hertz` (codice vecchio). Spostato su `backend/` con codice aggiornato.
+- **Markdown raw nel testo**: Asterischi e trattini mostrati come testo grezzo. Risolto con `MarkdownText` widget.
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning
+
 ## Problemi Aperti
 
 - `custom_error_widget.dart` ha colori hardcoded — da fixare in futuro
 - PUB_CACHE deve essere settato a `C:\PubCache` per aggirare sandbox Windows di Claude Code (junction AppContainer)
 - Exercise/formula/backtrack card riattivate con dati SSE reali (B13 DONE)
 - Classi evento duplicate in sessione.dart e api_response.dart (B2) vs sse_events.dart (B11) — risolto con `hide` nelle import, ma le vecchie classi restano per retrocompatibilita test B2
+- **Docker**: lanciare SEMPRE da `backend/`, MAI dal worktree `nostalgic-hertz`. Verificare con `docker ps` che il container si chiami `backend-backend-1`
+- `flutter_markdown` e marcato come "discontinued replaced by flutter_markdown_plus" — monitorare per eventuale migrazione futura
 
 ## Cosa Esiste Gia
 

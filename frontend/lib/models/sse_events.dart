@@ -117,6 +117,12 @@ class AzioneEvent extends SseEvent {
   /// Typed accessor for `chiudi_sessione` actions.
   ChiudiSessioneAction? get asChiudiSessione =>
       tipo == 'chiudi_sessione' ? ChiudiSessioneAction.fromParams(params) : null;
+
+  /// Typed accessor for `onboarding_domanda` actions.
+  OnboardingDomandaAction? get asOnboardingDomanda =>
+      tipo == 'onboarding_domanda'
+          ? OnboardingDomandaAction.fromParams(params)
+          : null;
 }
 
 /// Typed data for `proponi_esercizio` action.
@@ -197,6 +203,46 @@ class ChiudiSessioneAction {
     return ChiudiSessioneAction(
       riepilogo: params['riepilogo'] as String,
       prossimiPassi: params['prossimi_passi'] as String?,
+    );
+  }
+}
+
+/// Typed data for `onboarding_domanda` action.
+/// Three input types: scelta_singola, testo_libero, scala.
+class OnboardingDomandaAction {
+  final String tipoInput;
+  final String domanda;
+  final List<String> opzioni;
+  final String? placeholder;
+  final int? scalaMin;
+  final int? scalaMax;
+  final List<String> scalaLabels;
+
+  const OnboardingDomandaAction({
+    required this.tipoInput,
+    required this.domanda,
+    this.opzioni = const [],
+    this.placeholder,
+    this.scalaMin,
+    this.scalaMax,
+    this.scalaLabels = const [],
+  });
+
+  factory OnboardingDomandaAction.fromParams(Map<String, dynamic> params) {
+    return OnboardingDomandaAction(
+      tipoInput: params['tipo_input'] as String,
+      domanda: params['domanda'] as String,
+      opzioni: (params['opzioni'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      placeholder: params['placeholder'] as String?,
+      scalaMin: params['scala_min'] as int?,
+      scalaMax: params['scala_max'] as int?,
+      scalaLabels: (params['scala_labels'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
   }
 }

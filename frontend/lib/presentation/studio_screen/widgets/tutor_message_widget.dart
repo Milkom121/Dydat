@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
 import 'package:intl/intl.dart';
 
+import '../../../widgets/markdown_text.dart';
+
 class TutorMessageWidget extends StatefulWidget {
   final Map<String, dynamic> message;
   final ThemeData theme;
@@ -125,15 +127,19 @@ class _TutorMessageWidgetState extends State<TutorMessageWidget>
                                   .withValues(alpha: 0.2),
                             ),
                     ),
-                    child: Text(
-                      _displayedText,
-                      style: widget.theme.textTheme.bodyMedium?.copyWith(
-                        color: isUserMessage
-                            ? widget.theme.colorScheme.onPrimary
-                            : widget.theme.colorScheme.onSurface,
-                        height: 1.55,
-                      ),
-                    ),
+                    child: isUserMessage
+                        ? Text(
+                            _displayedText,
+                            style:
+                                widget.theme.textTheme.bodyMedium?.copyWith(
+                              color: widget.theme.colorScheme.onPrimary,
+                              height: 1.55,
+                            ),
+                          )
+                        : MarkdownText(
+                            data: _displayedText,
+                            textColor: widget.theme.colorScheme.onSurface,
+                          ),
                   ),
                   SizedBox(height: 0.5.h),
                   Text(

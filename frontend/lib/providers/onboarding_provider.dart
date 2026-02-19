@@ -29,6 +29,10 @@ class OnboardingScreenState {
   final OnboardingCompletaResponse? result;
   final String? error;
 
+  /// Current structured question from onboarding_domanda azione.
+  /// Null means no question is pending (show default text input or nothing).
+  final OnboardingDomandaAction? currentQuestion;
+
   const OnboardingScreenState({
     this.sessioneId,
     this.utenteTempId,
@@ -40,6 +44,7 @@ class OnboardingScreenState {
     this.isCompleted = false,
     this.result,
     this.error,
+    this.currentQuestion,
   });
 
   /// Progress from 0.0 to 1.0 based on turns completed (~10 turns total).
@@ -57,6 +62,8 @@ class OnboardingScreenState {
     OnboardingCompletaResponse? result,
     String? error,
     bool clearError = false,
+    OnboardingDomandaAction? currentQuestion,
+    bool clearQuestion = false,
   }) {
     return OnboardingScreenState(
       sessioneId: sessioneId ?? this.sessioneId,
@@ -69,6 +76,8 @@ class OnboardingScreenState {
       isCompleted: isCompleted ?? this.isCompleted,
       result: result ?? this.result,
       error: clearError ? null : (error ?? this.error),
+      currentQuestion:
+          clearQuestion ? null : (currentQuestion ?? this.currentQuestion),
     );
   }
 }
@@ -97,6 +106,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
       currentTutorText: '',
       tutorMessages: [],
       turnsCompleted: 0,
+      clearQuestion: true,
     );
 
     final stream = _onboardingService.startStream();
@@ -111,6 +121,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
       isStreaming: true,
       clearError: true,
       currentTutorText: '',
+      clearQuestion: true,
     );
 
     final stream = _onboardingService.sendTurnStream(
@@ -118,6 +129,13 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
       messaggio: message,
     );
     _listenToStream(stream);
+  }
+
+  /// Answers the current onboarding question and sends the response.
+  /// Clears currentQuestion so the UI reverts to waiting state.
+  Future<void> answerQuestion(String answer) async {
+    state = state.copyWith(clearQuestion: true);
+    await sendMessage(answer);
   }
 
   void _listenToStream(Stream<SseEvent> stream) {
@@ -171,9 +189,14 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
           error: event.messaggio,
         );
 
+      case AzioneEvent():
+        final onboardingQ = event.asOnboardingDomanda;
+        if (onboardingQ != null) {
+          state = state.copyWith(currentQuestion: onboardingQ);
+        }
+
       // Events not relevant to onboarding — ignore
       case SessioneCreataEvent():
-      case AzioneEvent():
       case AchievementEvent():
         break;
     }

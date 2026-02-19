@@ -3,6 +3,7 @@ import '../../../core/sizer_extensions.dart';
 
 import '../../../core/app_export.dart';
 import '../../../widgets/custom_icon_widget.dart';
+import '../../../widgets/markdown_text.dart';
 
 /// Widget that displays a message bubble in the onboarding conversation.
 class MessageBubbleWidget extends StatelessWidget {
@@ -62,15 +63,19 @@ class MessageBubbleWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    text,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: isUser
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurface,
-                      height: 1.55,
+                  if (isUser)
+                    Text(
+                      text,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        height: 1.55,
+                      ),
+                    )
+                  else
+                    MarkdownText(
+                      data: text,
+                      textColor: theme.colorScheme.onSurface,
                     ),
-                  ),
                   SizedBox(height: 0.5.h),
                   Text(
                     _formatTimestamp(timestamp),

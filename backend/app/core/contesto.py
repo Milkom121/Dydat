@@ -50,12 +50,19 @@ TURNI_FINALI = 20
 class ContextPackage:
     """Risultato assemblato: system prompt + messages per Claude API."""
 
-    __slots__ = ("system", "messages", "modello")
+    __slots__ = ("system", "messages", "modello", "tipo_sessione")
 
-    def __init__(self, system: str, messages: list[dict], modello: str) -> None:
+    def __init__(
+        self,
+        system: str,
+        messages: list[dict],
+        modello: str,
+        tipo_sessione: str = "studio",
+    ) -> None:
         self.system = system
         self.messages = messages
         self.modello = modello
+        self.tipo_sessione = tipo_sessione
 
 
 # ---------------------------------------------------------------------------
@@ -504,4 +511,9 @@ async def assembla_context_package(
         len(system),
     )
 
-    return ContextPackage(system=system, messages=messages, modello=modello)
+    return ContextPackage(
+        system=system,
+        messages=messages,
+        modello=modello,
+        tipo_sessione=sessione.tipo or "studio",
+    )

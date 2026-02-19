@@ -25,6 +25,7 @@ from app.core.elaborazione import (
 )
 from app.db.models.utenti import Sessione
 from app.llm.client import chiama_tutor
+from app.llm.tools import get_onboarding_tools
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +88,15 @@ async def esegui_turno(
     segnali_accumulati: list[dict] = []
     risultato_llm = None
 
+    # Onboarding: passa solo tool rilevanti per ridurre rumore
+    tools_override = (
+        get_onboarding_tools() if ctx.tipo_sessione == "onboarding" else None
+    )
+
     async for evento_llm in chiama_tutor(
         system=ctx.system,
         messages=ctx.messages,
+        tools=tools_override,
         modello=ctx.modello,
     ):
         tipo = evento_llm.get("tipo")

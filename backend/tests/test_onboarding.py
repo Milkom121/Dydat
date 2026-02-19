@@ -28,7 +28,7 @@ from app.core.onboarding import (
     crea_utente_temporaneo,
 )
 from app.llm.prompts.direttive import direttiva_onboarding
-from app.llm.tools import NOMI_AZIONI, is_azione
+from app.llm.tools import NOMI_AZIONI, is_azione, get_onboarding_tools
 from app.schemas.onboarding import (
     OnboardingCompletaRequest,
     OnboardingCompletaResponse,
@@ -535,6 +535,29 @@ class TestOnboardingDomandaTool:
         """onboarding_domanda deve essere classificato come azione (SSE → frontend)."""
         assert "onboarding_domanda" in NOMI_AZIONI
         assert is_azione("onboarding_domanda")
+
+    def test_get_onboarding_tools_contains_only_relevant(self):
+        """get_onboarding_tools deve contenere solo onboarding_domanda + segnali Loop 1."""
+        tools = get_onboarding_tools()
+        tool_names = [t["name"] for t in tools]
+        # Deve contenere onboarding_domanda
+        assert "onboarding_domanda" in tool_names
+        # NON deve contenere tool studio (proponi_esercizio, mostra_formula, etc.)
+        assert "proponi_esercizio" not in tool_names
+        assert "mostra_formula" not in tool_names
+        assert "suggerisci_backtrack" not in tool_names
+        assert "chiudi_sessione" not in tool_names
+
+    def test_context_package_tipo_sessione(self):
+        """ContextPackage deve avere tipo_sessione."""
+        from app.core.contesto import ContextPackage
+        ctx = ContextPackage(system="test", messages=[], modello="test")
+        assert ctx.tipo_sessione == "studio"  # default
+
+        ctx2 = ContextPackage(
+            system="test", messages=[], modello="test", tipo_sessione="onboarding"
+        )
+        assert ctx2.tipo_sessione == "onboarding"
 
     @pytest.mark.asyncio
     async def test_esegui_azione_onboarding_domanda_passthrough(self):

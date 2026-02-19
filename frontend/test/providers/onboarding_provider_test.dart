@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dydat/models/sse_events.dart';
 import 'package:dydat/providers/onboarding_provider.dart';
 import 'package:dydat/services/dio_client.dart';
 import 'package:dydat/services/onboarding_service.dart';
@@ -95,6 +96,55 @@ void main() {
       expect(onboardingNotifier.state.tutorMessages, isEmpty);
       expect(onboardingNotifier.state.currentTutorText, '');
       expect(onboardingNotifier.state.turnsCompleted, 0);
+      expect(onboardingNotifier.state.currentQuestion, isNull);
+    });
+
+    test('currentQuestion starts null', () {
+      expect(onboardingNotifier.state.currentQuestion, isNull);
+    });
+
+    test('copyWith with currentQuestion', () {
+      final question = OnboardingDomandaAction(
+        tipoInput: 'scelta_singola',
+        domanda: 'Chi sei?',
+        opzioni: ['Studente', 'Autodidatta'],
+      );
+      final state = const OnboardingScreenState().copyWith(
+        currentQuestion: question,
+      );
+      expect(state.currentQuestion, isNotNull);
+      expect(state.currentQuestion!.tipoInput, 'scelta_singola');
+      expect(state.currentQuestion!.domanda, 'Chi sei?');
+      expect(state.currentQuestion!.opzioni, ['Studente', 'Autodidatta']);
+    });
+
+    test('copyWith clearQuestion removes currentQuestion', () {
+      final question = OnboardingDomandaAction(
+        tipoInput: 'testo_libero',
+        domanda: 'Cosa vuoi?',
+      );
+      final state = const OnboardingScreenState().copyWith(
+        currentQuestion: question,
+      );
+      expect(state.currentQuestion, isNotNull);
+
+      final cleared = state.copyWith(clearQuestion: true);
+      expect(cleared.currentQuestion, isNull);
+    });
+
+    test('copyWith preserves currentQuestion when not clearing', () {
+      final question = OnboardingDomandaAction(
+        tipoInput: 'scala',
+        domanda: 'Livello?',
+        scalaMin: 1,
+        scalaMax: 5,
+      );
+      final state = const OnboardingScreenState().copyWith(
+        currentQuestion: question,
+      );
+      final updated = state.copyWith(isStreaming: true);
+      expect(updated.currentQuestion, isNotNull);
+      expect(updated.currentQuestion!.tipoInput, 'scala');
     });
   });
 }
