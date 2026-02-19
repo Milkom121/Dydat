@@ -270,6 +270,7 @@ class TestTurnoCoordinatore:
             system: str = "test system"
             messages: list = None
             modello: str = "test-model"
+            tipo_sessione: str = "studio"
 
             def __post_init__(self):
                 self.messages = self.messages or []
@@ -379,6 +380,7 @@ class TestTurnoCoordinatore:
             system: str = "test"
             messages: list = None
             modello: str = "test-model"
+            tipo_sessione: str = "studio"
 
             def __post_init__(self):
                 self.messages = self.messages or []
@@ -479,6 +481,7 @@ class TestTurnoCoordinatore:
             system: str = "test"
             messages: list = None
             modello: str = "test-model"
+            tipo_sessione: str = "studio"
 
             def __post_init__(self):
                 self.messages = self.messages or []
@@ -542,6 +545,7 @@ class TestTurnoCoordinatore:
             system: str = "test"
             messages: list = None
             modello: str = "test-model"
+            tipo_sessione: str = "studio"
 
             def __post_init__(self):
                 self.messages = self.messages or []
@@ -627,6 +631,7 @@ class TestTurnoCoordinatore:
             system: str = "test"
             messages: list = None
             modello: str = "test-model"
+            tipo_sessione: str = "studio"
 
             def __post_init__(self):
                 self.messages = self.messages or []

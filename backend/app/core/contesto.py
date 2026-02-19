@@ -25,6 +25,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.db.models.grafo import Esercizio, Nodo, Relazione
 from app.db.models.stato_utente import StatoNodoUtente, StoricoEsercizi
 from app.db.models.utenti import Sessione, TurnoConversazione, Utente
+from app.core.onboarding import seleziona_nodi_gateway
 from app.llm.prompts.direttive import (
     direttiva_esercizio,
     direttiva_feynman,
@@ -335,10 +336,17 @@ async def _genera_direttiva(
 
     # Onboarding
     if sessione.tipo == "onboarding" or fase_onboarding:
-        return direttiva_onboarding(
-            fase=fase_onboarding or "accoglienza",
-            info_raccolte=stato_orch.get("info_raccolte"),
-        )
+        fase = fase_onboarding or "accoglienza"
+        kwargs: dict = {
+            "fase": fase,
+            "info_raccolte": stato_orch.get("info_raccolte"),
+        }
+        if fase == "placement":
+            kwargs["nodi_gateway"] = seleziona_nodi_gateway()
+            kwargs["placement_risultati"] = stato_orch.get("placement_risultati")
+        elif fase == "piano":
+            kwargs["placement_risultati"] = stato_orch.get("placement_risultati")
+        return direttiva_onboarding(**kwargs)
 
     # Ripresa sessione sospesa
     if stato_orch.get("ripresa"):

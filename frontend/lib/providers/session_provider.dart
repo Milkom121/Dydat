@@ -118,10 +118,15 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
     _listenToStream(stream);
   }
 
+  /// Whether we are currently handling a 409 fallback (to prevent onDone
+  /// from resetting state while the REST call is in progress).
+  bool _handling409 = false;
+
   void _listenToStream(Stream<SseEvent> stream, {bool handle409 = false}) {
     _sseSubscription = stream.listen(
       (event) => _handleSseEvent(event, handle409: handle409),
       onError: (Object error) {
+        if (_handling409) return;
         state = state.copyWith(
           isLoading: false,
           isStreaming: false,
@@ -129,6 +134,7 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
         );
       },
       onDone: () {
+        if (_handling409) return;
         // Stream ended — if still streaming, finalize
         if (state.isStreaming && state.currentTutorText.isNotEmpty) {
           _finalizeTutorMessage();
@@ -194,8 +200,9 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
       case ErroreEvent():
         // Handle 409: active session exists — fall back to REST start()
         if (handle409 && event.codice == 'http_409') {
+          _handling409 = true;
           _cancelSubscription();
-          startSession();
+          _fallbackStartSession();
           return;
         }
         state = state.copyWith(
@@ -207,6 +214,16 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
       case OnboardingIniziatoEvent():
         // Not handled in session — this is for onboarding
         break;
+    }
+  }
+
+  /// Handles the 409 fallback: loads the existing session via REST
+  /// and adds a welcome-back message.
+  Future<void> _fallbackStartSession() async {
+    try {
+      await startSession(resumed: true);
+    } finally {
+      _handling409 = false;
     }
   }
 
@@ -226,16 +243,30 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
   }
 
   /// Creates a new study session via REST (fallback).
-  Future<void> startSession({int? durataPrevistaMin}) async {
+  /// When [resumed] is true, adds a welcome-back message.
+  Future<void> startSession({
+    int? durataPrevistaMin,
+    bool resumed = false,
+  }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final session = await _sessionService.start(
         durataPrevistaMin: durataPrevistaMin,
       );
+      final messages = <String>[];
+      if (resumed) {
+        final rawName = session.nodoFocaleNome ?? session.nodoFocaleId;
+        final nodeName = _formatNodeName(rawName);
+        messages.add(
+          'Bentornato! Hai una sessione in corso'
+          '${nodeName != null ? ' su **$nodeName**' : ''}.\n\n'
+          'Scrivi un messaggio per continuare.',
+        );
+      }
       state = state.copyWith(
         activeSession: session,
         isLoading: false,
-        tutorMessages: [],
+        tutorMessages: messages,
       );
     } on DioException catch (e) {
       final apiError = e.error;
@@ -244,6 +275,35 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
           : 'Errore creazione sessione';
       state = state.copyWith(isLoading: false, error: msg);
     }
+  }
+
+  /// Formats a raw node ID into a human-readable name.
+  /// "mat_MatematicaC3_Algebra1_numeri_relativi_potenza_di_un_numero_relativo"
+  /// → "Numeri relativi potenza di un numero relativo"
+  ///
+  /// If the name is already human-readable (no underscores), returns it as-is.
+  static String? _formatNodeName(String? raw) {
+    if (raw == null) return null;
+    // Already human-readable
+    if (!raw.contains('_')) return raw;
+
+    final parts = raw.split('_');
+    // Skip prefix parts: "mat", "MatematicaC3", "Algebra1" etc.
+    int start = 0;
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i].isNotEmpty &&
+          parts[i] == parts[i].toLowerCase() &&
+          !parts[i].startsWith('mat')) {
+        start = i;
+        break;
+      }
+    }
+    if (start == 0 && parts.length > 1) {
+      start = parts.length > 3 ? 3 : 1;
+    }
+    final name = parts.sublist(start).join(' ');
+    if (name.isEmpty) return raw;
+    return name[0].toUpperCase() + name.substring(1);
   }
 
   /// Sets the active session.

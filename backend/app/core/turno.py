@@ -89,9 +89,18 @@ async def esegui_turno(
     risultato_llm = None
 
     # Onboarding: passa solo tool rilevanti per ridurre rumore
-    tools_override = (
-        get_onboarding_tools() if ctx.tipo_sessione == "onboarding" else None
-    )
+    tools_override = None
+    if ctx.tipo_sessione == "onboarding":
+        # Recupera la fase corrente per filtrare i tool appropriati
+        fase_onboarding = "accoglienza"
+        sess_check = await db.execute(
+            select(Sessione).where(Sessione.id == sessione_id)
+        )
+        sess_obj = sess_check.scalar_one_or_none()
+        if sess_obj:
+            stato_orch_check = sess_obj.stato_orchestratore or {}
+            fase_onboarding = stato_orch_check.get("fase_onboarding", "accoglienza")
+        tools_override = get_onboarding_tools(fase=fase_onboarding)
 
     async for evento_llm in chiama_tutor(
         system=ctx.system,

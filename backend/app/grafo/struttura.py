@@ -36,11 +36,12 @@ class GrafoKnowledge:
         g = nx.DiGraph()
 
         # Carica nodi
-        result = await db.execute(select(Nodo.id, Nodo.tipo_nodo, Nodo.tipo, Nodo.materia))
+        result = await db.execute(select(Nodo.id, Nodo.nome, Nodo.tipo_nodo, Nodo.tipo, Nodo.materia))
         nodi = result.all()
-        for nodo_id, tipo_nodo, tipo, materia in nodi:
+        for nodo_id, nome, tipo_nodo, tipo, materia in nodi:
             g.add_node(
                 nodo_id,
+                nome=nome,
                 tipo_nodo=tipo_nodo,
                 tipo=tipo,
                 materia=materia,

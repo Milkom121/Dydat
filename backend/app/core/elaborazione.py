@@ -213,6 +213,10 @@ async def processa_segnali(
             await _processa_prossimo_passo(db, params, sessione_id)
         elif nome == "punto_partenza_suggerito":
             await _processa_punto_partenza(db, params, sessione_id)
+        elif nome == "placement_esito":
+            await _processa_placement_esito(db, params, sessione_id)
+        elif nome == "transizione_fase":
+            await _processa_transizione_fase(db, params, sessione_id)
         else:
             # Loop 3 segnali — log senza processare
             _log_segnale(nome, params)
@@ -482,6 +486,64 @@ async def _processa_punto_partenza(
     logger.info(
         "Punto partenza suggerito: %s (sessione=%s)",
         params.get("tema_o_concetto"), sessione_id,
+    )
+
+
+async def _processa_placement_esito(
+    db: AsyncSession,
+    params: dict,
+    sessione_id: uuid.UUID,
+) -> None:
+    """placement_esito → accumula risultati placement nella sessione."""
+    result = await db.execute(
+        select(Sessione).where(Sessione.id == sessione_id)
+    )
+    sess = result.scalar_one_or_none()
+    if not sess:
+        return
+
+    stato = sess.stato_orchestratore or {}
+    placement = stato.setdefault("placement_risultati", {"esiti": []})
+    esiti = placement.setdefault("esiti", [])
+
+    esiti.append({
+        "nodo_id": params.get("nodo_id", ""),
+        "padroneggiato": params.get("padroneggiato", False),
+        "confidenza": params.get("confidenza", "media"),
+        "note": params.get("note", ""),
+    })
+
+    sess.stato_orchestratore = stato
+    flag_modified(sess, "stato_orchestratore")
+    await db.flush()
+
+    logger.info(
+        "Placement esito: nodo=%s, padroneggiato=%s (sessione=%s)",
+        params.get("nodo_id"), params.get("padroneggiato"), sessione_id,
+    )
+
+
+async def _processa_transizione_fase(
+    db: AsyncSession,
+    params: dict,
+    sessione_id: uuid.UUID,
+) -> None:
+    """transizione_fase → transizione guidata dal LLM (placement→piano, piano→conclusione)."""
+    from app.core.onboarding import transizione_fase_onboarding
+
+    result = await db.execute(
+        select(Sessione).where(Sessione.id == sessione_id)
+    )
+    sess = result.scalar_one_or_none()
+    if not sess:
+        return
+
+    fase_dest = params.get("fase_destinazione", "")
+    nuova_fase = await transizione_fase_onboarding(db, sess, fase_dest)
+
+    logger.info(
+        "Transizione fase: → %s (richiesta: %s, sessione=%s)",
+        nuova_fase, fase_dest, sessione_id,
     )
 
 

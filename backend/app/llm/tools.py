@@ -435,6 +435,65 @@ SEGNALI_LOOP_1: list[dict] = [
             "required": ["tema_o_concetto"],
         },
     },
+    {
+        "name": "placement_esito",
+        "description": (
+            "SEGNALE INTERNO (solo onboarding, fase placement). "
+            "Emetti dopo aver valutato la risposta dello studente a un "
+            "quesito del placement test. Il backend usa questi esiti per "
+            "determinare il punto di partenza ottimale."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "nodo_id": {
+                    "type": "string",
+                    "description": "ID del nodo gateway valutato.",
+                },
+                "padroneggiato": {
+                    "type": "boolean",
+                    "description": (
+                        "true se lo studente dimostra di padroneggiare "
+                        "il concetto, false altrimenti."
+                    ),
+                },
+                "confidenza": {
+                    "type": "string",
+                    "enum": ["alta", "media", "bassa"],
+                    "description": "Quanto sei sicuro della valutazione.",
+                },
+                "note": {
+                    "type": "string",
+                    "description": "Note sulla risposta dello studente.",
+                },
+            },
+            "required": ["nodo_id", "padroneggiato"],
+        },
+    },
+    {
+        "name": "transizione_fase",
+        "description": (
+            "SEGNALE INTERNO (solo onboarding). "
+            "Emetti per segnalare che la fase corrente è completata "
+            "e si deve passare alla fase successiva. "
+            "Transizioni valide: placement→piano, piano→conclusione."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fase_destinazione": {
+                    "type": "string",
+                    "enum": ["piano", "conclusione"],
+                    "description": "La fase a cui transitare.",
+                },
+                "motivazione": {
+                    "type": "string",
+                    "description": "Perché si transita (es: test completato).",
+                },
+            },
+            "required": ["fase_destinazione"],
+        },
+    },
 ]
 
 SEGNALI_LOOP_3: list[dict] = [
@@ -508,8 +567,18 @@ def get_tool_schemas() -> list[dict]:
     return AZIONI_LOOP_1 + AZIONI_LOOP_2_3 + SEGNALI_LOOP_1 + SEGNALI_LOOP_3
 
 
-def get_onboarding_tools() -> list[dict]:
-    """Tool filtrati per onboarding: solo onboarding_domanda + segnali Loop 1."""
+def get_onboarding_tools(fase: str = "accoglienza") -> list[dict]:
+    """Tool filtrati per onboarding in base alla fase.
+
+    - accoglienza/conoscenza: onboarding_domanda + segnali Loop 1
+    - placement: onboarding_domanda + segnali Loop 1 (include placement_esito, transizione_fase)
+    - piano: onboarding_domanda + segnali Loop 1 (include transizione_fase)
+    - conclusione: solo segnali Loop 1 (NO onboarding_domanda)
+    """
+    if fase == "conclusione":
+        # Nella conclusione non serve onboarding_domanda
+        return list(SEGNALI_LOOP_1)
+
     onboarding_azioni = [t for t in AZIONI_LOOP_1 if t["name"] == "onboarding_domanda"]
     return onboarding_azioni + SEGNALI_LOOP_1
 

@@ -152,9 +152,12 @@ def direttiva_onboarding(
     *,
     fase: str,
     info_raccolte: str | None = None,
+    nodi_gateway: list[dict] | None = None,
+    placement_risultati: dict | None = None,
 ) -> str:
     """Direttiva per le fasi di onboarding.
 
+    Fasi: accoglienza → conoscenza → placement → piano → conclusione.
     Il tutor usa l'azione `onboarding_domanda` per presentare domande
     strutturate allo studente. Ogni turno: breve commento + una domanda.
     """
@@ -223,6 +226,87 @@ def direttiva_onboarding(
             "- Se la risposta copre più punti, salta domande già coperte\n"
             "- Adatta il linguaggio: a uno studente 'cosa fate in classe?', "
             "a un adulto 'qual è l'ultima cosa che ricordi bene?'"
+        )
+    elif fase == "placement":
+        # Prepara lista nodi gateway per il prompt
+        nodi_str = "(nessun nodo disponibile)"
+        if nodi_gateway:
+            righe_nodi = []
+            for gw in nodi_gateway:
+                righe_nodi.append(
+                    f"- {gw['nodo_id']}: {gw['nome']} (tema: {gw['tema_id']})"
+                )
+            nodi_str = "\n".join(righe_nodi)
+
+        # Esiti già raccolti
+        esiti_str = "(nessun esito ancora)"
+        if placement_risultati and placement_risultati.get("esiti"):
+            righe_esiti = []
+            for e in placement_risultati["esiti"]:
+                stato_e = "padroneggiato" if e.get("padroneggiato") else "non padroneggiato"
+                righe_esiti.append(f"- {e['nodo_id']}: {stato_e}")
+            esiti_str = "\n".join(righe_esiti)
+
+        return (
+            "ATTIVITÀ: Onboarding — Placement Test\n"
+            "FASE: placement\n\n"
+            f"INFO RACCOLTE: {info_raccolte or '(nessuna)'}\n\n"
+            "⚠️ VINCOLO ASSOLUTO:\n"
+            "DEVI chiamare il tool `onboarding_domanda` in questo turno.\n"
+            "NON scrivere domande nel testo. Solo nel tool.\n\n"
+            "OBIETTIVO: Mini-test diagnostico rapido. Fai 2-3 domande "
+            "su concetti chiave per capire dove lo studente si trova.\n\n"
+            "NODI GATEWAY DISPONIBILI (in ordine di profondità):\n"
+            f"{nodi_str}\n\n"
+            f"ESITI GIÀ RACCOLTI:\n{esiti_str}\n\n"
+            "FORMATO TURNO OBBLIGATORIO:\n"
+            "1. Testo: commento breve (1-2 frasi) — tipo 'Ottimo, ora vediamo "
+            "come te la cavi con qualche domanda veloce'\n"
+            "2. Tool call: `onboarding_domanda` con tipo_input='scelta_singola' "
+            "— domanda su un concetto gateway\n"
+            "3. Segnale: `placement_esito` dopo aver valutato la risposta\n\n"
+            "REGOLE:\n"
+            "- Parti dal nodo più semplice (inizio della lista)\n"
+            "- Se lo studente risponde correttamente, salta al nodo successivo\n"
+            "- Se risponde male, fermati: hai trovato il punto di partenza\n"
+            "- Massimo 3-4 domande — non è un esame!\n"
+            "- Le domande devono essere accessibili, non intimidatorie\n"
+            "- Quando hai abbastanza informazioni, emetti segnale "
+            "`transizione_fase` con fase_destinazione='piano'"
+        )
+    elif fase == "piano":
+        # Prepara riepilogo placement
+        piano_str = "(nessun risultato placement)"
+        if placement_risultati and placement_risultati.get("esiti"):
+            righe = []
+            for e in placement_risultati["esiti"]:
+                stato_e = "padroneggiato" if e.get("padroneggiato") else "da lavorare"
+                righe.append(f"- {e['nodo_id']}: {stato_e}")
+            piano_str = "\n".join(righe)
+
+        return (
+            "ATTIVITÀ: Onboarding — Proposta Piano Studio\n"
+            "FASE: piano\n\n"
+            f"INFO RACCOLTE: {info_raccolte or '(nessuna)'}\n\n"
+            f"RISULTATI PLACEMENT:\n{piano_str}\n\n"
+            "⚠️ VINCOLO:\n"
+            "DEVI chiamare il tool `onboarding_domanda` con una domanda "
+            "di conferma (tipo scelta_singola).\n\n"
+            "ISTRUZIONI:\n"
+            "1. Presenta un riepilogo dei risultati del placement (2-3 righe)\n"
+            "2. Proponi un piano studio personalizzato:\n"
+            "   - Da dove si parte (primo concetto da lavorare)\n"
+            "   - Cosa verrà coperto nelle prime sessioni\n"
+            "   - Tono positivo: 'Hai già una buona base, partiamo da X'\n"
+            "3. Chiama `onboarding_domanda` con domanda tipo "
+            "'Ti sembra un buon piano?' e opzioni di conferma/modifica\n"
+            "4. Dopo la risposta, emetti `transizione_fase` con "
+            "fase_destinazione='conclusione'\n\n"
+            "REGOLE:\n"
+            "- NON elencare tutti i nodi del grafo\n"
+            "- Usa nomi comprensibili (non nodo_id tecnici)\n"
+            "- Max 5-6 righe per il piano\n"
+            "- Il piano deve far sentire lo studente motivato, non sopraffatto"
         )
     elif fase == "conclusione":
         return (

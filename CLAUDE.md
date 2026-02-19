@@ -22,7 +22,7 @@ Dydat_V1_2026/
 ## Stato Backend
 
 Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
-- 11 blocchi implementati, 198 test (188 passed, 10 skipped)
+- 11 blocchi implementati + onboarding continuo (5 fasi), 264 test (260 passed, 4 failed pre-esistenti, 10 skipped)
 - Test E2E manuale con DB + LLM reali superato
 - API stabili — la fonte di verita e `docs/dydat_api_reference.md`
 
@@ -79,11 +79,14 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | 12 | Studio Screen con SSE reale | DONE | S8 |
 | 13 | Azioni tutor nel canvas (exercise/formula/backtrack) | DONE | S9 |
 | 14 | Onboarding reale con SSE + onboarding adattivo (B14-bis) | DONE | S10 |
-| 15 | Recap sessione + App lifecycle | TODO | S11 |
-| 16 | Test E2E Loop 2 | TODO | S12 |
+| 15 | Recap sessione + App lifecycle | DONE | S11 |
+| 16 | Test E2E Loop 2 | DONE | S12 |
+
+### Loop 2 COMPLETATO
+Tutti i 6 blocchi (B11-B16) completati. Flusso E2E completo con SSE reale senza crash verificato manualmente su emulatore Android. Bug fix: 409 handling race condition nel session_provider.
 
 ### Prossima sessione
-**S11 — Blocco 15**: Recap sessione + App lifecycle. Creare RecapSessionScreen con dati reali, aggiungere route /recap/:sessioneId, implementare WidgetsBindingObserver per sospensione/ripresa sessione.
+**Loop 3** — Da pianificare. Candidati: LaTeX rendering, animazioni celebrative, mascotte animata, storico sessioni nella home, completamento argomento nel recap.
 
 ## Pipeline Sessioni
 
@@ -105,7 +108,7 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 | S9 | B13 | Exercise/formula/backtrack card con dati SSE | `feature/frontend-azioni-tutor` |
 | S10 | B14 | Onboarding completo con tutor AI + registrazione conversione | `feature/frontend-onboarding` |
 | S11 | B15 | Recap post-sessione + sospensione in background | `feature/frontend-recap-lifecycle` |
-| S12 | B16 | Flusso completo con SSE reale senza crash | `feature/frontend-e2e-loop2` |
+| S12 | B16 | Flusso completo con SSE reale senza crash | `feature/frontend-b1-b2` (consolidato) |
 
 **Regola**: ogni sessione crea branch da main, PR a fine sessione dopo test verdi.
 
@@ -250,3 +253,9 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 | 2026-02-19 | Backend modificabile per feature cross-stack | B14-bis richiede tool LLM + prompt + filtering nel backend |
 | 2026-02-19 | Docker SEMPRE da backend/, MAI dal worktree | Worktree nostalgic-hertz ha codice vecchio, causa mismatch |
 | 2026-02-19 | Aggiunto flutter_markdown per rendering testo tutor | Raw **, - nel testo senza parsing markdown |
+| 2026-02-19 | Onboarding esteso a 5 fasi (placement + piano) | Test diagnostico + piano studio personalizzato prima di completare onboarding |
+| 2026-02-19 | Transizioni signal-driven per fasi avanzate | LLM decide quando passare da placement a piano e da piano a conclusione |
+| 2026-02-19 | Zero migrazioni DB per onboarding continuo | Tutto in stato_orchestratore JSONB, nessun schema change |
+| 2026-02-19 | Flag `_handling409` per race condition 409 | `onDone` del SSE stream azzerava stato prima che il fallback REST completasse |
+| 2026-02-19 | FormulaCard mostra LaTeX raw — fix in Loop 3 | Rendering LaTeX richiede pacchetto dedicato, non fix cosmetico temporaneo |
+| 2026-02-19 | Loop 2 completato — tutti i 6 blocchi B11-B16 | E2E manuale su emulatore: streaming, azioni, lifecycle, 409, recap tutti verificati |

@@ -1,14 +1,15 @@
-"""Test Blocco 9 + B14-bis — Onboarding.
+"""Test Blocco 9 + B14-bis + Onboarding Continuo — Onboarding.
 
 Test:
 - Creazione utente temporaneo
-- Sessione onboarding con fasi
-- Transizione fasi: accoglienza → conoscenza → conclusione
+- Sessione onboarding con fasi (5 fasi: accoglienza→conoscenza→placement→piano→conclusione)
+- Transizione fasi automatiche e guidate da segnale
 - Completamento: profilo, percorso, stato nodi
-- Punto di partenza personalizzato
+- Punto di partenza personalizzato (placement > punto_partenza_suggerito)
 - Match tema/nodo nel grafo
 - Schemas Pydantic
 - B14-bis: tool onboarding_domanda, elaborazione passthrough, prompt adattivi
+- Onboarding continuo: placement_esito, transizione_fase, nodi gateway, piano studio
 """
 
 from __future__ import annotations
@@ -20,15 +21,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.core.onboarding import (
+    FASI_ONBOARDING,
     TURNI_CONOSCENZA_MAX,
+    _determina_nodo_da_placement,
     _trova_nodo_per_tema,
     aggiorna_fase_onboarding,
     completa_onboarding,
     crea_sessione_onboarding,
     crea_utente_temporaneo,
+    seleziona_nodi_gateway,
+    transizione_fase_onboarding,
 )
 from app.llm.prompts.direttive import direttiva_onboarding
-from app.llm.tools import NOMI_AZIONI, is_azione, get_onboarding_tools
+from app.llm.tools import NOMI_AZIONI, NOMI_SEGNALI, is_azione, is_segnale, get_onboarding_tools
 from app.schemas.onboarding import (
     OnboardingCompletaRequest,
     OnboardingCompletaResponse,
@@ -169,7 +174,7 @@ class TestAggiornaFaseOnboarding:
         assert sessione.stato_orchestratore["turni_conoscenza"] == 3
 
     @pytest.mark.asyncio
-    async def test_conoscenza_a_conclusione_max_turni(self):
+    async def test_conoscenza_a_placement_max_turni(self):
         db = AsyncMock()
         sessione = _mock_sessione(
             stato_orchestratore={
@@ -179,7 +184,7 @@ class TestAggiornaFaseOnboarding:
         )
 
         fase = await aggiorna_fase_onboarding(db, sessione)
-        assert fase == "conclusione"
+        assert fase == "placement"
 
     @pytest.mark.asyncio
     async def test_conclusione_resta_conclusione(self):
@@ -464,7 +469,7 @@ class TestSchemas:
 
 class TestCostanti:
     def test_turni_conoscenza_max(self):
-        assert TURNI_CONOSCENZA_MAX == 8
+        assert TURNI_CONOSCENZA_MAX == 6
 
 
 # ===================================================================
@@ -502,14 +507,22 @@ class TestFlussoOnboardingE2E:
         fase = await aggiorna_fase_onboarding(db, sessione)
         assert fase == "conoscenza"
 
-        # Step 4: Simula turni in conoscenza fino a conclusione
-        # Servono TURNI_CONOSCENZA_MAX chiamate: da 0 si incrementa a 1,2,...,8
+        # Step 4: Simula turni in conoscenza fino a placement
+        # Servono TURNI_CONOSCENZA_MAX chiamate: da 0 si incrementa a 1,2,...,6
         for i in range(TURNI_CONOSCENZA_MAX):
             fase = await aggiorna_fase_onboarding(db, sessione)
 
-        assert fase == "conclusione"
+        assert fase == "placement"
 
-        # Step 5: Completa
+        # Step 5: Transizione placement → piano (via segnale)
+        nuova_fase = await transizione_fase_onboarding(db, sessione, "piano")
+        assert nuova_fase == "piano"
+
+        # Step 6: Transizione piano → conclusione (via segnale)
+        nuova_fase = await transizione_fase_onboarding(db, sessione, "conclusione")
+        assert nuova_fase == "conclusione"
+
+        # Step 7: Completa
         mock_grafo.caricato = False
         mock_init.return_value = 100
 
@@ -538,7 +551,7 @@ class TestOnboardingDomandaTool:
 
     def test_get_onboarding_tools_contains_only_relevant(self):
         """get_onboarding_tools deve contenere solo onboarding_domanda + segnali Loop 1."""
-        tools = get_onboarding_tools()
+        tools = get_onboarding_tools(fase="accoglienza")
         tool_names = [t["name"] for t in tools]
         # Deve contenere onboarding_domanda
         assert "onboarding_domanda" in tool_names
@@ -678,3 +691,404 @@ class TestDirettivaOnboardingAdattiva:
     def test_fase_sconosciuta(self):
         d = direttiva_onboarding(fase="inventata")
         assert "fase non riconosciuta" in d
+
+
+# ===================================================================
+# Test: Onboarding continuo — fasi placement e piano
+# ===================================================================
+
+
+class TestFasiOnboarding:
+    def test_fasi_onboarding_ordine(self):
+        assert FASI_ONBOARDING == (
+            "accoglienza", "conoscenza", "placement", "piano", "conclusione"
+        )
+
+    def test_turni_conoscenza_ridotti(self):
+        """Turni conoscenza ridotti da 8 a 6."""
+        assert TURNI_CONOSCENZA_MAX == 6
+
+
+class TestTransizioneFaseOnboarding:
+    @pytest.mark.asyncio
+    async def test_placement_a_piano(self):
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={"fase_onboarding": "placement"}
+        )
+        nuova = await transizione_fase_onboarding(db, sessione, "piano")
+        assert nuova == "piano"
+        assert sessione.stato_orchestratore["fase_onboarding"] == "piano"
+
+    @pytest.mark.asyncio
+    async def test_piano_a_conclusione(self):
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={"fase_onboarding": "piano"}
+        )
+        nuova = await transizione_fase_onboarding(db, sessione, "conclusione")
+        assert nuova == "conclusione"
+        assert sessione.stato_orchestratore["fase_onboarding"] == "conclusione"
+
+    @pytest.mark.asyncio
+    async def test_transizione_illegale_accoglienza_a_piano(self):
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={"fase_onboarding": "accoglienza"}
+        )
+        nuova = await transizione_fase_onboarding(db, sessione, "piano")
+        assert nuova == "accoglienza"  # rimane accoglienza
+
+    @pytest.mark.asyncio
+    async def test_transizione_illegale_conoscenza_a_conclusione(self):
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={"fase_onboarding": "conoscenza"}
+        )
+        nuova = await transizione_fase_onboarding(db, sessione, "conclusione")
+        assert nuova == "conoscenza"  # rimane conoscenza
+
+    @pytest.mark.asyncio
+    async def test_placement_resta_senza_segnale(self):
+        """Fase placement non avanza automaticamente senza segnale."""
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={"fase_onboarding": "placement"}
+        )
+        fase = await aggiorna_fase_onboarding(db, sessione)
+        assert fase == "placement"
+
+
+class TestSelezionaNotiGateway:
+    @patch("app.core.onboarding.grafo_knowledge")
+    def test_grafo_non_caricato(self, mock_grafo):
+        mock_grafo.caricato = False
+        assert seleziona_nodi_gateway() == []
+
+    @patch("app.core.onboarding.grafo_knowledge")
+    def test_seleziona_nodi_operativi(self, mock_grafo):
+        mock_grafo.caricato = True
+
+        import networkx as nx
+        grafo = nx.DiGraph()
+        # Crea 10 nodi operativi in catena
+        for i in range(10):
+            grafo.add_node(
+                f"nodo_{i}",
+                tipo_nodo="operativo",
+                nome=f"Concetto {i}",
+                tema_id=f"tema_{i}",
+            )
+            if i > 0:
+                grafo.add_edge(f"nodo_{i-1}", f"nodo_{i}")
+
+        mock_grafo.grafo = grafo
+
+        gateways = seleziona_nodi_gateway()
+        assert len(gateways) <= 5
+        assert all("nodo_id" in g for g in gateways)
+        assert all("nome" in g for g in gateways)
+        assert all("tema_id" in g for g in gateways)
+
+    @patch("app.core.onboarding.grafo_knowledge")
+    def test_ignora_nodi_contesto(self, mock_grafo):
+        mock_grafo.caricato = True
+
+        import networkx as nx
+        grafo = nx.DiGraph()
+        grafo.add_node("contesto_1", tipo_nodo="contesto", nome="Ctx")
+        grafo.add_node("op_1", tipo_nodo="operativo", nome="Op1", tema_id="t1")
+        mock_grafo.grafo = grafo
+
+        gateways = seleziona_nodi_gateway()
+        nodi_ids = [g["nodo_id"] for g in gateways]
+        assert "contesto_1" not in nodi_ids
+        assert "op_1" in nodi_ids
+
+
+class TestDeterminaNodoDaPlacement:
+    @patch("app.core.onboarding.grafo_knowledge")
+    def test_primo_nodo_non_padroneggiato(self, mock_grafo):
+        mock_grafo.caricato = True
+        risultati = {
+            "esiti": [
+                {"nodo_id": "nodo_1", "padroneggiato": True},
+                {"nodo_id": "nodo_2", "padroneggiato": False},
+                {"nodo_id": "nodo_3", "padroneggiato": False},
+            ]
+        }
+        nodo = _determina_nodo_da_placement(risultati)
+        assert nodo == "nodo_2"
+
+    @patch("app.core.onboarding.grafo_knowledge")
+    def test_tutti_padroneggiati_prossimo_nodo(self, mock_grafo):
+        mock_grafo.caricato = True
+
+        import networkx as nx
+        grafo = nx.DiGraph()
+        for i in range(5):
+            grafo.add_node(f"nodo_{i}", tipo_nodo="operativo")
+            if i > 0:
+                grafo.add_edge(f"nodo_{i-1}", f"nodo_{i}")
+        mock_grafo.grafo = grafo
+
+        risultati = {
+            "esiti": [
+                {"nodo_id": "nodo_1", "padroneggiato": True},
+                {"nodo_id": "nodo_2", "padroneggiato": True},
+            ]
+        }
+        nodo = _determina_nodo_da_placement(risultati)
+        assert nodo == "nodo_3"  # prossimo dopo nodo_2
+
+    @patch("app.core.onboarding.grafo_knowledge")
+    def test_esiti_vuoti(self, mock_grafo):
+        mock_grafo.caricato = True
+        assert _determina_nodo_da_placement({"esiti": []}) is None
+        assert _determina_nodo_da_placement({}) is None
+
+
+class TestPlacementEsitoSignal:
+    def test_placement_esito_is_segnale(self):
+        assert "placement_esito" in NOMI_SEGNALI
+        assert is_segnale("placement_esito")
+
+    def test_transizione_fase_is_segnale(self):
+        assert "transizione_fase" in NOMI_SEGNALI
+        assert is_segnale("transizione_fase")
+
+    @pytest.mark.asyncio
+    async def test_processa_placement_esito(self):
+        from app.core.elaborazione import _processa_placement_esito
+
+        db = AsyncMock()
+        sessione_id = uuid.uuid4()
+
+        # Mock sessione con stato_orchestratore
+        sess = _mock_sessione(
+            sessione_id=sessione_id,
+            stato_orchestratore={"fase_onboarding": "placement"},
+        )
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = sess
+        db.execute = AsyncMock(return_value=result_mock)
+
+        await _processa_placement_esito(
+            db,
+            {"nodo_id": "nodo_1", "padroneggiato": True, "confidenza": "alta"},
+            sessione_id,
+        )
+
+        placement = sess.stato_orchestratore.get("placement_risultati", {})
+        assert len(placement["esiti"]) == 1
+        assert placement["esiti"][0]["nodo_id"] == "nodo_1"
+        assert placement["esiti"][0]["padroneggiato"] is True
+
+    @pytest.mark.asyncio
+    async def test_processa_placement_esito_accumula(self):
+        from app.core.elaborazione import _processa_placement_esito
+
+        db = AsyncMock()
+        sessione_id = uuid.uuid4()
+
+        sess = _mock_sessione(
+            sessione_id=sessione_id,
+            stato_orchestratore={
+                "fase_onboarding": "placement",
+                "placement_risultati": {
+                    "esiti": [{"nodo_id": "nodo_0", "padroneggiato": True, "confidenza": "alta", "note": ""}]
+                },
+            },
+        )
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = sess
+        db.execute = AsyncMock(return_value=result_mock)
+
+        await _processa_placement_esito(
+            db,
+            {"nodo_id": "nodo_1", "padroneggiato": False},
+            sessione_id,
+        )
+
+        placement = sess.stato_orchestratore["placement_risultati"]
+        assert len(placement["esiti"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_processa_transizione_fase(self):
+        from app.core.elaborazione import _processa_transizione_fase
+
+        db = AsyncMock()
+        sessione_id = uuid.uuid4()
+
+        sess = _mock_sessione(
+            sessione_id=sessione_id,
+            stato_orchestratore={"fase_onboarding": "placement"},
+        )
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = sess
+        db.execute = AsyncMock(return_value=result_mock)
+
+        await _processa_transizione_fase(
+            db,
+            {"fase_destinazione": "piano"},
+            sessione_id,
+        )
+
+        assert sess.stato_orchestratore["fase_onboarding"] == "piano"
+
+
+class TestGetOnboardingToolsFase:
+    def test_accoglienza_ha_onboarding_domanda(self):
+        tools = get_onboarding_tools(fase="accoglienza")
+        names = [t["name"] for t in tools]
+        assert "onboarding_domanda" in names
+
+    def test_placement_ha_onboarding_domanda_e_segnali(self):
+        tools = get_onboarding_tools(fase="placement")
+        names = [t["name"] for t in tools]
+        assert "onboarding_domanda" in names
+        assert "placement_esito" in names
+        assert "transizione_fase" in names
+
+    def test_piano_ha_onboarding_domanda(self):
+        tools = get_onboarding_tools(fase="piano")
+        names = [t["name"] for t in tools]
+        assert "onboarding_domanda" in names
+        assert "transizione_fase" in names
+
+    def test_conclusione_no_onboarding_domanda(self):
+        tools = get_onboarding_tools(fase="conclusione")
+        names = [t["name"] for t in tools]
+        assert "onboarding_domanda" not in names
+
+    def test_conclusione_ha_segnali(self):
+        tools = get_onboarding_tools(fase="conclusione")
+        names = [t["name"] for t in tools]
+        assert "punto_partenza_suggerito" in names
+
+
+class TestDirettivaPlacement:
+    def test_placement_menziona_placement(self):
+        d = direttiva_onboarding(fase="placement")
+        assert "Placement Test" in d
+
+    def test_placement_menziona_onboarding_domanda(self):
+        d = direttiva_onboarding(fase="placement")
+        assert "onboarding_domanda" in d
+
+    def test_placement_include_nodi_gateway(self):
+        gateways = [
+            {"nodo_id": "nodo_1", "nome": "Equazioni", "tema_id": "algebra", "profondita": 0},
+            {"nodo_id": "nodo_2", "nome": "Derivate", "tema_id": "analisi", "profondita": 5},
+        ]
+        d = direttiva_onboarding(fase="placement", nodi_gateway=gateways)
+        assert "nodo_1" in d
+        assert "Equazioni" in d
+        assert "nodo_2" in d
+        assert "Derivate" in d
+
+    def test_placement_include_esiti_precedenti(self):
+        risultati = {
+            "esiti": [
+                {"nodo_id": "nodo_1", "padroneggiato": True},
+            ]
+        }
+        d = direttiva_onboarding(fase="placement", placement_risultati=risultati)
+        assert "padroneggiato" in d
+
+    def test_placement_menziona_transizione_fase(self):
+        d = direttiva_onboarding(fase="placement")
+        assert "transizione_fase" in d
+
+    def test_placement_menziona_placement_esito(self):
+        d = direttiva_onboarding(fase="placement")
+        assert "placement_esito" in d
+
+
+class TestDirettivaPiano:
+    def test_piano_menziona_piano_studio(self):
+        d = direttiva_onboarding(fase="piano")
+        assert "Piano Studio" in d
+
+    def test_piano_include_risultati_placement(self):
+        risultati = {
+            "esiti": [
+                {"nodo_id": "nodo_1", "padroneggiato": True},
+                {"nodo_id": "nodo_2", "padroneggiato": False},
+            ]
+        }
+        d = direttiva_onboarding(fase="piano", placement_risultati=risultati)
+        assert "nodo_1" in d
+        assert "nodo_2" in d
+
+    def test_piano_menziona_transizione_fase(self):
+        d = direttiva_onboarding(fase="piano")
+        assert "transizione_fase" in d
+
+    def test_piano_menziona_onboarding_domanda(self):
+        d = direttiva_onboarding(fase="piano")
+        assert "onboarding_domanda" in d
+
+
+class TestCompletaOnboardingPlacement:
+    @pytest.mark.asyncio
+    @patch("app.core.onboarding._inizializza_stato_nodi")
+    @patch("app.core.onboarding.grafo_knowledge")
+    async def test_completa_usa_placement_risultati(self, mock_grafo, mock_init):
+        """completa_onboarding usa placement_risultati per nodo_override."""
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={
+                "fase_onboarding": "conclusione",
+                "placement_risultati": {
+                    "esiti": [
+                        {"nodo_id": "nodo_1", "padroneggiato": True},
+                        {"nodo_id": "nodo_2", "padroneggiato": False},
+                    ]
+                },
+            }
+        )
+        utente = _mock_utente()
+
+        mock_grafo.caricato = True
+
+        import networkx as nx
+        grafo = nx.DiGraph()
+        for i in range(5):
+            grafo.add_node(f"nodo_{i}", tipo_nodo="operativo")
+            if i > 0:
+                grafo.add_edge(f"nodo_{i-1}", f"nodo_{i}")
+        mock_grafo.grafo = grafo
+        mock_init.return_value = 50
+
+        risultato = await completa_onboarding(db=db, sessione=sessione, utente=utente)
+
+        # Deve usare nodo_2 (primo non padroneggiato) come nodo_iniziale
+        assert risultato["nodo_iniziale"] == "nodo_2"
+
+    @pytest.mark.asyncio
+    @patch("app.core.onboarding._inizializza_stato_nodi")
+    @patch("app.core.onboarding.grafo_knowledge")
+    async def test_completa_fallback_punto_partenza_senza_placement(
+        self, mock_grafo, mock_init
+    ):
+        """Senza placement_risultati, fallback su punto_partenza_suggerito."""
+        db = AsyncMock()
+        sessione = _mock_sessione(
+            stato_orchestratore={
+                "fase_onboarding": "conclusione",
+                "punto_partenza_suggerito": "equazioni",
+            }
+        )
+        utente = _mock_utente()
+
+        mock_grafo.caricato = True
+
+        import networkx as nx
+        grafo = nx.DiGraph()
+        grafo.add_node("nodo_eq", tipo_nodo="operativo", tema_id="equazioni")
+        mock_grafo.grafo = grafo
+        mock_init.return_value = 50
+
+        risultato = await completa_onboarding(db=db, sessione=sessione, utente=utente)
+        assert risultato["nodo_iniziale"] == "nodo_eq"

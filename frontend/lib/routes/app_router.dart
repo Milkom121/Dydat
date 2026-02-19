@@ -8,6 +8,7 @@ import '../presentation/onboarding_screen/onboarding_screen.dart';
 import '../presentation/login_screen/login_screen.dart';
 import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/studio_screen/studio_screen.dart';
+import '../presentation/studio_screen/recap_session_screen.dart';
 import '../presentation/learning_path_screen/learning_path_screen.dart';
 import '../presentation/profile_screen/profile_screen.dart';
 import '../widgets/custom_bottom_bar.dart';
@@ -21,6 +22,8 @@ class AppPaths {
   static const studio = '/studio';
   static const percorso = '/percorso';
   static const profilo = '/profilo';
+  static const recap = '/recap';
+  static String recapSession(String sessioneId) => '/recap/$sessioneId';
 }
 
 /// Shell with bottom navigation bar for the three main tabs.
@@ -103,6 +106,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppPaths.onboarding,
         builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // Recap session (outside shell — no bottom bar).
+      GoRoute(
+        path: '${AppPaths.recap}/:sessioneId',
+        builder: (context, state) {
+          final sessioneId = state.pathParameters['sessioneId']!;
+          return RecapSessionScreen(sessioneId: sessioneId);
+        },
       ),
 
       // Main app — shell route with bottom navigation bar.

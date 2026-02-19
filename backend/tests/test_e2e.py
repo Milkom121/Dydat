@@ -40,6 +40,7 @@ class FakeContextPackage:
     system: str = "test system"
     messages: list = field(default_factory=list)
     modello: str = "test-model"
+    tipo_sessione: str = "studio"
 
 
 @dataclass

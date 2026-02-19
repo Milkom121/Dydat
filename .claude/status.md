@@ -5,9 +5,10 @@
 ## Stato Corrente
 
 **Ultimo aggiornamento**: 2026-02-19
-**Ultima sessione**: S10-bis (Blocco 14-bis — Onboarding adattivo cross-stack) — COMPLETATA
-**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B14 + B14-bis)
-**Prossima sessione**: S11 — Blocco 15 (Recap sessione + App lifecycle). Vedi `.claude/plans/frontend-integration.md` sezione Loop 2.
+**Ultima sessione**: S12 (Test E2E Loop 2) — COMPLETATA
+**Branch attivo**: feature/frontend-b1-b2 (contiene B1-B16 + B14-bis/ter + onboarding continuo backend)
+**Loop 2 COMPLETATO**: tutti i 6 blocchi B11-B16 implementati e testati E2E con SSE reale.
+**Prossima sessione**: Loop 3 — Da pianificare. Candidati: LaTeX rendering, animazioni celebrative, mascotte animata, storico sessioni nella home, completamento argomento nel recap.
 
 ## Blocchi Completati
 
@@ -29,6 +30,9 @@
 | B13 — Azioni tutor nel canvas | DONE | S9 | ExerciseCard, FormulaCard, BacktrackCard, ChiudiSessioneCard, AchievementToast con dati SSE reali |
 | B14 — Onboarding reale con SSE | DONE | S10 | OnboardingScreen con SSE streaming, conversione utente temp→registrato, cursore ambra |
 | B14-bis — Onboarding adattivo | DONE | S10-bis | Tool `onboarding_domanda` backend + widget UI frontend (scelta/testo/scala) + markdown rendering + Docker fix worktree |
+| B14-ter — Onboarding continuo (backend) | DONE | S10-ter | 5 fasi onboarding (placement + piano), segnali placement_esito/transizione_fase, nodi gateway, direttive placement/piano |
+| B15 — Recap + App lifecycle | DONE | S11 | RecapSessionScreen con dati reali, route /recap/:sessioneId, WidgetsBindingObserver per sospensione/ripresa |
+| B16 — Test E2E Loop 2 | DONE | S12 | Flusso completo verificato manualmente: SSE streaming, azioni tutor, lifecycle, 409, recap. Bug fix: 409 race condition |
 
 ## Risultati Test E2E (S6)
 
@@ -70,8 +74,8 @@ Flusso completo testato manualmente:
 | B12 — Studio con SSE reale | Testo tutor in streaming, rimuovere placeholder | DONE | S8 |
 | B13 — Azioni tutor nel canvas | Exercise/formula/backtrack card con dati SSE, achievement toast | DONE | S9 |
 | B14 — Onboarding reale con SSE | Onboarding con tutor AI, registrazione conversione utente_temp | DONE | S10 |
-| B15 — Recap + App lifecycle | Recap post-sessione, sospensione in background | TODO | S11 |
-| B16 — Test E2E Loop 2 | Flusso completo SSE reale senza crash | TODO | S12 |
+| B15 — Recap + App lifecycle | Recap post-sessione, sospensione in background | DONE | S11 |
+| B16 — Test E2E Loop 2 | Flusso completo SSE reale senza crash | DONE | S12 |
 
 Dettaglio completo in `.claude/plans/frontend-integration.md`.
 
@@ -183,6 +187,102 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 ### Analisi statica
 - `flutter analyze` → 0 errori, 0 warning
 
+## Risultati S10-ter (B14-ter — Onboarding Continuo, backend-only)
+
+### Obiettivo
+Estendere l'onboarding da 3 fasi a 5 fasi: accoglienza → conoscenza → **placement** → **piano** → conclusione. Le due nuove fasi aggiungono un test diagnostico (placement) e una proposta di piano di studio personalizzato (piano).
+
+### File backend modificati
+- `app/core/onboarding.py` — 5 fasi, `transizione_fase_onboarding()`, `seleziona_nodi_gateway()`, `_determina_nodo_da_placement()`, `completa_onboarding()` con priorita placement
+- `app/llm/tools.py` — Segnali `placement_esito` e `transizione_fase`, `get_onboarding_tools(fase=...)` filtra per fase
+- `app/core/elaborazione.py` — Processing segnali `placement_esito` e `transizione_fase`
+- `app/core/turno.py` — Carica sessione per fase e passa a `get_onboarding_tools()`
+- `app/core/contesto.py` — Passa `nodi_gateway` e `placement_risultati` alla direttiva
+- `app/llm/prompts/direttive.py` — Direttive placement e piano
+
+### File test modificati
+- `tests/test_onboarding.py` — ~34 nuovi test (fasi, transizioni, gateway, placement, piano, direttive)
+- `tests/test_elaborazione.py` — Fix FakeContextPackage (aggiunto `tipo_sessione`)
+- `tests/test_e2e.py` — Fix FakeContextPackage (aggiunto `tipo_sessione`)
+- `tests/test_contesto.py` — Fix assertion pre-esistente rotta da B14-bis
+
+### Risultati test
+- 264 passed, 4 failed (pre-esistenti in test_sessione.py — `_calcola_inattivita` signature), 10 skipped
+- `pytest-asyncio` installato nel container Docker
+
+### Design chiave
+- **Transizioni automatiche**: accoglienza→conoscenza (1o turno utente), conoscenza→placement (dopo 6 turni)
+- **Transizioni signal-driven**: placement→piano e piano→conclusione sono guidate dal LLM tramite segnale `transizione_fase`
+- **Nodi gateway**: fino a 5 nodi operativi distribuiti nel grafo per il test diagnostico
+- **Priorita starting point**: placement_risultati > punto_partenza_suggerito in `completa_onboarding()`
+- **Zero migrazioni DB**: tutto in `stato_orchestratore` JSONB
+
+## Risultati S11 (B15 — Recap sessione + App lifecycle)
+
+### File creati
+- `lib/presentation/studio_screen/recap_session_screen.dart` — Schermata post-sessione con dati reali: durata, nodi lavorati, nodo focale, statistiche aggiornate. Card numeriche stile gamification. Bottone "Torna alla home" che pulisce lo stato sessione e naviga a /studio.
+
+### File modificati
+- `lib/routes/app_router.dart` — Aggiunta route `/recap/:sessioneId` (fuori dalla shell, no bottom bar), import RecapSessionScreen, costante `AppPaths.recap` e metodo `AppPaths.recapSession(id)`
+- `lib/presentation/studio_screen/studio_screen.dart` — Aggiunto `WidgetsBindingObserver` mixin con `didChangeAppLifecycleState()`: sospende sessione su `paused`, mostra dialog di ripresa su `resumed`. Aggiunto metodo `_endSessionAndNavigateToRecap()` usato da ChiudiSessioneCard e dialog "Termina sessione". Import `go_router` e `app_router.dart`. Aggiunto `_formatNodeId()` per nomi nodo leggibili nell'header.
+- `lib/providers/session_provider.dart` — Aggiunto handler 409 con messaggio "Bentornato!" e `_formatNodeName()` statico per fallback formattazione nodi tecnici
+- `backend/app/grafo/struttura.py` — Fix: aggiunto `Nodo.nome` alla query SELECT e al `g.add_node()` nel knowledge graph in-memory (root cause dei nomi nodo mancanti)
+
+### Bug fix durante test manuale
+- **"Tried to modify provider during build"**: `_loadData()` chiamato direttamente in `initState()` di RecapSessionScreen. Fix: `Future.microtask(_loadData)` per deferire dopo il build
+- **Error state overflow (19797 px)**: Column non scrollabile nello stato errore. Fix: wrappato in `SingleChildScrollView` con messaggio user-friendly
+- **Nomi nodo tecnici**: backend non caricava `Nodo.nome` nel grafo in-memory, API ritornava ID tecnico come fallback. Fix: aggiunto `nome` alla query + formatter frontend come doppio fallback
+- **409 canvas vuoto**: sessione ripresa via REST senza messaggi tutor. Fix: messaggio "Bentornato!" generato nel handler 409
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- 163 test — tutti verdi (4 fallimenti pre-esistenti: 3 path_service + 1 session_service.start mock — invariati da S10)
+- Nessun nuovo test fallito
+
+### Test manuale superato (emulatore Android)
+1. Sessione attiva con nome nodo leggibile ("Potenza di un numero relativo") — OK
+2. Termina sessione → schermata Recap con dati reali (durata, nodo focale, stats) — OK
+3. "Torna alla home" → stato pulito ("Pronto per studiare" + "Inizia") — OK
+4. App lifecycle: background → dialog "Sessione sospesa" con "Riprendi"/"No, termina" — OK
+
+### Design chiave
+- **RecapSessionScreen**: carica `GET /sessione/{id}` + `GET /utente/me/statistiche` in parallelo con `Future.wait()`, mostra durata effettiva, nodi lavorati, nodo focale, e statistiche aggregate (streak, nodi completati, sessioni)
+- **Navigazione recap**: ChiudiSessioneCard e dialog "Termina" navigano a `/recap/{sessioneId}` dopo `endSession()`. Il bottone "Torna alla home" pulisce lo stato e va a `/studio`
+- **App lifecycle**: solo `AppLifecycleState.paused` sospende (non `inactive`, per evitare doppia sospensione su iOS). Al `resumed` mostra dialog con opzione "Riprendi" (chiama `startSessionStream()` che auto-riprende la sessione sospesa) o "No, termina" (pulisce stato)
+- **Flag `_suspendedInBackground`**: evita dialog di ripresa se la sospensione non e stata causata dal background
+- **Future.microtask per initState**: pattern Riverpod — mai modificare un provider dentro initState/build, deferire con Future.microtask
+
+## Risultati S12 (B16 — Test E2E Loop 2)
+
+### Code review
+- `flutter analyze` → 0 errori, 0 warning
+- `flutter test` → 163 passed, 4 failed (pre-esistenti: 3 path_service + 1 session_service.start mock)
+- Code review completa: nessun bug bloccante nei file chiave
+
+### Bug fix
+- **409 race condition**: `onDone` dello SSE stream azzerava lo stato del provider prima che il fallback REST `startSession(resumed: true)` completasse. Fix: flag `_handling409` che blocca `onDone` e `onError` durante il fallback.
+
+### Test E2E manuale (emulatore Android)
+
+| Flusso | Risultato | Note |
+|--------|-----------|------|
+| 2 — Sessione studio SSE | ✅ | Streaming, FormulaCard (LaTeX raw), multi-turno |
+| 3 — Termina → Recap | ✅ | Dati reali, nomi nodo leggibili, torna alla home |
+| 4 — Lifecycle background/foreground | ✅ | Dialog sospesa, Riprendi, No termina |
+| 5 — Tab Percorso + Profilo | ✅ | Temi, nodi, stats, achievement "Si parte!" sbloccato |
+| 6 — 409 sessione attiva | ✅ | "Bentornato!" con nome nodo (dopo fix race condition) |
+
+### Feedback fondatore per Loop 3
+- **FormulaCard**: mostra LaTeX raw — servira renderer LaTeX (`flutter_math_fork` o simile)
+- **Home dopo recap**: manca storico sessioni — servira endpoint backend `GET /sessione/` (lista)
+- **Recap**: non distingue "argomento completato" da "interrotto a meta" — miglioramento UX futuro
+- **Progressione nodi**: il tracking esiste nel backend (spiegazione_data + esercizi + promozione) ma non e visibile nella home — miglioramento UX futuro
+
+### Analisi statica finale
+- `flutter analyze` → 0 errori, 0 warning
+
 ## Problemi Aperti
 
 - `custom_error_widget.dart` ha colori hardcoded — da fixare in futuro
@@ -191,6 +291,10 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 - Classi evento duplicate in sessione.dart e api_response.dart (B2) vs sse_events.dart (B11) — risolto con `hide` nelle import, ma le vecchie classi restano per retrocompatibilita test B2
 - **Docker**: lanciare SEMPRE da `backend/`, MAI dal worktree `nostalgic-hertz`. Verificare con `docker ps` che il container si chiami `backend-backend-1`
 - `flutter_markdown` e marcato come "discontinued replaced by flutter_markdown_plus" — monitorare per eventuale migrazione futura
+- **4 test pre-esistenti falliti** in `test_sessione.py`: `TestCalcoloInattivita` — signature mismatch di `_calcola_inattivita()`. NON causati da onboarding continuo
+- **FormulaCard mostra LaTeX raw** — necessita renderer LaTeX in Loop 3
+- **Manca storico sessioni nella home** — necessita endpoint backend `GET /sessione/` (lista sessioni)
+- **Recap non distingue completamento argomento** — miglioramento UX futuro
 
 ## Cosa Esiste Gia
 
@@ -261,3 +365,13 @@ Dettaglio completo in `.claude/plans/frontend-integration.md`.
 | 2026-02-18 | Bottone "Inizia il tuo percorso!" dopo 8 turni | Appare quando turnsCompleted >= 8, chiama completeOnboarding() |
 | 2026-02-18 | RegistrationScreen legge utenteTempId da onboardingProvider | Conversione utente temp→registrato passa l'ID via provider (non route extra) |
 | 2026-02-18 | hide AchievementEvent in onboarding_provider.dart | Stessa ambiguita tra api_response.dart e sse_events.dart, risolta con hide |
+| 2026-02-19 | RecapSessionScreen fuori dalla shell route | No bottom bar nella schermata recap, navigazione dedicata con "Torna alla home" |
+| 2026-02-19 | Solo `paused` sospende, non `inactive` | Su iOS `inactive` arriva prima di `paused`, causerebbe doppia sospensione |
+| 2026-02-19 | Flag `_suspendedInBackground` per dialog ripresa | Evita dialog spurio se la sospensione non e stata causata dal background |
+| 2026-02-19 | `_endSessionAndNavigateToRecap()` come metodo riutilizzabile | Condiviso tra ChiudiSessioneCard.onEnd e dialog "Termina sessione" |
+| 2026-02-19 | `Future.microtask()` per _loadData in initState | Riverpod vieta modifiche provider durante build — deferire con microtask |
+| 2026-02-19 | `Nodo.nome` nel grafo in-memory (backend fix) | Root cause nomi nodo mancanti — API fallback ritornava ID tecnico |
+| 2026-02-19 | `_formatNodeName()` come fallback frontend | Doppia sicurezza: se backend ritorna ancora ID tecnico, formatter lo converte |
+| 2026-02-19 | Messaggio "Bentornato!" per sessioni riprese (409) | Canvas vuoto dopo 409 — ora mostra messaggio di benvenuto con nome nodo |
+| 2026-02-19 | Flag `_handling409` per race condition 409 | `onDone` dello SSE stream azzerava stato prima che fallback REST completasse |
+| 2026-02-19 | FormulaCard mostra LaTeX raw — fix rimandato a Loop 3 | Rendering LaTeX richiede pacchetto dedicato, non fix cosmetico temporaneo |

@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
 import '../../models/sse_events.dart';
 import '../../providers/session_provider.dart';
+import '../../routes/app_router.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_icon_widget.dart';
 import '../../widgets/markdown_text.dart';
@@ -27,7 +29,8 @@ class StudioScreen extends ConsumerStatefulWidget {
   ConsumerState<StudioScreen> createState() => _StudioScreenState();
 }
 
-class _StudioScreenState extends ConsumerState<StudioScreen> {
+class _StudioScreenState extends ConsumerState<StudioScreen>
+    with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _messageFocusNode = FocusNode();
@@ -48,13 +51,109 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
   int _prevActionsCount = 0;
   int _prevAchievementsCount = 0;
 
+  // True if we auto-suspended the session when going to background.
+  bool _suspendedInBackground = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
     _messageFocusNode.dispose();
     _timer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+        // App went to background — suspend active session
+        if (_isSessionActive && !_suspendedInBackground) {
+          _suspendedInBackground = true;
+          _stopTimer();
+          ref.read(sessionProvider.notifier).suspend();
+        }
+      case AppLifecycleState.resumed:
+        if (_suspendedInBackground) {
+          _suspendedInBackground = false;
+          _showResumeDialog();
+        }
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        break;
+    }
+  }
+
+  void _showResumeDialog() {
+    if (!mounted) return;
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(
+            'Sessione sospesa',
+            style: theme.textTheme.titleLarge,
+          ),
+          content: Text(
+            'Vuoi riprendere la sessione di studio?',
+            style: theme.textTheme.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                // User chose not to resume — clear session state
+                ref.read(sessionProvider.notifier).clear();
+                setState(() {
+                  _sessionSeconds = 0;
+                  _sessionTime = '00:00';
+                  _messages.clear();
+                  _prevTutorMessagesCount = 0;
+                  _prevActionsCount = 0;
+                  _prevAchievementsCount = 0;
+                });
+              },
+              child: Text(
+                'No, termina',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                // Resume by starting a new session stream —
+                // the backend auto-resumes suspended sessions.
+                _startTimer();
+                await ref
+                    .read(sessionProvider.notifier)
+                    .startSessionStream();
+              },
+              child: Text(
+                'Riprendi',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   bool get _isSessionActive {
@@ -249,6 +348,18 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
     );
   }
 
+  Future<void> _endSessionAndNavigateToRecap() async {
+    final sessionId = ref.read(sessionProvider).activeSession?.id;
+    if (sessionId == null) return;
+
+    _stopTimer();
+    await ref.read(sessionProvider.notifier).endSession();
+
+    if (mounted) {
+      context.go(AppPaths.recapSession(sessionId));
+    }
+  }
+
   void _endSession() {
     showDialog(
       context: context,
@@ -273,14 +384,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(ctx);
-                _stopTimer();
-                await ref.read(sessionProvider.notifier).endSession();
-                if (mounted) {
-                  setState(() {
-                    _sessionSeconds = 0;
-                    _sessionTime = '00:00';
-                  });
-                }
+                await _endSessionAndNavigateToRecap();
               },
               child: Text(
                 'Termina',
@@ -428,16 +532,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen> {
           child: ChiudiSessioneCardWidget(
             data: chiudi,
             theme: theme,
-            onEnd: () async {
-              _stopTimer();
-              await ref.read(sessionProvider.notifier).endSession();
-              if (mounted) {
-                setState(() {
-                  _sessionSeconds = 0;
-                  _sessionTime = '00:00';
-                });
-              }
-            },
+            onEnd: _endSessionAndNavigateToRecap,
           ),
         );
 
