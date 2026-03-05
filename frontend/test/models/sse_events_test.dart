@@ -194,6 +194,94 @@ void main() {
       expect(e.messaggio, 'Timeout dopo 60s');
     });
 
+    test('parses esito_esercizio event — primo_tentativo', () {
+      final event = SseEvent.fromRawEvent(
+        'esito_esercizio',
+        '{"corretto": true, "primo_tentativo": true, "con_guida": false}',
+      );
+
+      expect(event, isA<EsitoEsercizioEvent>());
+      final e = event as EsitoEsercizioEvent;
+      expect(e.corretto, true);
+      expect(e.primoTentativo, true);
+      expect(e.conGuida, false);
+    });
+
+    test('parses esito_esercizio event — con_guida', () {
+      final event = SseEvent.fromRawEvent(
+        'esito_esercizio',
+        '{"corretto": true, "primo_tentativo": false, "con_guida": true}',
+      );
+
+      expect(event, isA<EsitoEsercizioEvent>());
+      final e = event as EsitoEsercizioEvent;
+      expect(e.corretto, true);
+      expect(e.primoTentativo, false);
+      expect(e.conGuida, true);
+    });
+
+    test('parses esito_esercizio event — non_risolto', () {
+      final event = SseEvent.fromRawEvent(
+        'esito_esercizio',
+        '{"corretto": false, "primo_tentativo": false, "con_guida": false}',
+      );
+
+      expect(event, isA<EsitoEsercizioEvent>());
+      final e = event as EsitoEsercizioEvent;
+      expect(e.corretto, false);
+      expect(e.primoTentativo, false);
+      expect(e.conGuida, false);
+    });
+
+    test('parses esito_esercizio with missing fields defaults to false', () {
+      final event = SseEvent.fromRawEvent(
+        'esito_esercizio',
+        '{}',
+      );
+
+      expect(event, isA<EsitoEsercizioEvent>());
+      final e = event as EsitoEsercizioEvent;
+      expect(e.corretto, false);
+      expect(e.primoTentativo, false);
+      expect(e.conGuida, false);
+    });
+
+    test('parses promozione event with all fields', () {
+      final event = SseEvent.fromRawEvent(
+        'promozione',
+        '{"nodo_id": "mat_Algebra1_equazioni", "nodo_nome": "Equazioni lineari", "nuovo_livello": "operativo", "nodi_sbloccati": ["mat_Algebra1_disequazioni", "mat_Algebra1_sistemi"]}',
+      );
+
+      expect(event, isA<PromozioneEvent>());
+      final e = event as PromozioneEvent;
+      expect(e.nodoId, 'mat_Algebra1_equazioni');
+      expect(e.nodoNome, 'Equazioni lineari');
+      expect(e.nuovoLivello, 'operativo');
+      expect(e.nodiSbloccati, ['mat_Algebra1_disequazioni', 'mat_Algebra1_sistemi']);
+    });
+
+    test('parses promozione event with empty nodi_sbloccati', () {
+      final event = SseEvent.fromRawEvent(
+        'promozione',
+        '{"nodo_id": "nodo_x", "nodo_nome": "Potenze", "nuovo_livello": "operativo", "nodi_sbloccati": []}',
+      );
+
+      expect(event, isA<PromozioneEvent>());
+      final e = event as PromozioneEvent;
+      expect(e.nodiSbloccati, isEmpty);
+    });
+
+    test('parses promozione event with missing nodi_sbloccati defaults to empty', () {
+      final event = SseEvent.fromRawEvent(
+        'promozione',
+        '{"nodo_id": "nodo_y", "nodo_nome": "Radici", "nuovo_livello": "operativo"}',
+      );
+
+      expect(event, isA<PromozioneEvent>());
+      final e = event as PromozioneEvent;
+      expect(e.nodiSbloccati, isEmpty);
+    });
+
     test('returns null for unknown event type', () {
       final event = SseEvent.fromRawEvent(
         'unknown_event',

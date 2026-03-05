@@ -22,6 +22,8 @@ sealed class SseEvent {
         'text_delta' => TextDeltaEvent.fromJson(data),
         'azione' => AzioneEvent.fromJson(data),
         'achievement' => AchievementEvent.fromJson(data),
+        'esito_esercizio' => EsitoEsercizioEvent.fromJson(data),
+        'promozione' => PromozioneEvent.fromJson(data),
         'turno_completo' => TurnoCompletoEvent.fromJson(data),
         'errore' => ErroreEvent.fromJson(data),
         _ => null,
@@ -247,6 +249,56 @@ class OnboardingDomandaAction {
   }
 }
 
+/// Exercise outcome event. Emitted after a `risposta_esercizio` signal.
+/// Used to trigger celebration animations in the frontend.
+class EsitoEsercizioEvent extends SseEvent {
+  final bool corretto;
+  final bool primoTentativo;
+  final bool conGuida;
+
+  const EsitoEsercizioEvent({
+    required this.corretto,
+    required this.primoTentativo,
+    required this.conGuida,
+  });
+
+  factory EsitoEsercizioEvent.fromJson(Map<String, dynamic> json) {
+    return EsitoEsercizioEvent(
+      corretto: json['corretto'] as bool? ?? false,
+      primoTentativo: json['primo_tentativo'] as bool? ?? false,
+      conGuida: json['con_guida'] as bool? ?? false,
+    );
+  }
+}
+
+/// Node promotion event. Emitted when a node is promoted to a higher level.
+/// Used to trigger promotion celebration animations in the frontend.
+class PromozioneEvent extends SseEvent {
+  final String nodoId;
+  final String nodoNome;
+  final String nuovoLivello;
+  final List<String> nodiSbloccati;
+
+  const PromozioneEvent({
+    required this.nodoId,
+    required this.nodoNome,
+    required this.nuovoLivello,
+    this.nodiSbloccati = const [],
+  });
+
+  factory PromozioneEvent.fromJson(Map<String, dynamic> json) {
+    return PromozioneEvent(
+      nodoId: json['nodo_id'] as String,
+      nodoNome: json['nodo_nome'] as String,
+      nuovoLivello: json['nuovo_livello'] as String,
+      nodiSbloccati: (json['nodi_sbloccati'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+    );
+  }
+}
+
 /// Achievement unlocked during a turn.
 class AchievementEvent extends SseEvent {
   final String id;
@@ -284,6 +336,18 @@ class TurnoCompletoEvent extends SseEvent {
       nodoFocale: json['nodo_focale'] as String?,
     );
   }
+}
+
+/// Reconnection attempt event. Emitted by SseClient when retrying after
+/// a network error or timeout. Not a backend event — generated client-side.
+class ReconnectingEvent extends SseEvent {
+  final int attempt;
+  final int maxAttempts;
+
+  const ReconnectingEvent({
+    required this.attempt,
+    required this.maxAttempts,
+  });
 }
 
 /// Error event. The stream terminates after this.

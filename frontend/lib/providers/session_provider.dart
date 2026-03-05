@@ -24,6 +24,21 @@ class SessionScreenState {
   /// Achievements received during the current turn.
   final List<AchievementEvent> currentTurnAchievements;
 
+  /// Past sessions for the history widget.
+  final List<SessioneListItem> sessionHistory;
+
+  /// Whether session history is being loaded.
+  final bool isLoadingHistory;
+
+  /// Latest exercise outcome (for triggering celebration animations).
+  final EsitoEsercizioEvent? latestEsito;
+
+  /// Latest node promotion (for triggering promotion celebration).
+  final PromozioneEvent? latestPromotion;
+
+  /// Whether the SSE client is attempting to reconnect after a network error.
+  final bool isReconnecting;
+
   const SessionScreenState({
     this.activeSession,
     this.tutorMessages = const [],
@@ -33,6 +48,11 @@ class SessionScreenState {
     this.currentTutorText = '',
     this.currentTurnActions = const [],
     this.currentTurnAchievements = const [],
+    this.sessionHistory = const [],
+    this.isLoadingHistory = false,
+    this.latestEsito,
+    this.latestPromotion,
+    this.isReconnecting = false,
   });
 
   SessionScreenState copyWith({
@@ -44,8 +64,15 @@ class SessionScreenState {
     String? currentTutorText,
     List<AzioneEvent>? currentTurnActions,
     List<AchievementEvent>? currentTurnAchievements,
+    List<SessioneListItem>? sessionHistory,
+    bool? isLoadingHistory,
+    EsitoEsercizioEvent? latestEsito,
+    PromozioneEvent? latestPromotion,
+    bool? isReconnecting,
     bool clearSession = false,
     bool clearError = false,
+    bool clearEsito = false,
+    bool clearPromotion = false,
   }) {
     return SessionScreenState(
       activeSession:
@@ -58,6 +85,13 @@ class SessionScreenState {
       currentTurnActions: currentTurnActions ?? this.currentTurnActions,
       currentTurnAchievements:
           currentTurnAchievements ?? this.currentTurnAchievements,
+      sessionHistory: sessionHistory ?? this.sessionHistory,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
+      latestEsito: clearEsito ? null : (latestEsito ?? this.latestEsito),
+      latestPromotion: clearPromotion
+          ? null
+          : (latestPromotion ?? this.latestPromotion),
+      isReconnecting: isReconnecting ?? this.isReconnecting,
     );
   }
 }
@@ -130,6 +164,7 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
         state = state.copyWith(
           isLoading: false,
           isStreaming: false,
+          isReconnecting: false,
           error: 'Errore stream: $error',
         );
       },
@@ -139,7 +174,11 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
         if (state.isStreaming && state.currentTutorText.isNotEmpty) {
           _finalizeTutorMessage();
         }
-        state = state.copyWith(isLoading: false, isStreaming: false);
+        state = state.copyWith(
+          isLoading: false,
+          isStreaming: false,
+          isReconnecting: false,
+        );
       },
     );
   }
@@ -157,12 +196,14 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
           activeSession: session,
           isLoading: false,
           isStreaming: true,
+          isReconnecting: false,
         );
 
       case TextDeltaEvent():
         state = state.copyWith(
           currentTutorText: state.currentTutorText + event.testo,
           isStreaming: true,
+          isReconnecting: false,
         );
 
       case AzioneEvent():
@@ -174,6 +215,15 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
         state = state.copyWith(
           currentTurnAchievements: [...state.currentTurnAchievements, event],
         );
+
+      case EsitoEsercizioEvent():
+        state = state.copyWith(latestEsito: event);
+
+      case PromozioneEvent():
+        state = state.copyWith(latestPromotion: event);
+
+      case ReconnectingEvent():
+        state = state.copyWith(isReconnecting: true);
 
       case TurnoCompletoEvent():
         _finalizeTutorMessage();
@@ -208,6 +258,7 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
         state = state.copyWith(
           isLoading: false,
           isStreaming: false,
+          isReconnecting: false,
           error: event.messaggio,
         );
 
@@ -385,6 +436,37 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
           : 'Errore caricamento sessione';
       state = state.copyWith(isLoading: false, error: msg);
     }
+  }
+
+  /// Loads the session history (past sessions).
+  Future<void> loadSessionHistory({int limit = 10, int offset = 0}) async {
+    state = state.copyWith(isLoadingHistory: true);
+    try {
+      final sessions = await _sessionService.listSessions(
+        limit: limit,
+        offset: offset,
+      );
+      state = state.copyWith(
+        sessionHistory: sessions,
+        isLoadingHistory: false,
+      );
+    } on DioException catch (e) {
+      final apiError = e.error;
+      final msg = apiError is ApiException
+          ? apiError.message
+          : 'Errore caricamento storico';
+      state = state.copyWith(isLoadingHistory: false, error: msg);
+    }
+  }
+
+  /// Clears the latest esito (after celebration animation has played).
+  void clearEsito() {
+    state = state.copyWith(clearEsito: true);
+  }
+
+  /// Clears the latest promotion (after celebration animation has played).
+  void clearPromotion() {
+    state = state.copyWith(clearPromotion: true);
   }
 
   void clear() {

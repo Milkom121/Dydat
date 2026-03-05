@@ -24,6 +24,7 @@ from app.core.elaborazione import (
     processa_segnali,
 )
 from app.db.models.utenti import Sessione
+from app.grafo.struttura import grafo_knowledge
 from app.llm.client import chiama_tutor
 from app.llm.tools import get_onboarding_tools
 
@@ -183,12 +184,16 @@ async def esegui_turno(
     )
 
     # Processa segnali
-    promozioni = await processa_segnali(
+    promozioni, esiti_esercizio = await processa_segnali(
         db=db,
         segnali=segnali_accumulati,
         sessione_id=sessione_id,
         utente_id=utente_id,
     )
+
+    # Emit esito_esercizio events for frontend celebrations
+    for esito in esiti_esercizio:
+        yield _evento_sse("esito_esercizio", esito)
 
     # Gestisci promozioni
     for promo in promozioni:
@@ -203,6 +208,17 @@ async def esegui_turno(
             "Promozione %s → operativo, prossimo: %s",
             nodo_promosso, prossimo_nodo,
         )
+
+        # Emit promozione SSE event for frontend celebration
+        nodo_nome = grafo_knowledge.grafo.nodes.get(
+            nodo_promosso, {}
+        ).get("nome", nodo_promosso) if grafo_knowledge.caricato else nodo_promosso
+        yield _evento_sse("promozione", {
+            "nodo_id": nodo_promosso,
+            "nodo_nome": nodo_nome,
+            "nuovo_livello": promo["nuovo_livello"],
+            "nodi_sbloccati": promo.get("nodi_sbloccati", []),
+        })
 
     # Aggiorna statistiche giornaliere
     await _aggiorna_stats_safe(utente_id, db)

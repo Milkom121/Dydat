@@ -25,6 +25,7 @@ class ApiConfig {
   static const String onboardingComplete = '/onboarding/completa';
 
   // Sessione
+  static const String sessionList = '/sessione/';
   static const String sessionStart = '/sessione/inizia';
   static String sessionTurn(String id) => '/sessione/$id/turno';
   static String sessionSuspend(String id) => '/sessione/$id/sospendi';

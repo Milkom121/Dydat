@@ -38,7 +38,7 @@ class TemaCardWidget extends StatelessWidget {
     final theme = Theme.of(context);
     switch (status) {
       case 'completed':
-        return const Color(0xFF7EBF8E);
+        return theme.colorScheme.secondary;
       case 'current':
         return theme.colorScheme.primary;
       default:

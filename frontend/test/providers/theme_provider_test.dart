@@ -9,9 +9,9 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('initial state is ThemeMode.system', () {
+    test('initial state is ThemeMode.dark', () {
       final notifier = ThemeNotifier();
-      expect(notifier.state, ThemeMode.system);
+      expect(notifier.state, ThemeMode.dark);
     });
 
     test('setThemeMode changes state and persists', () async {
@@ -33,26 +33,27 @@ void main() {
       expect(notifier.state, ThemeMode.light);
     });
 
-    test('load with no saved value keeps system', () async {
+    test('load with no saved value keeps dark', () async {
       SharedPreferences.setMockInitialValues({});
 
       final notifier = ThemeNotifier();
       await notifier.load();
 
-      expect(notifier.state, ThemeMode.system);
+      expect(notifier.state, ThemeMode.dark);
     });
 
     test('toggle switches between dark and light', () async {
       final notifier = ThemeNotifier();
+
+      // Initial state is dark, first toggle goes to light
+      await notifier.toggle();
+      expect(notifier.state, ThemeMode.light);
 
       await notifier.toggle();
       expect(notifier.state, ThemeMode.dark);
 
       await notifier.toggle();
       expect(notifier.state, ThemeMode.light);
-
-      await notifier.toggle();
-      expect(notifier.state, ThemeMode.dark);
     });
 
     test('load with invalid value defaults to system', () async {

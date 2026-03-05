@@ -122,6 +122,9 @@ class CustomStudioAppBar extends StatelessWidget
   /// Callback when settings button is pressed
   final VoidCallback? onSettings;
 
+  /// Callback when back arrow is pressed (navigate to home view)
+  final VoidCallback? onBack;
+
   /// Whether the session is currently active
   final bool isSessionActive;
 
@@ -130,6 +133,7 @@ class CustomStudioAppBar extends StatelessWidget
     this.sessionTime,
     this.onPause,
     this.onSettings,
+    this.onBack,
     this.isSessionActive = false,
   });
 
@@ -139,6 +143,17 @@ class CustomStudioAppBar extends StatelessWidget
     final colorScheme = theme.colorScheme;
 
     return AppBar(
+      leading: isSessionActive && onBack != null
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                onBack!();
+              },
+              tooltip: 'Torna alla home',
+            )
+          : null,
+      automaticallyImplyLeading: false,
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

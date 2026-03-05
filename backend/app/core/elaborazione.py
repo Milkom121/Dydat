@@ -185,13 +185,16 @@ async def processa_segnali(
     segnali: list[dict],
     sessione_id: uuid.UUID,
     utente_id: uuid.UUID,
-) -> list[dict]:
-    """Processa i segnali accumulati. Ritorna lista promozioni avvenute.
+) -> tuple[list[dict], list[dict]]:
+    """Processa i segnali accumulati. Ritorna promozioni e esiti esercizio.
 
     Returns:
-        Lista di dict con promozioni: [{"nodo_id": ..., "nuovo_livello": ...}]
+        Tupla (promozioni, esiti_esercizio):
+        - promozioni: [{"nodo_id": ..., "nuovo_livello": ...}]
+        - esiti_esercizio: [{"corretto": bool, "primo_tentativo": bool, "con_guida": bool}]
     """
     promozioni: list[dict] = []
+    esiti_esercizio: list[dict] = []
 
     for segnale in segnali:
         nome = segnale.get("name", "")
@@ -205,6 +208,14 @@ async def processa_segnali(
             )
             if promo:
                 promozioni.append(promo)
+
+            # Emit esito_esercizio event for frontend celebration
+            esito = params.get("esito", "non_risolto")
+            esiti_esercizio.append({
+                "corretto": esito in ("primo_tentativo", "con_guida"),
+                "primo_tentativo": esito == "primo_tentativo",
+                "con_guida": esito == "con_guida",
+            })
         elif nome == "confusione_rilevata":
             _log_segnale("confusione_rilevata", params)
         elif nome == "energia_utente":
@@ -221,7 +232,7 @@ async def processa_segnali(
             # Loop 3 segnali — log senza processare
             _log_segnale(nome, params)
 
-    return promozioni
+    return promozioni, esiti_esercizio
 
 
 def _log_segnale(nome: str, params: dict) -> None:

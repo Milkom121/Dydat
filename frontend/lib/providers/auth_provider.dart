@@ -54,21 +54,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
         super(const AuthState());
 
   /// Check for stored token on app start.
+  ///
+  /// The token is NOT placed in state until the backend validates it.
+  /// This prevents GoRouter from redirecting to /studio prematurely
+  /// (which would cause child screens to fire API calls with a stale token).
   Future<void> checkAuth() async {
     final token = await _storageService.getAccessToken();
     if (token == null) return;
 
-    state = state.copyWith(token: token, isLoading: true, clearError: true);
+    // Only set isLoading — do NOT set token yet (avoids premature redirect).
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final user = await _userService.getMe();
-      state = state.copyWith(user: user, isLoading: false);
+      // Token verified — now set it in state so isAuthenticated becomes true.
+      state = state.copyWith(token: token, user: user, isLoading: false);
     } on DioException catch (e) {
       final apiError = e.error;
       if (apiError is ApiException && apiError.statusCode == 401) {
+        // Token is invalid/expired — remove it completely.
         await _storageService.deleteAccessToken();
         state = const AuthState();
       } else {
-        state = state.copyWith(isLoading: false, clearToken: true);
+        // Network error, timeout, server down, etc.
+        // Set token to keep user "authenticated" so the router doesn't
+        // oscillate between splash and login.
+        state = state.copyWith(token: token, isLoading: false);
       }
     }
   }

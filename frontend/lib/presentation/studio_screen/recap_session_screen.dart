@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
 import '../../models/sessione.dart';
 import '../../models/statistiche.dart';
+import '../../models/tema.dart';
+import '../../providers/path_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../providers/stats_provider.dart';
 import '../../routes/app_router.dart';
@@ -23,6 +25,7 @@ class RecapSessionScreen extends ConsumerStatefulWidget {
 class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
   Sessione? _session;
   StatisticheUtente? _stats;
+  List<Tema> _completedTemi = [];
   bool _isLoading = true;
   String? _error;
 
@@ -41,16 +44,32 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
     });
 
     try {
-      // Load session data and refresh stats in parallel
+      // Load session data, stats, and topics in parallel
       await Future.wait([
         ref.read(sessionProvider.notifier).loadSession(widget.sessioneId),
         ref.read(statsProvider.notifier).load(),
+        ref.read(pathProvider.notifier).loadTopics(),
       ]);
 
       if (mounted) {
+        final session = ref.read(sessionProvider).activeSession;
+        final topics = ref.read(pathProvider).topics;
+
+        // Find completed temi that overlap with this session's worked nodes
+        final nodiLavorati = session?.nodiLavorati ?? [];
+        final completed = <Tema>[];
+        if (nodiLavorati.isNotEmpty) {
+          for (final tema in topics) {
+            if (tema.completato) {
+              completed.add(tema);
+            }
+          }
+        }
+
         setState(() {
-          _session = ref.read(sessionProvider).activeSession;
+          _session = session;
           _stats = ref.read(statsProvider).stats;
+          _completedTemi = completed;
           _isLoading = false;
         });
       }
@@ -235,6 +254,14 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
             SizedBox(height: 2.h),
           ],
 
+          // Completed temi celebration
+          if (_completedTemi.isNotEmpty) ...[
+            ..._completedTemi.map(
+              (tema) => _buildCompletedTemaCard(theme, tema),
+            ),
+            SizedBox(height: 2.h),
+          ],
+
           // Updated statistics section
           if (_stats != null) ...[
             _buildStatsSection(theme),
@@ -267,6 +294,67 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
           ),
           SizedBox(height: 2.h),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedTemaCard(ThemeData theme, Tema tema) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.5.h),
+      child: Container(
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 12.w,
+              height: 12.w,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.emoji_events,
+                size: 6.w,
+                color: theme.colorScheme.secondary,
+              ),
+            ),
+            SizedBox(width: 3.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tema completato!',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.secondary,
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Text(
+                    tema.nome,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '${tema.nodiTotali} nodi completati',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -198,6 +198,9 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
       // Events not relevant to onboarding — ignore
       case SessioneCreataEvent():
       case AchievementEvent():
+      case EsitoEsercizioEvent():
+      case PromozioneEvent():
+      case ReconnectingEvent():
         break;
     }
   }

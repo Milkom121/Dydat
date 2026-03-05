@@ -99,7 +99,7 @@ class TestFlussoE2ESpiegazionePromozione:
                   return_value=FakeContextPackage()),
             patch("app.core.turno.chiama_tutor", side_effect=fake_llm),
             patch("app.core.turno.salva_turno", return_value=FakeTurno()),
-            patch("app.core.turno.processa_segnali", return_value=[]) as mock_segnali,
+            patch("app.core.turno.processa_segnali", return_value=([], [])) as mock_segnali,
         ):
             eventi = []
             async for ev in esegui_turno(
@@ -158,7 +158,7 @@ class TestFlussoE2ESpiegazionePromozione:
             patch("app.core.turno.chiama_tutor", side_effect=fake_llm),
             patch("app.core.turno.salva_turno", return_value=FakeTurno()),
             patch("app.core.turno.esegui_azione", return_value=azione_result),
-            patch("app.core.turno.processa_segnali", return_value=[]),
+            patch("app.core.turno.processa_segnali", return_value=([], [])),
         ):
             eventi = []
             async for ev in esegui_turno(
@@ -207,7 +207,7 @@ class TestFlussoE2ESpiegazionePromozione:
                   return_value=FakeContextPackage()),
             patch("app.core.turno.chiama_tutor", side_effect=fake_llm),
             patch("app.core.turno.salva_turno", return_value=FakeTurno()),
-            patch("app.core.turno.processa_segnali", return_value=promozione),
+            patch("app.core.turno.processa_segnali", return_value=(promozione, [])),
             patch("app.core.turno.aggiorna_nodo_dopo_promozione",
                   return_value="nodo_B") as mock_promo,
             patch("app.core.gamification.verifica_achievement",

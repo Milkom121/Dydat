@@ -207,4 +207,19 @@ class SessionService {
     );
     return Sessione.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Lists past sessions with pagination.
+  Future<List<SessioneListItem>> listSessions({
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    final response = await _client.dio.get(
+      ApiConfig.sessionList,
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => SessioneListItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 }

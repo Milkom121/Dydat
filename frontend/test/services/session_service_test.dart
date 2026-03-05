@@ -46,14 +46,42 @@ void main() {
   };
 
   group('SessionService', () {
-    test('start makes POST to /sessione/inizia', () async {
-      dioAdapter.onPost(
-        '/sessione/inizia',
-        (server) => server.reply(200, ''),
-        data: Matchers.any,
+    test('start makes POST to /sessione/inizia and parses SSE', () async {
+      // DioAdapter JSON-encodes response data, which escapes newlines and
+      // breaks plain-text SSE parsing. Use a Dio interceptor instead to
+      // return the raw SSE text for the POST and JSON for the follow-up GET.
+      const sseText = 'event: sessione_creata\n'
+          'data: {"sessione_id":"session-uuid-1","nodo_id":"derivata_definizione","nodo_nome":"Definizione di Derivata"}\n\n';
+
+      dio.interceptors.insert(
+        0,
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path.contains('/sessione/inizia')) {
+              return handler.resolve(Response(
+                data: sseText,
+                statusCode: 200,
+                requestOptions: options,
+              ));
+            }
+            if (options.path.contains('/sessione/session-uuid-1') &&
+                options.method == 'GET') {
+              return handler.resolve(Response(
+                data: sessionJson,
+                statusCode: 200,
+                requestOptions: options,
+              ));
+            }
+            return handler.next(options);
+          },
+        ),
       );
 
-      await sessionService.start(tipo: 'media', durataPrevistaMin: 30);
+      final session =
+          await sessionService.start(tipo: 'media', durataPrevistaMin: 30);
+      expect(session.id, 'session-uuid-1');
+      expect(session.stato, 'attiva');
+      expect(session.nodoFocaleNome, 'Definizione di Derivata');
     });
 
     test('sendTurn makes POST to /sessione/{id}/turno', () async {
@@ -121,6 +149,86 @@ void main() {
         () => sessionService.get('nonexistent'),
         throwsA(isA<DioException>()),
       );
+    });
+
+    test('listSessions returns list of SessioneListItem', () async {
+      dioAdapter.onGet(
+        '/sessione/',
+        (server) => server.reply(200, [
+          {
+            'id': 'session-1',
+            'stato': 'completata',
+            'tipo': 'media',
+            'nodo_focale_id': 'nodo_1',
+            'nodo_focale_nome': 'Numeri naturali',
+            'durata_effettiva_min': 15,
+            'nodi_lavorati': ['nodo_1', 'nodo_2'],
+            'created_at': '2026-02-19T10:00:00',
+            'completed_at': '2026-02-19T10:15:00',
+          },
+          {
+            'id': 'session-2',
+            'stato': 'sospesa',
+            'tipo': 'media',
+            'nodo_focale_id': 'nodo_3',
+            'nodo_focale_nome': null,
+            'durata_effettiva_min': 5,
+            'nodi_lavorati': ['nodo_3'],
+            'created_at': '2026-02-18T14:00:00',
+            'completed_at': null,
+          },
+        ]),
+        queryParameters: {'limit': 10, 'offset': 0},
+      );
+
+      final sessions = await sessionService.listSessions();
+      expect(sessions, hasLength(2));
+      expect(sessions[0].id, 'session-1');
+      expect(sessions[0].stato, 'completata');
+      expect(sessions[0].nodoFocaleNome, 'Numeri naturali');
+      expect(sessions[0].durataEffettivaMin, 15);
+      expect(sessions[0].nodiLavorati, ['nodo_1', 'nodo_2']);
+      expect(sessions[0].createdAt, '2026-02-19T10:00:00');
+      expect(sessions[0].completedAt, '2026-02-19T10:15:00');
+      expect(sessions[1].id, 'session-2');
+      expect(sessions[1].stato, 'sospesa');
+      expect(sessions[1].completedAt, isNull);
+    });
+
+    test('listSessions returns empty list', () async {
+      dioAdapter.onGet(
+        '/sessione/',
+        (server) => server.reply(200, []),
+        queryParameters: {'limit': 10, 'offset': 0},
+      );
+
+      final sessions = await sessionService.listSessions();
+      expect(sessions, isEmpty);
+    });
+
+    test('listSessions passes limit and offset', () async {
+      dioAdapter.onGet(
+        '/sessione/',
+        (server) => server.reply(200, [
+          {
+            'id': 'session-3',
+            'stato': 'completata',
+            'tipo': 'media',
+            'nodo_focale_id': null,
+            'nodo_focale_nome': null,
+            'durata_effettiva_min': null,
+            'nodi_lavorati': null,
+            'created_at': '2026-02-17T08:00:00',
+            'completed_at': null,
+          },
+        ]),
+        queryParameters: {'limit': 5, 'offset': 10},
+      );
+
+      final sessions =
+          await sessionService.listSessions(limit: 5, offset: 10);
+      expect(sessions, hasLength(1));
+      expect(sessions[0].id, 'session-3');
     });
   });
 }

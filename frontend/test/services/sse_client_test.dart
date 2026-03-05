@@ -1,9 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart' as http_testing;
 import 'package:dydat/models/sse_events.dart';
 import 'package:dydat/services/sse_client.dart';
+import 'package:dydat/services/storage_service.dart';
+import '../helpers/fake_secure_storage.dart';
 
 /// Helper: converts a raw SSE text into a byte stream (simulating HTTP response).
 Stream<List<int>> _sseTextToByteStream(String sseText) {
@@ -318,6 +323,147 @@ void main() {
       expect(achievements, hasLength(2));
       expect(achievements[0].id, 'primo_nodo');
       expect(achievements[1].id, 'dieci_esercizi');
+    });
+  });
+
+  group('SseClient.stream() retry logic', () {
+    late StorageService storageService;
+
+    setUp(() {
+      storageService = StorageService(storage: FakeSecureStorage());
+    });
+
+    test('retries on connection error and yields ReconnectingEvent', () async {
+      var callCount = 0;
+      final mockClient = http_testing.MockClient.streaming(
+        (request, bodyStream) async {
+          callCount++;
+          if (callCount <= 2) {
+            throw const SocketException('Network unreachable');
+          }
+          // Third attempt succeeds
+          const sseText = 'event: text_delta\n'
+              'data: {"testo": "Ciao"}\n'
+              '\n';
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(sseText)),
+            200,
+          );
+        },
+      );
+
+      final client = SseClient(
+        storageService: storageService,
+        httpClient: mockClient,
+        maxRetries: 3,
+      );
+
+      final events = await client
+          .stream('/test', body: {}, authenticated: false)
+          .toList();
+
+      // Expect: ReconnectingEvent(1), ReconnectingEvent(2), TextDeltaEvent
+      expect(callCount, 3);
+      expect(events.whereType<ReconnectingEvent>().length, 2);
+      expect(events.whereType<TextDeltaEvent>().length, 1);
+      final reconnect1 = events[0] as ReconnectingEvent;
+      expect(reconnect1.attempt, 1);
+      expect(reconnect1.maxAttempts, 3);
+      final reconnect2 = events[1] as ReconnectingEvent;
+      expect(reconnect2.attempt, 2);
+    });
+
+    test('does not retry on 4xx client error', () async {
+      var callCount = 0;
+      final mockClient = http_testing.MockClient.streaming(
+        (request, bodyStream) async {
+          callCount++;
+          return http.StreamedResponse(
+            Stream.value(utf8.encode('{"detail": "Non trovato"}')),
+            404,
+          );
+        },
+      );
+
+      final client = SseClient(
+        storageService: storageService,
+        httpClient: mockClient,
+        maxRetries: 3,
+      );
+
+      final events = await client
+          .stream('/test', body: {}, authenticated: false)
+          .toList();
+
+      // Should NOT retry — only 1 call
+      expect(callCount, 1);
+      expect(events, hasLength(1));
+      expect(events[0], isA<ErroreEvent>());
+      expect((events[0] as ErroreEvent).codice, 'http_404');
+    });
+
+    test('yields ErroreEvent after all retries exhausted', () async {
+      var callCount = 0;
+      final mockClient = http_testing.MockClient.streaming(
+        (request, bodyStream) async {
+          callCount++;
+          throw const SocketException('Network unreachable');
+        },
+      );
+
+      final client = SseClient(
+        storageService: storageService,
+        httpClient: mockClient,
+        maxRetries: 2,
+      );
+
+      final events = await client
+          .stream('/test', body: {}, authenticated: false)
+          .toList();
+
+      // Initial + 2 retries = 3 calls
+      expect(callCount, 3);
+      // 2 ReconnectingEvents + 1 ErroreEvent
+      expect(events.whereType<ReconnectingEvent>().length, 2);
+      expect(events.last, isA<ErroreEvent>());
+      expect((events.last as ErroreEvent).codice, 'connection_error');
+    });
+
+    test('retries on 5xx server error', () async {
+      var callCount = 0;
+      final mockClient = http_testing.MockClient.streaming(
+        (request, bodyStream) async {
+          callCount++;
+          if (callCount == 1) {
+            return http.StreamedResponse(
+              Stream.value(utf8.encode('{"detail": "Internal error"}')),
+              500,
+            );
+          }
+          // Second attempt succeeds
+          const sseText = 'event: turno_completo\n'
+              'data: {"turno_id": 1, "nodo_focale": null}\n'
+              '\n';
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(sseText)),
+            200,
+          );
+        },
+      );
+
+      final client = SseClient(
+        storageService: storageService,
+        httpClient: mockClient,
+        maxRetries: 3,
+      );
+
+      final events = await client
+          .stream('/test', body: {}, authenticated: false)
+          .toList();
+
+      expect(callCount, 2);
+      expect(events[0], isA<ReconnectingEvent>());
+      expect(events[1], isA<TurnoCompletoEvent>());
     });
   });
 }

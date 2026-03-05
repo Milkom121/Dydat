@@ -324,7 +324,7 @@ class TestTurnoCoordinatore:
             ),
             patch(
                 "app.core.turno.processa_segnali",
-                return_value=[],
+                return_value=([], []),
             ),
         ):
             eventi = []
@@ -453,7 +453,7 @@ class TestTurnoCoordinatore:
             ),
             patch(
                 "app.core.turno.processa_segnali",
-                return_value=[],
+                return_value=([], []),
             ),
         ):
             eventi = []
@@ -587,7 +587,7 @@ class TestTurnoCoordinatore:
             ),
             patch(
                 "app.core.turno.processa_segnali",
-                return_value=[],
+                return_value=([], []),
             ),
         ):
             eventi = []
@@ -679,13 +679,18 @@ class TestTurnoCoordinatore:
             ),
             patch(
                 "app.core.turno.processa_segnali",
-                return_value=promozione,
+                return_value=(promozione, []),
             ),
             patch(
                 "app.core.turno.aggiorna_nodo_dopo_promozione",
                 aggiorna_mock,
             ),
+            patch("app.core.turno.grafo_knowledge") as mock_grafo,
         ):
+            mock_grafo.caricato = True
+            mock_grafo.grafo.nodes = {
+                "nodo_old": {"nome": "Equazioni lineari"},
+            }
             eventi = []
             async for ev in esegui_turno(
                 db=db,
@@ -698,10 +703,206 @@ class TestTurnoCoordinatore:
         # aggiorna_nodo_dopo_promozione chiamato
         aggiorna_mock.assert_called_once()
 
+        # Promozione SSE event emitted
+        promo_events = [
+            e for e in eventi if e.get("event") == "promozione"
+        ]
+        assert len(promo_events) == 1
+        assert promo_events[0]["data"]["nodo_id"] == "nodo_old"
+        assert promo_events[0]["data"]["nodo_nome"] == "Equazioni lineari"
+        assert promo_events[0]["data"]["nuovo_livello"] == "operativo"
+        assert promo_events[0]["data"]["nodi_sbloccati"] == ["nodo_next"]
+
         turno_completo = [
             e for e in eventi if e.get("event") == "turno_completo"
         ]
         assert len(turno_completo) == 1
+
+
+# ===================================================================
+# Test: promozione SSE event
+# ===================================================================
+
+
+class TestPromozioneSseEvent:
+    """Test che il turno emette l'evento SSE promozione con dati corretti."""
+
+    @pytest.mark.asyncio
+    async def test_promozione_sse_fallback_nome_quando_grafo_non_caricato(self):
+        """Se il grafo non è caricato, usa nodo_id come fallback per nodo_nome."""
+        from dataclasses import dataclass
+
+        from app.core.turno import esegui_turno
+
+        @dataclass
+        class FakeRisultato:
+            testo_completo: str = "Ottimo!"
+            azioni: list = None
+            segnali: list = None
+            token_input: int = 100
+            token_output: int = 50
+            costo_stimato: float = 0.001
+            modello: str = "test-model"
+            stop_reason: str = "end_turn"
+
+            def __post_init__(self):
+                self.azioni = self.azioni or []
+                self.segnali = self.segnali or []
+
+        @dataclass
+        class FakeContextPackage:
+            system: str = "test"
+            messages: list = None
+            modello: str = "test-model"
+            tipo_sessione: str = "studio"
+
+            def __post_init__(self):
+                self.messages = self.messages or []
+
+        @dataclass
+        class FakeSessione:
+            stato_orchestratore: dict = None
+
+            def __post_init__(self):
+                self.stato_orchestratore = {"nodo_focale_id": "nodo_b"}
+
+        async def fake_chiama_tutor(**kwargs):
+            yield {"tipo": "text_delta", "testo": "Ottimo!"}
+            yield {"tipo": "stop", "risultato": FakeRisultato()}
+
+        db = AsyncMock()
+        db.commit = AsyncMock()
+        db.refresh = AsyncMock()
+        sess_result = MagicMock()
+        sess_result.scalar_one_or_none.return_value = FakeSessione()
+        db.execute = AsyncMock(return_value=sess_result)
+
+        promozione = [{
+            "nodo_id": "mat_Algebra1_equazioni",
+            "nuovo_livello": "operativo",
+            "nodi_sbloccati": [],
+        }]
+
+        import uuid
+
+        with (
+            patch("app.core.turno.assembla_context_package",
+                  return_value=FakeContextPackage()),
+            patch("app.core.turno.chiama_tutor",
+                  side_effect=fake_chiama_tutor),
+            patch("app.core.turno.salva_turno",
+                  return_value=MagicMock(id=4)),
+            patch("app.core.turno.processa_segnali",
+                  return_value=(promozione, [])),
+            patch("app.core.turno.aggiorna_nodo_dopo_promozione",
+                  AsyncMock(return_value="nodo_b")),
+            patch("app.core.turno.grafo_knowledge") as mock_grafo,
+        ):
+            mock_grafo.caricato = False
+            eventi = []
+            async for ev in esegui_turno(
+                db=db,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+                messaggio_utente="ok",
+            ):
+                eventi.append(ev)
+
+        promo_events = [e for e in eventi if e.get("event") == "promozione"]
+        assert len(promo_events) == 1
+        # Fallback: nodo_nome == nodo_id when grafo not loaded
+        assert promo_events[0]["data"]["nodo_nome"] == "mat_Algebra1_equazioni"
+
+    @pytest.mark.asyncio
+    async def test_promozione_sse_multiple_promozioni(self):
+        """Turno con 2 promozioni emette 2 eventi SSE promozione."""
+        from dataclasses import dataclass
+
+        from app.core.turno import esegui_turno
+
+        @dataclass
+        class FakeRisultato:
+            testo_completo: str = "Doppio bravo!"
+            azioni: list = None
+            segnali: list = None
+            token_input: int = 100
+            token_output: int = 50
+            costo_stimato: float = 0.001
+            modello: str = "test-model"
+            stop_reason: str = "end_turn"
+
+            def __post_init__(self):
+                self.azioni = self.azioni or []
+                self.segnali = self.segnali or []
+
+        @dataclass
+        class FakeContextPackage:
+            system: str = "test"
+            messages: list = None
+            modello: str = "test-model"
+            tipo_sessione: str = "studio"
+
+            def __post_init__(self):
+                self.messages = self.messages or []
+
+        @dataclass
+        class FakeSessione:
+            stato_orchestratore: dict = None
+
+            def __post_init__(self):
+                self.stato_orchestratore = {"nodo_focale_id": "nodo_c"}
+
+        async def fake_chiama_tutor(**kwargs):
+            yield {"tipo": "text_delta", "testo": "Doppio!"}
+            yield {"tipo": "stop", "risultato": FakeRisultato()}
+
+        db = AsyncMock()
+        db.commit = AsyncMock()
+        db.refresh = AsyncMock()
+        sess_result = MagicMock()
+        sess_result.scalar_one_or_none.return_value = FakeSessione()
+        db.execute = AsyncMock(return_value=sess_result)
+
+        promozioni = [
+            {"nodo_id": "nodo_a", "nuovo_livello": "operativo", "nodi_sbloccati": ["nodo_b"]},
+            {"nodo_id": "nodo_b", "nuovo_livello": "operativo", "nodi_sbloccati": []},
+        ]
+
+        import uuid
+
+        with (
+            patch("app.core.turno.assembla_context_package",
+                  return_value=FakeContextPackage()),
+            patch("app.core.turno.chiama_tutor",
+                  side_effect=fake_chiama_tutor),
+            patch("app.core.turno.salva_turno",
+                  return_value=MagicMock(id=5)),
+            patch("app.core.turno.processa_segnali",
+                  return_value=(promozioni, [])),
+            patch("app.core.turno.aggiorna_nodo_dopo_promozione",
+                  AsyncMock(return_value="nodo_c")),
+            patch("app.core.turno.grafo_knowledge") as mock_grafo,
+        ):
+            mock_grafo.caricato = True
+            mock_grafo.grafo.nodes = {
+                "nodo_a": {"nome": "Addizione"},
+                "nodo_b": {"nome": "Sottrazione"},
+            }
+            eventi = []
+            async for ev in esegui_turno(
+                db=db,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+                messaggio_utente="ok",
+            ):
+                eventi.append(ev)
+
+        promo_events = [e for e in eventi if e.get("event") == "promozione"]
+        assert len(promo_events) == 2
+        assert promo_events[0]["data"]["nodo_id"] == "nodo_a"
+        assert promo_events[0]["data"]["nodo_nome"] == "Addizione"
+        assert promo_events[1]["data"]["nodo_id"] == "nodo_b"
+        assert promo_events[1]["data"]["nodo_nome"] == "Sottrazione"
 
 
 # ===================================================================
@@ -805,6 +1006,217 @@ class TestPromozioneAppenAvvenuta:
         stato = sessione.stato_orchestratore
         # Fallback: usa l'ID come nome
         assert stato["promozione_appena_avvenuta"]["nodo_nome"] == "nodo_a"
+
+
+# ===================================================================
+# Test: processa_segnali returns esito_esercizio
+# ===================================================================
+
+
+class TestEsitoEsercizio:
+    """Test che processa_segnali ritorna esiti_esercizio per celebrazioni frontend."""
+
+    @pytest.mark.asyncio
+    async def test_esito_primo_tentativo(self):
+        """risposta_esercizio con esito primo_tentativo produce esito corretto."""
+        from app.core.elaborazione import processa_segnali
+
+        segnali = [{
+            "name": "risposta_esercizio",
+            "input": {
+                "esercizio_id": "es_01",
+                "nodo_focale": "nodo_x",
+                "esito": "primo_tentativo",
+            },
+        }]
+
+        db = AsyncMock()
+        # Mock per _processa_risposta_esercizio DB calls
+        db.add = MagicMock()
+        db.flush = AsyncMock()
+
+        # Mock upsert + storico
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        db.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None)))
+
+        import uuid
+        with patch("app.core.elaborazione._processa_risposta_esercizio", return_value=None):
+            promozioni, esiti = await processa_segnali(
+                db=db,
+                segnali=segnali,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+            )
+
+        assert len(esiti) == 1
+        assert esiti[0]["corretto"] is True
+        assert esiti[0]["primo_tentativo"] is True
+        assert esiti[0]["con_guida"] is False
+
+    @pytest.mark.asyncio
+    async def test_esito_con_guida(self):
+        """risposta_esercizio con esito con_guida produce esito corretto."""
+        from app.core.elaborazione import processa_segnali
+
+        segnali = [{
+            "name": "risposta_esercizio",
+            "input": {
+                "esercizio_id": "es_02",
+                "nodo_focale": "nodo_y",
+                "esito": "con_guida",
+            },
+        }]
+
+        db = AsyncMock()
+
+        import uuid
+        with patch("app.core.elaborazione._processa_risposta_esercizio", return_value=None):
+            promozioni, esiti = await processa_segnali(
+                db=db,
+                segnali=segnali,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+            )
+
+        assert len(esiti) == 1
+        assert esiti[0]["corretto"] is True
+        assert esiti[0]["primo_tentativo"] is False
+        assert esiti[0]["con_guida"] is True
+
+    @pytest.mark.asyncio
+    async def test_esito_non_risolto(self):
+        """risposta_esercizio con esito non_risolto produce corretto=False."""
+        from app.core.elaborazione import processa_segnali
+
+        segnali = [{
+            "name": "risposta_esercizio",
+            "input": {
+                "esercizio_id": "es_03",
+                "nodo_focale": "nodo_z",
+                "esito": "non_risolto",
+            },
+        }]
+
+        db = AsyncMock()
+
+        import uuid
+        with patch("app.core.elaborazione._processa_risposta_esercizio", return_value=None):
+            promozioni, esiti = await processa_segnali(
+                db=db,
+                segnali=segnali,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+            )
+
+        assert len(esiti) == 1
+        assert esiti[0]["corretto"] is False
+        assert esiti[0]["primo_tentativo"] is False
+        assert esiti[0]["con_guida"] is False
+
+    @pytest.mark.asyncio
+    async def test_no_esiti_senza_risposta_esercizio(self):
+        """Segnali senza risposta_esercizio non producono esiti."""
+        from app.core.elaborazione import processa_segnali
+
+        segnali = [{
+            "name": "concetto_spiegato",
+            "input": {"nodo_id": "nodo_a"},
+        }]
+
+        db = AsyncMock()
+        db.execute = AsyncMock()
+        db.flush = AsyncMock()
+
+        import uuid
+        with patch("app.core.elaborazione._processa_concetto_spiegato"):
+            promozioni, esiti = await processa_segnali(
+                db=db,
+                segnali=segnali,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+            )
+
+        assert len(esiti) == 0
+        assert len(promozioni) == 0
+
+    @pytest.mark.asyncio
+    async def test_turno_emits_esito_esercizio_sse(self):
+        """Il turno coordinatore emette evento SSE esito_esercizio."""
+        from dataclasses import dataclass
+
+        from app.core.turno import esegui_turno
+
+        @dataclass
+        class FakeRisultato:
+            testo_completo: str = "Bravo!"
+            azioni: list = None
+            segnali: list = None
+            token_input: int = 100
+            token_output: int = 50
+            costo_stimato: float = 0.001
+            modello: str = "test-model"
+            stop_reason: str = "end_turn"
+
+            def __post_init__(self):
+                self.azioni = self.azioni or []
+                self.segnali = self.segnali or []
+
+        @dataclass
+        class FakeContextPackage:
+            system: str = "test"
+            messages: list = None
+            modello: str = "test-model"
+            tipo_sessione: str = "studio"
+
+            def __post_init__(self):
+                self.messages = self.messages or []
+
+        @dataclass
+        class FakeSessione:
+            stato_orchestratore: dict = None
+
+            def __post_init__(self):
+                self.stato_orchestratore = {"nodo_focale_id": "nodo_test"}
+
+        async def fake_chiama_tutor(**kwargs):
+            yield {"tipo": "text_delta", "testo": "Bravo!"}
+            yield {"tipo": "stop", "risultato": FakeRisultato()}
+
+        db = AsyncMock()
+        db.commit = AsyncMock()
+        db.refresh = AsyncMock()
+        sess_result = MagicMock()
+        sess_result.scalar_one_or_none.return_value = FakeSessione()
+        db.execute = AsyncMock(return_value=sess_result)
+
+        esiti = [{"corretto": True, "primo_tentativo": True, "con_guida": False}]
+
+        import uuid
+
+        with (
+            patch("app.core.turno.assembla_context_package",
+                  return_value=FakeContextPackage()),
+            patch("app.core.turno.chiama_tutor",
+                  side_effect=fake_chiama_tutor),
+            patch("app.core.turno.salva_turno",
+                  return_value=MagicMock(id=1)),
+            patch("app.core.turno.processa_segnali",
+                  return_value=([], esiti)),
+        ):
+            eventi = []
+            async for ev in esegui_turno(
+                db=db,
+                sessione_id=uuid.uuid4(),
+                utente_id=uuid.uuid4(),
+                messaggio_utente="x = 2",
+            ):
+                eventi.append(ev)
+
+        esito_events = [e for e in eventi if e.get("event") == "esito_esercizio"]
+        assert len(esito_events) == 1
+        assert esito_events[0]["data"]["corretto"] is True
+        assert esito_events[0]["data"]["primo_tentativo"] is True
+        assert esito_events[0]["data"]["con_guida"] is False
 
 
 # ===================================================================

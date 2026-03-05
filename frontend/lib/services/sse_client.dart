@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -20,6 +21,9 @@ class RawSseEvent {
 /// Uses the `http` package (not Dio) because Dio does not support line-by-line
 /// streaming of `text/event-stream` responses.
 ///
+/// Includes automatic retry with exponential backoff on network errors and
+/// timeouts. Client errors (4xx) are NOT retried.
+///
 /// Usage:
 /// ```dart
 /// final client = SseClient(storageService: storageService);
@@ -28,6 +32,8 @@ class RawSseEvent {
 ///   switch (event) {
 ///     case TextDeltaEvent(:final testo):
 ///       print(testo);
+///     case ReconnectingEvent(:final attempt):
+///       print('Retry $attempt...');
 ///     case TurnoCompletoEvent():
 ///       break;
 ///     // ...
@@ -38,73 +44,142 @@ class SseClient {
   final StorageService _storageService;
   final http.Client _httpClient;
   final Duration _timeout;
+  final int _maxRetries;
 
   SseClient({
     required StorageService storageService,
     http.Client? httpClient,
     Duration? timeout,
+    int maxRetries = 3,
   })  : _storageService = storageService,
         _httpClient = httpClient ?? http.Client(),
-        _timeout = timeout ?? const Duration(seconds: 120);
+        _timeout = timeout ?? const Duration(seconds: 120),
+        _maxRetries = maxRetries;
 
   /// Sends a POST request to [path] and returns a stream of typed [SseEvent]s.
   ///
   /// The [path] is relative to [ApiConfig.baseUrl] (e.g. `/sessione/inizia`).
   /// The [body] is JSON-encoded and sent as the request body.
   /// Set [authenticated] to `false` for unauthenticated endpoints (onboarding).
+  ///
+  /// On network errors or timeouts, retries up to [_maxRetries] times with
+  /// exponential backoff (1s, 2s, 4s). Yields [ReconnectingEvent] before each
+  /// retry. Client errors (4xx) are NOT retried.
   Stream<SseEvent> stream(
     String path, {
     Map<String, dynamic>? body,
     bool authenticated = true,
   }) async* {
-    final uri = Uri.parse('${ApiConfig.baseUrl}$path');
+    for (int attempt = 0; attempt <= _maxRetries; attempt++) {
+      // Yield reconnecting event before retry (not on first attempt)
+      if (attempt > 0) {
+        yield ReconnectingEvent(
+          attempt: attempt,
+          maxAttempts: _maxRetries,
+        );
+        // Exponential backoff: 1s, 2s, 4s
+        await Future<void>.delayed(
+          Duration(seconds: 1 << (attempt - 1)),
+        );
+      }
 
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',
-    };
+      final uri = Uri.parse('${ApiConfig.baseUrl}$path');
 
-    if (authenticated) {
-      final token = await _storageService.getAccessToken();
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      };
+
+      if (authenticated) {
+        final token = await _storageService.getAccessToken();
+        if (token != null) {
+          headers['Authorization'] = 'Bearer $token';
+        }
+      }
+
+      final request = http.Request('POST', uri)..headers.addAll(headers);
+
+      if (body != null) {
+        request.body = jsonEncode(body);
+      }
+
+      // --- Connect ---
+      final http.StreamedResponse response;
+      try {
+        response = await _httpClient.send(request).timeout(_timeout);
+      } on TimeoutException {
+        if (attempt < _maxRetries) continue;
+        yield const ErroreEvent(
+          codice: 'timeout',
+          messaggio: 'Timeout connessione al server',
+        );
+        return;
+      } on SocketException {
+        if (attempt < _maxRetries) continue;
+        yield const ErroreEvent(
+          codice: 'connection_error',
+          messaggio: 'Errore di rete: impossibile raggiungere il server',
+        );
+        return;
+      } catch (e) {
+        if (attempt < _maxRetries) continue;
+        yield ErroreEvent(
+          codice: 'connection_error',
+          messaggio: 'Errore di connessione: $e',
+        );
+        return;
+      }
+
+      // --- Client errors (4xx) — NOT retryable ---
+      if (response.statusCode >= 400 && response.statusCode < 500) {
+        final responseBody = await response.stream.bytesToString();
+        yield ErroreEvent(
+          codice: 'http_${response.statusCode}',
+          messaggio: _extractErrorMessage(response.statusCode, responseBody),
+        );
+        return;
+      }
+
+      // --- Server errors (5xx) — retryable ---
+      if (response.statusCode != 200) {
+        if (attempt < _maxRetries) continue;
+        final responseBody = await response.stream.bytesToString();
+        yield ErroreEvent(
+          codice: 'http_${response.statusCode}',
+          messaggio: _extractErrorMessage(response.statusCode, responseBody),
+        );
+        return;
+      }
+
+      // --- Stream events ---
+      try {
+        await for (final event in _parseStream(response.stream)) {
+          yield event;
+        }
+        return; // Stream completed successfully — no retry needed
+      } on TimeoutException {
+        if (attempt < _maxRetries) continue;
+        yield const ErroreEvent(
+          codice: 'stream_timeout',
+          messaggio: 'Connessione persa (timeout)',
+        );
+        return;
+      } on SocketException {
+        if (attempt < _maxRetries) continue;
+        yield const ErroreEvent(
+          codice: 'stream_error',
+          messaggio: 'Connessione persa: errore di rete',
+        );
+        return;
+      } catch (e) {
+        if (attempt < _maxRetries) continue;
+        yield ErroreEvent(
+          codice: 'stream_error',
+          messaggio: 'Connessione persa: $e',
+        );
+        return;
       }
     }
-
-    final request = http.Request('POST', uri)
-      ..headers.addAll(headers);
-
-    if (body != null) {
-      request.body = jsonEncode(body);
-    }
-
-    final http.StreamedResponse response;
-    try {
-      response = await _httpClient.send(request).timeout(_timeout);
-    } on TimeoutException {
-      yield const ErroreEvent(
-        codice: 'timeout',
-        messaggio: 'Timeout connessione al server',
-      );
-      return;
-    } catch (e) {
-      yield ErroreEvent(
-        codice: 'connection_error',
-        messaggio: 'Errore di connessione: $e',
-      );
-      return;
-    }
-
-    if (response.statusCode != 200) {
-      final responseBody = await response.stream.bytesToString();
-      yield ErroreEvent(
-        codice: 'http_${response.statusCode}',
-        messaggio: _extractErrorMessage(response.statusCode, responseBody),
-      );
-      return;
-    }
-
-    yield* _parseStream(response.stream);
   }
 
   /// Parses a byte stream of SSE data into typed [SseEvent]s.

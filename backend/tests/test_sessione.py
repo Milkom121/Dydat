@@ -83,26 +83,64 @@ class TestSessioneConflitto:
 
 
 class TestCalcoloInattivita:
-    def test_sessione_recente(self):
+    @pytest.mark.asyncio
+    async def test_sessione_recente(self):
+        db = AsyncMock()
         sess = _mock_sessione(created_at=datetime.now(timezone.utc) - timedelta(seconds=60))
-        inattivita = _calcola_inattivita(sess)
+        # No turns — fallback to created_at
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=result_mock)
+
+        inattivita = await _calcola_inattivita(db, sess)
         assert 55 < inattivita < 65
 
-    def test_sessione_vecchia(self):
+    @pytest.mark.asyncio
+    async def test_sessione_vecchia(self):
+        db = AsyncMock()
         sess = _mock_sessione(created_at=datetime.now(timezone.utc) - timedelta(minutes=10))
-        inattivita = _calcola_inattivita(sess)
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=result_mock)
+
+        inattivita = await _calcola_inattivita(db, sess)
         assert inattivita > INATTIVITA_MAX_SEC
 
-    def test_sessione_appena_creata(self):
+    @pytest.mark.asyncio
+    async def test_sessione_appena_creata(self):
+        db = AsyncMock()
         sess = _mock_sessione(created_at=datetime.now(timezone.utc))
-        inattivita = _calcola_inattivita(sess)
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=result_mock)
+
+        inattivita = await _calcola_inattivita(db, sess)
         assert inattivita < 2
 
-    def test_sessione_naive_datetime(self):
+    @pytest.mark.asyncio
+    async def test_sessione_naive_datetime(self):
         """Gestisce datetime senza timezone."""
+        db = AsyncMock()
         sess = _mock_sessione(created_at=datetime.now(timezone.utc).replace(tzinfo=None))
-        inattivita = _calcola_inattivita(sess)
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=result_mock)
+
+        inattivita = await _calcola_inattivita(db, sess)
         assert inattivita < 2
+
+    @pytest.mark.asyncio
+    async def test_ultimo_turno_recente(self):
+        """Usa il timestamp dell'ultimo turno invece di created_at."""
+        db = AsyncMock()
+        # Session created 10 min ago, but last turn was 30 sec ago
+        sess = _mock_sessione(created_at=datetime.now(timezone.utc) - timedelta(minutes=10))
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = datetime.now(timezone.utc) - timedelta(seconds=30)
+        db.execute = AsyncMock(return_value=result_mock)
+
+        inattivita = await _calcola_inattivita(db, sess)
+        assert 25 < inattivita < 35
 
 
 # ===================================================================

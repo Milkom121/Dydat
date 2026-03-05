@@ -39,13 +39,13 @@ class _ExerciseCardWidgetState extends State<ExerciseCardWidget> {
     return 'difficile';
   }
 
-  Color get _difficultyColor {
+  Color _difficultyColor(ThemeData theme) {
     final label = _difficultyLabel;
     return label == 'facile'
-        ? const Color(0xFF7EBF8E)
+        ? theme.colorScheme.secondary
         : label == 'medio'
-            ? widget.theme.colorScheme.primary
-            : const Color(0xFFC97070);
+            ? theme.colorScheme.primary
+            : theme.colorScheme.error;
   }
 
   @override
@@ -71,7 +71,7 @@ class _ExerciseCardWidgetState extends State<ExerciseCardWidget> {
                 padding:
                     EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
                 decoration: BoxDecoration(
-                  color: _difficultyColor.withValues(alpha: 0.1),
+                  color: _difficultyColor(theme).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -79,14 +79,14 @@ class _ExerciseCardWidgetState extends State<ExerciseCardWidget> {
                   children: [
                     CustomIconWidget(
                       iconName: 'assignment',
-                      color: _difficultyColor,
+                      color: _difficultyColor(theme),
                       size: 16,
                     ),
                     SizedBox(width: 1.w),
                     Text(
                       _difficultyLabel.toUpperCase(),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: _difficultyColor,
+                        color: _difficultyColor(theme),
                         fontWeight: FontWeight.w600,
                       ),
                     ),

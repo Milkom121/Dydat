@@ -148,7 +148,7 @@ class ToolsTrayWidget extends StatelessWidget {
               child: Text(
                 'Termina sessione',
                 style: theme.textTheme.labelLarge?.copyWith(
-                  color: const Color(0xFFC97070),
+                  color: theme.colorScheme.error,
                 ),
               ),
             ),

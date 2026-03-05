@@ -42,24 +42,54 @@ class _ShellScaffold extends StatelessWidget {
       body: child,
       bottomNavigationBar: CustomBottomBar(
         currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
+        onTap: (index) {
+          if (index == 0 && navigationShell.currentIndex == 0) {
+            // Re-tapped Studio tab → signal StudioScreen to show home view
+            StudioScreen.tabReTapNotifier.value++;
+          }
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
+        },
       ),
     );
   }
 }
 
-/// GoRouter provider — depends on auth state for redirect logic.
+/// Notifier that triggers GoRouter redirect re-evaluation when auth changes.
+///
+/// This avoids recreating the entire GoRouter (and rebuilding the widget tree)
+/// on every auth state change. Instead, only the redirect logic runs again.
+class _AuthRefreshNotifier extends ChangeNotifier {
+  _AuthRefreshNotifier(Ref ref) {
+    _sub = ref.listen(authProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+
+  late final ProviderSubscription<AuthState> _sub;
+
+  @override
+  void dispose() {
+    _sub.close();
+    super.dispose();
+  }
+}
+
+/// GoRouter provider — uses refreshListenable to react to auth changes
+/// WITHOUT recreating the router instance.
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final refreshNotifier = _AuthRefreshNotifier(ref);
+  ref.onDispose(() => refreshNotifier.dispose());
 
   return GoRouter(
     initialLocation: AppPaths.splash,
     debugLogDiagnostics: true,
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final isAuthenticated = authState.isAuthenticated;
+      // Read auth state at redirect-time (not at GoRouter creation time).
+      final isAuthenticated = ref.read(authProvider).isAuthenticated;
       final location = state.matchedLocation;
 
       // Authenticated users should not be on splash, login or registration.

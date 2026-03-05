@@ -14,16 +14,22 @@ import '../../widgets/custom_icon_widget.dart';
 import '../../widgets/markdown_text.dart';
 import './widgets/achievement_toast_widget.dart';
 import './widgets/backtrack_card_widget.dart';
+import './widgets/celebration_overlay.dart';
 import './widgets/chiudi_sessione_card_widget.dart';
 import './widgets/exercise_card_widget.dart';
 import './widgets/formula_card_widget.dart';
 import './widgets/mascotte_widget.dart';
+import './widgets/session_history_widget.dart';
 import './widgets/tools_tray_widget.dart';
 import './widgets/tutor_message_widget.dart';
 import './widgets/tutor_panel_widget.dart';
 
 class StudioScreen extends ConsumerStatefulWidget {
   const StudioScreen({super.key});
+
+  /// Notifier that increments when the Studio tab is re-tapped.
+  /// Listened by _StudioScreenState to navigate back to home view.
+  static final tabReTapNotifier = ValueNotifier<int>(0);
 
   @override
   ConsumerState<StudioScreen> createState() => _StudioScreenState();
@@ -37,6 +43,14 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
 
   bool _isToolsTrayVisible = false;
   bool _isTutorPanelVisible = false;
+
+  /// Guard: prevents infinite loadSessionHistory calls from build().
+  /// Set true after first attempt; reset when navigating away or starting session.
+  bool _historyLoadAttempted = false;
+
+  /// When true, show the home view (history + "Inizia") even if session is active.
+  /// Used when user navigates "back" from an active session.
+  bool _showingHome = false;
 
   // Local chat items (user messages + finalized tutor messages + action cards).
   final List<Map<String, dynamic>> _messages = [];
@@ -54,15 +68,46 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   // True if we auto-suspended the session when going to background.
   bool _suspendedInBackground = false;
 
+  // Track whether we've already triggered a celebration for the current esito.
+  EsitoEsercizioEvent? _lastTriggeredEsito;
+
+  // Track whether we've already triggered a celebration for the current promotion.
+  PromozioneEvent? _lastTriggeredPromotion;
+
+  // Track the last error we showed in a snackbar to avoid duplicate snackbars.
+  String? _lastShownError;
+
+  // Timestamp of the most recent celebration (promotion or correct esito).
+  // Used to keep mascotte in celebrating state for a short window.
+  DateTime? _lastCelebrationTime;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    StudioScreen.tabReTapNotifier.addListener(_onTabReTap);
+    Future.microtask(() {
+      ref.read(sessionProvider.notifier).loadSessionHistory();
+    });
+  }
+
+  void _onTabReTap() {
+    if (mounted && !_showingHome) {
+      final session = ref.read(sessionProvider).activeSession;
+      if (session != null && session.stato == 'attiva') {
+        setState(() {
+          _showingHome = true;
+          _historyLoadAttempted = false;
+        });
+        ref.read(sessionProvider.notifier).loadSessionHistory();
+      }
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    StudioScreen.tabReTapNotifier.removeListener(_onTabReTap);
     _messageController.dispose();
     _scrollController.dispose();
     _messageFocusNode.dispose();
@@ -117,7 +162,9 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                 Navigator.pop(ctx);
                 // User chose not to resume — clear session state
                 ref.read(sessionProvider.notifier).clear();
+                ref.read(sessionProvider.notifier).loadSessionHistory();
                 setState(() {
+                  _historyLoadAttempted = false;
                   _sessionSeconds = 0;
                   _sessionTime = '00:00';
                   _messages.clear();
@@ -213,6 +260,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
 
     // Reset local state before starting
     setState(() {
+      _showingHome = false;
+      _historyLoadAttempted = false;
       _sessionSeconds = 0;
       _sessionTime = '00:00';
       _messages.clear();
@@ -461,6 +510,51 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       }
       _prevAchievementsCount = achievements.length;
     }
+
+    // Trigger celebration overlay on exercise outcome
+    final esito = sessionState.latestEsito;
+    if (esito != null && esito != _lastTriggeredEsito) {
+      _lastTriggeredEsito = esito;
+      if (esito.corretto) _lastCelebrationTime = DateTime.now();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showCelebrationOverlay(context, esito);
+          ref.read(sessionProvider.notifier).clearEsito();
+        }
+      });
+    }
+
+    // Trigger promotion celebration overlay
+    final promotion = sessionState.latestPromotion;
+    if (promotion != null && promotion != _lastTriggeredPromotion) {
+      _lastTriggeredPromotion = promotion;
+      _lastCelebrationTime = DateTime.now();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showPromotionCelebration(context, promotion);
+          ref.read(sessionProvider.notifier).clearPromotion();
+        }
+      });
+    }
+  }
+
+  /// Computes the mascotte visual state from the current session state.
+  MascotteState _computeMascotteState(SessionScreenState sessionState) {
+    final session = sessionState.activeSession;
+    final isActive = session != null && session.stato == 'attiva';
+
+    if (!isActive) return MascotteState.sleeping;
+
+    // Recent celebration keeps mascotte in celebrating for 3 seconds
+    if (_lastCelebrationTime != null &&
+        DateTime.now().difference(_lastCelebrationTime!) <
+            const Duration(seconds: 3)) {
+      return MascotteState.celebrating;
+    }
+
+    if (sessionState.isStreaming) return MascotteState.thinking;
+
+    return MascotteState.idle;
   }
 
   /// Builds a chat item widget based on its type.
@@ -550,8 +644,47 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     final isStreaming = sessionState.isStreaming;
     final currentTutorText = sessionState.currentTutorText;
 
+    // Reset _showingHome when session is no longer active
+    if (!isActive && _showingHome) {
+      _showingHome = false;
+    }
+
+    // Reload session history when returning to home with no active session.
+    // Guard: only attempt once per "home view" to prevent infinite loop
+    // when the backend is unreachable (loadSessionHistory fails, sets
+    // isLoadingHistory=false, condition met again → infinite rebuild).
+    if (!isActive && !isStreaming && _messages.isEmpty &&
+        sessionState.sessionHistory.isEmpty &&
+        !sessionState.isLoadingHistory &&
+        !_historyLoadAttempted) {
+      _historyLoadAttempted = true;
+      Future.microtask(() {
+        ref.read(sessionProvider.notifier).loadSessionHistory();
+      });
+    }
+
     // Sync finalized tutor messages, actions, achievements into local list
     _syncTutorMessages(sessionState);
+
+    // Show fatal error snackbar when reconnection fails
+    final error = sessionState.error;
+    if (error != null && error != _lastShownError) {
+      _lastShownError = error;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error),
+              backgroundColor: theme.colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      });
+    } else if (error == null) {
+      _lastShownError = null;
+    }
 
     // Auto-scroll when streaming text grows
     if (isStreaming && currentTutorText.isNotEmpty) {
@@ -569,7 +702,15 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CustomStudioAppBar(
         sessionTime: _sessionTime,
-        isSessionActive: isActive,
+        isSessionActive: isActive && !_showingHome,
+        onBack: isActive && !_showingHome
+            ? () {
+                setState(() {
+                  _showingHome = true;
+                });
+                ref.read(sessionProvider.notifier).loadSessionHistory();
+              }
+            : null,
         onPause: _toggleSession,
         onSettings: () {
           HapticFeedback.lightImpact();
@@ -609,9 +750,11 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                         SizedBox(width: 2.w),
                         Expanded(
                           child: Text(
-                            isActive
+                            isActive && !_showingHome
                                 ? _currentNode
-                                : 'Pronto per studiare',
+                                : isActive && _showingHome
+                                    ? _currentNode
+                                    : 'Pronto per studiare',
                             style: isActive
                                 ? theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
@@ -621,6 +764,22 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (_showingHome && isActive)
+                          TextButton(
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              setState(() {
+                                _showingHome = false;
+                              });
+                            },
+                            child: Text(
+                              'Riprendi',
+                              style:
+                                  theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
                         if (!isActive)
                           TextButton(
                             onPressed: sessionState.isLoading
@@ -651,15 +810,48 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                   ),
                 ),
 
+                // Reconnection banner
+                if (sessionState.isReconnecting)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4.w,
+                      vertical: 1.h,
+                    ),
+                    color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.tertiary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          'Riconnessione in corso...',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.tertiary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Chat area
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: _messages.isEmpty && !isActive && !isStreaming
-                        ? Center(
+                    child: (_messages.isEmpty && !isActive && !isStreaming) || _showingHome
+                        ? SingleChildScrollView(
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                SizedBox(height: 4.h),
                                 CustomIconWidget(
                                   iconName: 'chat_bubble_outline',
                                   color: theme.colorScheme.onSurfaceVariant,
@@ -667,13 +859,25 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                                 ),
                                 SizedBox(height: 2.h),
                                 Text(
-                                  'Inizia una sessione per chattare con il tutor',
+                                  _showingHome && isActive
+                                      ? 'Hai una sessione attiva'
+                                      : 'Inizia una sessione per chattare con il tutor',
                                   style:
                                       theme.textTheme.bodyMedium?.copyWith(
                                     color:
                                         theme.colorScheme.onSurfaceVariant,
                                   ),
                                   textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 4.h),
+                                SessionHistoryWidget(
+                                  sessions: sessionState.sessionHistory,
+                                  isLoading: sessionState.isLoadingHistory,
+                                  onSessionTap: (sessioneId) {
+                                    context.go(
+                                      AppPaths.recapSession(sessioneId),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -705,7 +909,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                   ),
                 ),
 
-                // Input bar
+                // Input bar (hidden when showing home view)
+                if (!_showingHome)
                 Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 4.w,
@@ -780,12 +985,15 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
             ),
 
             // Mascotte widget
-            if (isActive)
+            if (isActive && !_showingHome)
               Positioned(
                 right: 4.w,
                 bottom: 12.h,
-                child:
-                    MascotteWidget(theme: theme, onTap: _toggleToolsTray),
+                child: MascotteWidget(
+                  theme: theme,
+                  onTap: _toggleToolsTray,
+                  mascotteState: _computeMascotteState(sessionState),
+                ),
               ),
 
             // Tools tray overlay
