@@ -4,12 +4,15 @@
 
 ## Stato Corrente
 
-**Ultimo aggiornamento**: 2026-02-19
-**Ultima sessione**: S14 (B18 — Node Progression + History Backend) — COMPLETATA
-**Branch attivo**: feature/frontend-b18 (contiene B17+B18)
-**Loop 2 COMPLETATO**: tutti i 6 blocchi B11-B16 implementati e testati E2E con SSE reale.
-**Loop 3 IN CORSO**: B17-B18 DONE, B19-B21 TODO.
-**Prossima sessione**: S15 — B19 (Session History Frontend + Recap Improvements)
+**Ultimo aggiornamento**: 2026-02-27
+**Ultima sessione**: S21 — B25 (MascotteState + E2E Loop 4)
+**Branch attivo**: feature/loop4-b23 (contiene B17-B25)
+**Loop 1 COMPLETATO**: B0-B10, architettura + auth + 3 tab + E2E
+**Loop 2 COMPLETATO**: B11-B16, SSE streaming + onboarding + lifecycle + E2E
+**Loop 3 COMPLETATO**: B17-B21, LaTeX + storico + celebrazioni + polish. Test manuale E2E pendente.
+**Loop 4 COMPLETATO**: B22-B25, promozione SSE + SSE reconnect + fix test + MascotteState. E2E manuale pendente.
+**Roadmap Loop 4-7**: `.claude/plans/roadmap_loop4_7.md` — 16 blocchi (B22-B37) in 16 sessioni
+**Prossima sessione**: S22 — B26 (FSRS Algoritmo Backend)
 
 ## Blocchi Completati
 
@@ -349,15 +352,101 @@ Estendere l'onboarding da 3 fasi a 5 fasi: accoglienza → conoscenza → **plac
 - 3 nuovi test frontend SessioneListItem — tutti verdi
 - 6 nuovi test backend SessioneListItem/helper — tutti verdi
 
+## Risultati S15 (B19 — Session History Frontend + Recap Improvements)
+
+### 19a — Session History Frontend
+- `api_config.dart` — Aggiunto `sessionList` endpoint (`/sessione/`)
+- `session_service.dart` — Aggiunto `listSessions(limit, offset)` che chiama `GET /sessione/` con paginazione
+- `session_provider.dart` — Aggiunto stato `sessionHistory` (`List<SessioneListItem>`) e `isLoadingHistory`, metodo `loadSessionHistory()`
+- NUOVO: `session_history_widget.dart` — Lista sessioni recenti con card: nodo focale, durata, data relativa, stato (completata/sospesa/attiva), nodi lavorati. Tap naviga a `/recap/:sessioneId`
+- `studio_screen.dart` — `SessionHistoryWidget` mostrato nella home quando non c'e sessione attiva (sotto "Inizia"). Carica storico in `initState` con `Future.microtask`. Auto-reload quando torna dalla recap.
+
+### 19b — Recap Improvements
+- `recap_session_screen.dart` — Carica anche `GET /temi/` via `pathProvider.loadTopics()` in parallelo. Filtra temi con `completato == true` quando la sessione ha `nodiLavorati` non vuoti. Mostra card "Tema completato!" con icona trofeo, nome tema, conteggio nodi.
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- Frontend: 191 passed, 4 failed (pre-esistenti: 3 theme_provider + 1 session_service.start mock — invariati)
+- 7 nuovi test — tutti verdi:
+  - 3 test `listSessions` (full list, empty, limit/offset)
+  - 4 test `loadSessionHistory` (loads list, empty, error, initial state)
+
+## Risultati S16 (B20 — Celebration Animations + Esito SSE Backend)
+
+### Backend — esito_esercizio SSE event
+- `app/core/elaborazione.py` — `processa_segnali()` ora ritorna tupla `(promozioni, esiti_esercizio)`. Ogni segnale `risposta_esercizio` produce un esito con `corretto`, `primo_tentativo`, `con_guida`
+- `app/core/turno.py` — Emette evento SSE `esito_esercizio` dopo processa_segnali, prima delle promozioni
+- `tests/test_elaborazione.py` — 5 nuovi test (primo_tentativo, con_guida, non_risolto, no esiti, turno emits SSE)
+- `tests/test_elaborazione.py` + `tests/test_e2e.py` — Aggiornati tutti i mock `processa_segnali` da `return_value=[]` a `return_value=([], [])`
+
+### Frontend — EsitoEsercizioEvent + Celebration Overlay
+- `lib/models/sse_events.dart` — Aggiunta `EsitoEsercizioEvent` come nuovo sottotipo sealed class con `corretto`, `primoTentativo`, `conGuida`
+- `lib/providers/session_provider.dart` — Aggiunto `latestEsito` a `SessionScreenState`, handler per `EsitoEsercizioEvent`, metodo `clearEsito()`
+- `lib/providers/onboarding_provider.dart` — Aggiunto case `EsitoEsercizioEvent` nel switch exhaustive (ignorato)
+- NUOVO: `lib/presentation/studio_screen/widgets/celebration_overlay.dart` — `showCelebrationOverlay()`:
+  - Particle burst (24 particelle colorate, confetti-like) per `primo_tentativo` con `HapticFeedback.heavyImpact()`
+  - Radial glow pulse per `con_guida` con `HapticFeedback.mediumImpact()`
+  - Auto-dismiss dopo animazione (1.2s burst, 1.0s glow)
+  - `IgnorePointer` per non bloccare interazione
+- `lib/presentation/studio_screen/studio_screen.dart` — Trigger celebration in `_syncTutorMessages()` quando `latestEsito` cambia
+
+### Frontend — ExerciseCard hardcoded colors fix
+- `lib/presentation/studio_screen/widgets/exercise_card_widget.dart`:
+  - `Color(0xFF7EBF8E)` (facile) → `theme.colorScheme.secondary`
+  - `Color(0xFFC97070)` (difficile) → `theme.colorScheme.error`
+  - Getter `_difficultyColor` → metodo `_difficultyColor(ThemeData theme)`
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- Frontend: 195 passed, 4 failed (pre-esistenti: 3 theme_provider + 1 session_service.start mock — invariati)
+- 4 nuovi test `EsitoEsercizioEvent` parsing — tutti verdi (primo_tentativo, con_guida, non_risolto, missing fields)
+
+## Risultati S17 (B21 — Test E2E Loop 3 + Polish)
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+### Test
+- Frontend: 195 passed, 4 failed (pre-esistenti: 3 theme_provider + 1 session_service.start mock — invariati)
+- Nessun nuovo test fallito
+
+### Hardcoded colors fixati
+- `mascotte_widget.dart:103` — `Color(0xFF7EBF8E)` → `widget.theme.colorScheme.secondary`
+- `tema_card_widget.dart:41` — `Color(0xFF7EBF8E)` → `theme.colorScheme.secondary`
+- `tools_tray_widget.dart:151` — `Color(0xFFC97070)` → `theme.colorScheme.error`
+
+### Colori hardcoded accettati (non fixati)
+- `celebration_overlay.dart:119-124` — Colori confetti decorativi (oro, arancione, verde, blu, rosso, viola) — sono decorativi/artistici, non semantici
+- `splash_screen.dart:134,148,149` — Colori background splash specifici per brand
+- `custom_error_widget.dart` — Colori hardcoded pre-esistenti (fuori scope Loop 3)
+- `custom_bottom_bar.dart:64-65` — Colori testo pre-esistenti (fuori scope Loop 3)
+
+### Code review file chiave
+Tutti i file Loop 3 revisionati senza bug trovati:
+- `latex_text.dart` — Parser solido, fast path, fallback monospace
+- `celebration_overlay.dart` — Burst/glow con IgnorePointer, haptic, auto-dismiss
+- `session_history_widget.dart` — Card sessioni con tutti colori da theme
+- `sse_events.dart` — Sealed class con 8 sottotipi, EsitoEsercizioEvent con default false
+- `session_provider.dart` — latestEsito/clearEsito, 409 con _handling409 flag
+- `recap_session_screen.dart` — Tema completato con pathProvider.loadTopics()
+- `studio_screen.dart` — Sync celebration trigger, session history nella home, lifecycle
+
+### Test E2E pendente
+- Serve test manuale del fondatore su emulatore Android per verificare flusso E2E Loop 3 completo
+
 ## Loop 3 — Piano (B17-B21)
 
 | Blocco | Contenuto | Stato | Sessione |
 |--------|-----------|-------|----------|
 | B17 — LaTeX Rendering | `flutter_math_fork`, FormulaCard, LatexText widget, inline math | DONE | S13 |
 | B18 — Node Progression + History Backend | 3 stati nodo, fix hardcoded colors, `GET /sessione/` backend | DONE | S14 |
-| B19 — History Frontend + Recap | SessionHistoryWidget nella home, card "Tema completato" nel recap | TODO | S15 |
-| B20 — Celebrations + Esito SSE | Particle burst (primo_tentativo), glow (con_guida), `esito_esercizio` SSE | TODO | S16 |
-| B21 — E2E Loop 3 + Polish | Test completo, fix hardcoded colors residui, bug fix | TODO | S17 |
+| B19 — History Frontend + Recap | SessionHistoryWidget nella home, card "Tema completato" nel recap | DONE | S15 |
+| B20 — Celebrations + Esito SSE | Particle burst (primo_tentativo), glow (con_guida), `esito_esercizio` SSE | DONE | S16 |
+| B21 — E2E Loop 3 + Polish | Test completo, fix hardcoded colors residui, code review | DONE | S17 |
 
 Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
 
@@ -365,11 +454,157 @@ Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
 1. `GET /sessione/` — list endpoint per storico sessioni (B18)
 2. `esito_esercizio` — nuovo evento SSE con esito esercizio (B20)
 
-### Deferito a Loop 4
-- Mascotte "Creatura di Luce" (servono asset SVG/Rive)
-- Beat-aware canvas styling (shimmer, dimming)
-- Celebrazione promozione nodo (Beat 6)
-- Tools tray funzionale, voice input
+### Deferito
+- Mascotte "Creatura di Luce" (servono asset SVG/Rive — track separato con AI generativa)
+- Voice input (non pianificato nei Loop 4-7)
+
+## Sessione Analisi + Pianificazione (2026-02-27)
+
+### Attivita
+- Analisi completa progetto (backend 48 file ~5071 LOC, frontend ~80+ file ~15000+ LOC, 8 doc)
+- Discussione strategica sulle priorita con il fondatore
+- Pianificazione dettagliata Loop 4-7 (B22-B37)
+- Scritto roadmap in `.claude/plans/roadmap_loop4_7.md`
+
+### Decisioni fondatore
+- Mascotte: track separato, asset con AI generativa (Midjourney/DALL-E per PNG + Flutter code per glow/transizioni)
+- No beta test con esterni — il fondatore e lo studente/tester
+- Scope: completare prodotto per Algebra 1+2 con ciclo pedagogico completo
+- FSRS: approccio duale (interleaving in sessioni normali + sezione ripasso dedicata)
+- Feynman: tono incoraggiante ("buona intuizione, prova ad approfondire...")
+- Fiducia nella prioritizzazione tecnica/pedagogica proposta
+
+### Infrastruttura gia pronta scoperta durante analisi
+- **FSRS**: 6 campi DB in StatoNodoUtente + indice + stub fsrs.py + direttiva_ripasso_sr() + branch contesto.py
+- **Feynman**: tool schema avvia_feynman + valutazione_feynman completi + direttiva_feynman() 3 fasi + branch contesto.py + 4 campi DB
+- **Promozione nodo**: logica in turno.py linee 197-209 ma SENZA evento SSE (solo log)
+- **SSE client**: nessun reconnect, nessun retry, nessun event ID tracking
+
+## Loop 4 — Piano (B22-B25)
+
+| Blocco | Contenuto | Stato | Sessione |
+|--------|-----------|-------|----------|
+| B22 — Celebrazione Promozione | SSE event `promozione` + `showPromotionCelebration()` overlay | DONE | S18 |
+| B23 — SSE Reconnect | Retry su timeout/network, banner "Riconnessione...", isReconnecting state | DONE | S19 |
+| B24 — Fix Test | 4 test backend + 4 test frontend + worktree rimosso | DONE | S20 |
+| B25 — MascotteState + E2E | Enum MascotteState, animazioni per stato, E2E Loop 4 | DONE | S21 |
+
+### Backend modifiche richieste (Loop 4)
+1. `turno.py` — `yield _evento_sse("promozione", {...})` dopo promozioni (B22)
+
+Dettaglio completo in `.claude/plans/roadmap_loop4_7.md`.
+
+## Risultati S18 (B22 — Celebrazione Promozione Nodo + SSE Event)
+
+### Backend — promozione SSE event
+- `app/core/turno.py` — Aggiunto `yield _evento_sse("promozione", {...})` dopo ogni promozione nel ciclo for. Importato `grafo_knowledge` per risolvere `nodo_nome`. Fallback a `nodo_id` se grafo non caricato.
+- `tests/test_elaborazione.py` — Aggiornato `test_turno_con_promozione` per verificare evento SSE `promozione` emesso con dati corretti. Aggiunta classe `TestPromozioneSseEvent` con 2 nuovi test: fallback nome quando grafo non caricato, multiple promozioni emettono multiple eventi.
+
+### Frontend — PromozioneEvent + Celebration
+- `lib/models/sse_events.dart` — Aggiunta `PromozioneEvent` come nuovo sottotipo sealed class con `nodoId`, `nodoNome`, `nuovoLivello`, `nodiSbloccati`. Registrato nel parser `fromRawEvent`.
+- `lib/providers/session_provider.dart` — Aggiunto `latestPromotion: PromozioneEvent?` a `SessionScreenState`, handler `PromozioneEvent` nel switch, metodo `clearPromotion()`, parametri `clearPromotion` in `copyWith()`.
+- `lib/providers/onboarding_provider.dart` — Aggiunto case `PromozioneEvent` nel switch exhaustive (ignorato).
+- `lib/presentation/studio_screen/widgets/celebration_overlay.dart` — Nuova funzione `showPromotionCelebration()`: overlay full-screen con background scuro, 48 particelle confetti (vs 24 per esercizio), trofeo pulsante (`Icons.emoji_events`) al centro, "Concetto completato!" headline + nome nodo + conteggio nodi sbloccati, durata 2500ms, doppio `HapticFeedback.heavyImpact()` con 200ms delay, auto-dismiss.
+- `lib/presentation/studio_screen/studio_screen.dart` — Aggiunto `_lastTriggeredPromotion` tracker, trigger celebration in `_syncTutorMessages()` analogo a esito.
+
+### Test
+- Frontend: 200 passed, 4 failed (pre-esistenti: 3 theme_provider + 1 session_service.start mock — invariati)
+- 5 nuovi test tutti verdi: 3 `PromozioneEvent` parsing (full fields, empty sbloccati, missing sbloccati defaults), 2 provider state (initial null, clearPromotion)
+- Backend: 3 nuovi test tutti verdi: turno emette promozione SSE, fallback nome, multiple promozioni
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+## Risultati S19 (B23 — SSE Reconnect + Resilienza Errori)
+
+### Frontend — ReconnectingEvent + Retry Logic
+- `lib/models/sse_events.dart` — Aggiunta `ReconnectingEvent` come nuovo sottotipo sealed class con `attempt` e `maxAttempts`. Non e un evento backend — generato client-side.
+- `lib/services/sse_client.dart` — Riscritto `stream()` con retry loop:
+  - Exponential backoff: 1s, 2s, 4s (fino a `maxRetries` tentativi, default 3)
+  - Retry su `TimeoutException`, `SocketException`, errori generici, 5xx server errors
+  - NO retry su errori 4xx (client errors)
+  - Retry anche su stream drop mid-connection (catch nell'`await for`)
+  - Yield `ReconnectingEvent` prima di ogni retry
+  - Aggiunto `dart:io` import per `SocketException`
+  - `maxRetries` parametro configurabile nel costruttore
+- `lib/providers/session_provider.dart` — Aggiunto `isReconnecting: bool` a `SessionScreenState` + `copyWith()`. Handler `ReconnectingEvent` setta `isReconnecting: true`. Reset a `false` su `SessioneCreataEvent`, `TextDeltaEvent`, `ErroreEvent`, `onDone`, `onError`.
+- `lib/providers/onboarding_provider.dart` — Aggiunto case `ReconnectingEvent` nel switch exhaustive (ignorato).
+- `lib/presentation/studio_screen/studio_screen.dart` — Banner "Riconnessione in corso..." (colore tertiary con spinner) quando `isReconnecting == true`. Snackbar rosso con errore fatale quando `error != null` (dopo retry esauriti). Tracker `_lastShownError` per evitare snackbar duplicati.
+
+### Test
+- Frontend: 206 passed, 4 failed (pre-esistenti: 3 theme_provider + 1 session_service.start mock — invariati)
+- 6 nuovi test tutti verdi:
+  - `retries on connection error and yields ReconnectingEvent` (SocketException, 2 fail + 1 success)
+  - `does not retry on 4xx client error` (404, solo 1 chiamata)
+  - `yields ErroreEvent after all retries exhausted` (3 fail, maxRetries=2)
+  - `retries on 5xx server error` (500 -> success al 2o tentativo)
+  - `initial state has isReconnecting false`
+  - `isReconnecting state management via copyWith`
+
+### Analisi statica
+- `flutter analyze` → 0 errori, 0 warning (No issues found!)
+
+## Risultati S20 (B24 — Fix Test Backend/Frontend + Pulizia Worktree)
+
+### Backend — TestCalcoloInattivita fix (4 test)
+- `tests/test_sessione.py` — Riscritti 4 test `TestCalcoloInattivita` come `async` con `@pytest.mark.asyncio`:
+  - Ogni test crea `AsyncMock()` per `db` con `db.execute` che ritorna mock result con `scalar_one_or_none.return_value = None` (fallback a `created_at`)
+  - Chiamata cambiata da `_calcola_inattivita(sess)` a `await _calcola_inattivita(db, sess)`
+  - Aggiunto 5o test `test_ultimo_turno_recente`: verifica che usa il timestamp dell'ultimo turno (non `created_at`) quando presente
+
+### Frontend — theme_provider_test fix (3 test)
+- `test/providers/theme_provider_test.dart` — 3 test aggiornati per `ThemeMode.dark` default:
+  - `initial state is ThemeMode.dark` (era `system`)
+  - `load with no saved value keeps dark` (era `system`)
+  - `toggle switches between dark and light` — prima toggle da dark→light (era system→dark)
+
+### Frontend — session_service_test fix (1 test)
+- `test/services/session_service_test.dart` — `start` test riscritto:
+  - Problema: `http_mock_adapter` DioAdapter JSON-encodes response body, che escapa `\n` nella SSE text, rompendo il parser
+  - Fix: usa `InterceptorsWrapper` Dio custom che ritorna `Response(data: sseText)` raw per il POST e `Response(data: sessionJson)` per il follow-up GET
+  - Verifica ora: `session.id`, `session.stato`, `session.nodoFocaleNome`
+
+### Worktree cleanup
+- `git worktree prune` — rimosso reference git a `nostalgic-hertz`
+- Directory fisica `.claude/worktrees/nostalgic-hertz` locked ("device busy") — git non la traccia piu, fondatore puo rimuovere manualmente con explorer
+
+### Risultati test
+- Backend: **282 passed**, 0 failed, 10 skipped (era: 264 passed, 4 failed)
+- Frontend: **210 passed**, 0 failed (era: 206 passed, 4 failed)
+- `flutter analyze` → 0 errori, 0 warning
+
+## Risultati S21 (B25 — MascotteState + E2E Loop 4)
+
+### Frontend — MascotteWidget refactor
+- `lib/presentation/studio_screen/widgets/mascotte_widget.dart` — Refactored con:
+  - Enum `MascotteState { idle, listening, thinking, celebrating, sleeping }` con documentazione
+  - `mascotteState` parameter (default `idle`)
+  - `_applyStateAnimation()` cambia `AnimationController.duration` per stato:
+    - idle: 2000ms, listening: 1500ms, thinking: 800ms, celebrating: 600ms, sleeping: 3500ms
+  - Scale range per stato: sleeping 1.0-1.03 (quasi fermo), celebrating 1.0-1.18 (energico)
+  - Pulse opacity per stato: sleeping 0.08 (quasi invisibile), celebrating 0.45 (intenso)
+  - Widget opacity: sleeping 0.5 (dimmed), tutti gli altri 1.0
+  - `didUpdateWidget` rileva cambio stato e riapplica animazione
+
+### Frontend — studio_screen.dart MascotteState computation
+- `_computeMascotteState()` computa stato da `SessionScreenState`:
+  - No active session → `sleeping`
+  - Celebration recente (<3s) → `celebrating`
+  - `isStreaming` → `thinking`
+  - Default → `idle`
+- `_lastCelebrationTime` settato su promozione e esito corretto
+- `MascotteWidget` riceve `mascotteState` calcolato
+
+### Risultati test
+- Frontend: **210 passed**, 0 failed
+- `flutter analyze` → 0 errori, 0 warning
+
+### E2E manuale pendente
+Test manuale Loop 4 da verificare con fondatore:
+1. Sessione → promozione nodo → celebrazione intensa (2.5s)
+2. SSE drop → "Riconnessione..." → auto-recovery
+3. Mascotte cambia stato durante streaming/celebrazione
+4. Tutti i test backend e frontend passano (0 failures)
 
 ## Problemi Aperti
 
@@ -377,12 +612,13 @@ Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
 - PUB_CACHE deve essere settato a `C:\PubCache` per aggirare sandbox Windows di Claude Code (junction AppContainer)
 - Exercise/formula/backtrack card riattivate con dati SSE reali (B13 DONE)
 - Classi evento duplicate in sessione.dart e api_response.dart (B2) vs sse_events.dart (B11) — risolto con `hide` nelle import, ma le vecchie classi restano per retrocompatibilita test B2
-- **Docker**: lanciare SEMPRE da `backend/`, MAI dal worktree `nostalgic-hertz`. Verificare con `docker ps` che il container si chiami `backend-backend-1`
+- **Docker**: lanciare SEMPRE da `backend/`. Worktree `nostalgic-hertz` reference rimosso (git prune), directory fisica da rimuovere manualmente
 - `flutter_markdown` e marcato come "discontinued replaced by flutter_markdown_plus" — monitorare per eventuale migrazione futura
-- **4 test pre-esistenti falliti** in `test_sessione.py`: `TestCalcoloInattivita` — signature mismatch di `_calcola_inattivita()`. NON causati da onboarding continuo
+- ~~**4 test pre-esistenti falliti** in `test_sessione.py`~~ — RISOLTO in B24 (async + db mock)
+- ~~**4 test pre-esistenti falliti** frontend (3 theme_provider + 1 session_service)~~ — RISOLTO in B24
 - ~~**FormulaCard mostra LaTeX raw**~~ — RISOLTO in B17 con `flutter_math_fork`
-- ~~**Manca storico sessioni nella home**~~ — Backend `GET /sessione/` implementato in B18, frontend in B19
-- **Recap non distingue completamento argomento** — miglioramento UX in B19
+- ~~**Manca storico sessioni nella home**~~ — RISOLTO in B19 con SessionHistoryWidget
+- ~~**Recap non distingue completamento argomento**~~ — RISOLTO in B19 con card "Tema completato"
 
 ## Cosa Esiste Gia
 
@@ -468,3 +704,7 @@ Dettaglio completo in `.claude/plans/serialized-prancing-walrus.md`.
 | 2026-02-19 | `GET /sessione/` esclude onboarding | `tipo != "onboarding"` nel filtro — utente non deve vedere sessioni onboarding nello storico |
 | 2026-02-19 | `SessioneListItem` con timestamps stringa | ISO 8601 come stringhe nel Dart model — parsing in DateTime delegato alla UI |
 | 2026-02-19 | Branch B18 da B17 (non da main) | Main non ha B11-B17 mergiati — branch incrementale necessario |
+| 2026-02-27 | Roadmap Loop 4-7 in `.claude/plans/roadmap_loop4_7.md` | Piano dettagliato B22-B37, 16 blocchi in 16 sessioni, cross-session reference |
+| 2026-02-27 | FSRS duale: interleaving + sezione ripasso dedicata | Fondatore vuole entrambi — piu complesso ma piu completo pedagogicamente |
+| 2026-02-27 | Feynman con tono incoraggiante | "buona intuizione, prova ad approfondire..." — mai giudicante |
+| 2026-02-27 | Mascotte track separato con AI generativa | Midjourney/DALL-E per PNG, Flutter code per glow/transizioni — non blocca sviluppo |

@@ -44,10 +44,23 @@ Il backend e completo e testato. Vedi `backend/CLAUDE.md` per dettagli.
 - Recap sessione + app lifecycle (sospensione/ripresa)
 - Test E2E Loop 2 superato con SSE reale su emulatore Android
 
-### Fase attuale: Loop 3 — UX Polish + LaTeX + Storico
-- **Obiettivo**: formule LaTeX renderizzate, storico sessioni, celebrazioni animate, progressione nodi visibile
-- **Blocchi**: B17-B21 (5 sessioni, S13-S17)
-- **NON implementiamo ora**: mascotte "Creatura di Luce" (mancano asset design), beat-aware canvas styling — rimandati a Loop 4
+### Loop 3 completato (B17-B21)
+- LaTeX rendering con `flutter_math_fork` (FormulaCard + inline `LatexText`)
+- Node progression a 3 stati nel bottom sheet (non_iniziato/in_corso/operativo)
+- Storico sessioni nella home (`SessionHistoryWidget`) + `GET /sessione/` backend
+- Recap con card "Tema completato" via cross-reference pathProvider
+- Celebrazioni animate: particle burst (primo_tentativo), radial glow (con_guida), haptic
+- `esito_esercizio` nuovo evento SSE nel backend
+- Fix hardcoded colors in mascotte, tema_card, tools_tray, exercise_card
+- `flutter analyze` 0 errori, 195 test passed
+
+### Loop 4 completato (B22-B25)
+- Piano completo Loop 4-7 in `.claude/plans/roadmap_loop4_7.md`
+- **B22**: Celebrazione promozione nodo + SSE event (DONE)
+- **B23**: SSE reconnect + resilienza errori (DONE)
+- **B24**: Fix test backend/frontend + pulizia worktree (DONE)
+- **B25**: MascotteWidget con enum `MascotteState`, animazioni per stato, E2E Loop 4 (DONE)
+- **Deferito**: mascotte "Creatura di Luce" (mancano asset design), voice input
 
 ### Stack Frontend (HARD CONSTRAINT)
 | Componente | Scelta |
@@ -97,12 +110,26 @@ Tutti i 6 blocchi (B11-B16) completati. Flusso E2E completo con SSE reale senza 
 |---|---|---|---|
 | 17 | LaTeX rendering (FormulaCard + inline tutor messages) | DONE | S13 |
 | 18 | Node progression visibility + Session history backend | DONE | S14 |
-| 19 | Session history frontend + Recap improvements | TODO | S15 |
-| 20 | Celebration animations + esito SSE backend | TODO | S16 |
-| 21 | Test E2E Loop 3 + Polish | TODO | S17 |
+| 19 | Session history frontend + Recap improvements | DONE | S15 |
+| 20 | Celebration animations + esito SSE backend | DONE | S16 |
+| 21 | Test E2E Loop 3 + Polish | DONE | S17 |
+
+### Loop 3 COMPLETATO
+Tutti i 5 blocchi (B17-B21) completati. Code review + hardcoded colors fix + flutter analyze 0 errori + flutter test 195/199 (4 pre-esistenti). Test manuale E2E pendente.
+
+## Roadmap Loop 4-7 (B22-B37) — Completamento Prodotto
+
+Piano dettagliato in **`.claude/plans/roadmap_loop4_7.md`** — leggerlo a inizio sessione.
+
+| Loop | Blocchi | Focus | Sessioni |
+|------|---------|-------|----------|
+| 4 | B22-B25 | Quick wins + robustezza | S18-S21 |
+| 5 | B26-B29 | FSRS Spaced Repetition | S22-S25 |
+| 6 | B30-B33 | Feynman + Comprensione Profonda | S26-S29 |
+| 7 | B34-B37 | Atmosfera + Polish | S30-S33 |
 
 ### Prossima sessione
-**S15 — B19**: Session history frontend + Recap improvements. `SessionHistoryWidget` nella home, `listSessions()` nel service/provider, card "Tema completato" nel recap.
+**S22 — B26** — Algoritmo FSRS (Backend). Installare libreria `fsrs` da PyPI nel Docker. `backend/app/grafo/fsrs.py` — sostituire stub con implementazione reale: `calcola_prossimo_ripasso(db, utente_id, nodo_id, esito)` mappa esiti a FSRS Rating, `get_nodi_da_ripassare(db, utente_id)` query nodi scaduti. `backend/app/core/elaborazione.py` — in `_processa_risposta_esercizio()`, dopo update contatori, chiamare `calcola_prossimo_ripasso()` per aggiornare campi SR. 8-10 test in `test_fsrs.py`.
 
 ## Pipeline Sessioni
 
@@ -135,13 +162,22 @@ Tutti i 6 blocchi (B11-B16) completati. Flusso E2E completo con SSE reale senza 
 | S16 | B20 | Celebrazioni burst/glow + esito SSE backend | `feature/frontend-b20` |
 | S17 | B21 | Flusso E2E Loop 3 completo senza crash | `feature/frontend-b21` |
 
+### Loop 4 (Quick wins + Robustezza)
+| Sessione | Blocchi | Gate di uscita | Branch |
+|----------|---------|----------------|--------|
+| S18 | B22 | Promozione SSE + celebrazione | `feature/loop4-b22` |
+| S19 | B23 | SSE reconnect + banner | `feature/loop4-b23` |
+| S20 | B24 | 0 test failures + worktree rimosso | `feature/loop4-b24` |
+| S21 | B25 | MascotteState + E2E Loop 4 | `feature/loop4-b25` |
+
 **Regola**: ogni sessione crea branch da main, PR a fine sessione dopo test verdi.
 
 ## Documenti di Riferimento
 
 | Documento | Cosa contiene | Quando leggerlo |
 |---|---|---|
-| `.claude/plans/frontend-integration.md` | **Piano operativo** — dettaglio file per file | Sempre, a inizio sessione |
+| `.claude/plans/frontend-integration.md` | **Piano operativo Loop 1-3** — dettaglio file per file | Riferimento (Loop 1-3 completati) |
+| `.claude/plans/roadmap_loop4_7.md` | **Piano operativo Loop 4-7** — B22-B37 dettaglio blocco per blocco | Sempre, a inizio sessione |
 | `.claude/status.md` | **Checkpoint** — stato corrente, problemi aperti | Sempre, a inizio sessione |
 | `docs/dydat_api_reference.md` | **Fonte di verita API** — endpoint, modelli, flussi | Blocchi 2-10 |
 | `docs/dydat_brief_rocket_new_v2.md` | Brief originale Rocket.new — architettura ideale | Riferimento |
@@ -176,10 +212,10 @@ flutter run
 
 ### Inizio sessione
 1. Leggere questo CLAUDE.md (stato globale + prossima sessione)
-2. Leggere `.claude/plans/frontend-integration.md` (piano dettagliato)
+2. Leggere `.claude/plans/roadmap_loop4_7.md` (piano dettagliato Loop 4-7)
 3. Leggere `.claude/status.md` (checkpoint: da dove riprendere)
 4. Leggere `docs/dydat_api_reference.md` se il blocco tocca le API
-5. Creare branch `feature/frontend-bX-bY` da main
+5. Creare branch `feature/loopX-bY` da main
 
 ### Fine sessione — CHECKLIST OBBLIGATORIA
 - [ ] `flutter analyze` → zero errori
@@ -294,3 +330,26 @@ Non procedere al passo successivo finche il fondatore non conferma l'esito del t
 | 2026-02-19 | flutter_math_fork per LaTeX rendering | Non WebView, rendering nativo Flutter |
 | 2026-02-19 | LatexText widget per inline math | Parsa $...$ e $$...$$, fallback su MarkdownText per plain text, fallback monospace per LaTeX malformato |
 | 2026-02-19 | Streaming bubble resta MarkdownText | Delimitatori $ possono arrivare split durante SSE streaming |
+| 2026-02-19 | SessionHistoryWidget nella home sotto "Inizia" | Mostra sessioni recenti con date relative, durata, stato — tap naviga a recap |
+| 2026-02-19 | Tema completato nel recap con pathProvider.loadTopics() | Cross-reference nodiLavorati con temi completati — card celebrativa con trofeo |
+| 2026-02-19 | Auto-reload session history su ritorno alla home | StudioScreen rileva stato vuoto e ricarica in build() con Future.microtask |
+| 2026-02-19 | `esito_esercizio` SSE event nel backend | `processa_segnali` ritorna tupla (promozioni, esiti), turno.py emette evento |
+| 2026-02-19 | `EsitoEsercizioEvent` sealed class nel frontend | Nuova variante con `corretto`, `primoTentativo`, `conGuida` |
+| 2026-02-19 | Celebration overlay (burst + glow) | `showCelebrationOverlay()` con particle burst per primo_tentativo, radial glow per con_guida |
+| 2026-02-19 | Haptic feedback differenziato per esito | heavyImpact per primo_tentativo, mediumImpact per con_guida |
+| 2026-02-19 | ExerciseCard colori hardcoded fixati | `Color(0xFF7EBF8E)` → `theme.colorScheme.secondary`, `Color(0xFFC97070)` → `theme.colorScheme.error` |
+| 2026-02-27 | Roadmap Loop 4-7 (B22-B37) pianificata | 16 blocchi in 16 sessioni — quick wins, FSRS, Feynman, atmosfera |
+| 2026-02-27 | FSRS duale: interleaving + sezione ripasso | Fondatore vuole entrambi gli approcci per completezza pedagogica |
+| 2026-02-27 | Feynman tono incoraggiante | Mai giudicante, "buona intuizione, prova ad approfondire..." |
+| 2026-02-27 | Mascotte asset con AI generativa (track separato) | Midjourney/DALL-E per PNG, Flutter code per glow/transizioni |
+| 2026-02-27 | `promozione` SSE event nel backend | `turno.py` yield dopo ogni promozione con nodo_id, nodo_nome, nuovo_livello, nodi_sbloccati |
+| 2026-02-27 | `PromozioneEvent` sealed class nel frontend | Nuovo sottotipo SSE con 4 campi, registrato nel parser |
+| 2026-02-27 | `showPromotionCelebration()` celebrazione full-screen | 48 particelle, trofeo pulsante, 2500ms, doppio heavyImpact, nome nodo + nodi sbloccati |
+| 2026-02-27 | SSE retry con backoff esponenziale in `SseClient` | max 3 retry, 1s/2s/4s, retry su timeout/network/5xx, NO retry su 4xx |
+| 2026-02-27 | `ReconnectingEvent` generato client-side | Non e un evento backend — SseClient lo yield prima di ogni retry |
+| 2026-02-27 | `isReconnecting` in `SessionScreenState` | Banner giallo "Riconnessione in corso..." nello studio_screen |
+| 2026-02-27 | Snackbar errore fatale dopo retry esauriti | `_lastShownError` tracker evita duplicati |
+| 2026-02-27 | `_calcola_inattivita` async con DB query | Usa timestamp ultimo turno (non solo created_at) per calcolo inattivita |
+| 2026-02-27 | ThemeNotifier initial state `ThemeMode.dark` | Dark-first design, test aggiornati di conseguenza |
+| 2026-02-27 | DioAdapter non supporta ResponseType.plain | JSON-encodes body, escapa newlines. Fix: Dio InterceptorsWrapper per test SSE plain text |
+| 2026-02-27 | Worktree `nostalgic-hertz` rimosso da git | `git worktree prune` — directory fisica locked, rimuovere manualmente |
