@@ -48,7 +48,7 @@
 
 ## Regole Specifiche del Progetto
 
-- **Backend stabile**: il backend e completo e testato (282 test). Puo essere esteso per feature cross-stack (nuovi tool LLM, prompt, filtering) ma serve autorizzazione esplicita di Villa. API endpoint e modelli DB non vanno toccati senza necessita.
+- **Backend stabile**: il backend e completo e testato (282 test). Puo essere esteso per feature cross-stack (nuovi tool LLM, prompt, filtering) quando previsto dal blocco corrente in ROADMAP.md. Schema DB (tabelle/colonne) non va modificato se non esplicitamente richiesto dal blocco.
 - **Fonte di verita API**: `docs/dydat_api_reference.md` — consultare sempre prima di toccare servizi/modelli frontend.
 - **Widget nuovi**: usano `Theme.of(context)` — zero colori hardcoded.
 - **JSON**: snake_case (backend) -> camelCase (Dart) nei fromJson/toJson.

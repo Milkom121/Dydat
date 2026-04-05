@@ -100,11 +100,10 @@ Idee cross-progetto: C:\Users\Mario\Documents\ideas.md
 **Stack e stato**: vedi PROJECT_CONFIG.md
 
 ## Vietato (Senza Chiedere)
-- Modificare il backend senza autorizzazione esplicita di Villa (eccezioni: CORS, nuovi tool LLM per feature approvate)
 - Implementare mascotte "Creatura di Luce" (manca design asset)
-- Implementare beat-aware canvas styling (Loop 7)
+- Implementare beat-aware canvas styling (Loop 7, non anticipare)
 - Toccare app_theme.dart (salvo ricablare su provider)
-- Toccare widget esistenti (salvo ricablarli su provider)
+- Modificare schema DB (tabelle/colonne) senza che sia previsto nel blocco corrente
 
 ## Regole Business Critiche
 - **Fonte di verita API**: `docs/dydat_api_reference.md` — consultare SEMPRE prima di toccare servizi/modelli frontend
