@@ -2,11 +2,24 @@
 __pycache__/
 *.pyc
 *.pyo
+*.py[cod]
+*$py.class
 *.egg-info/
+*.egg
 dist/
 .pytest_cache/
 .ruff_cache/
-*.egg
+.Python
+venv/
+.venv/
+env/
+ENV/
+
+# Python test/coverage
+coverage/
+.coverage
+htmlcov/
+.nyc_output/
 
 # Flutter
 .dart_tool/
@@ -26,11 +39,18 @@ build/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V2
+.Trashes
 Thumbs.db
+ehthumbs.db
 desktop.ini
 
 # Secrets — MAI committare
 .env
+.env.local
+.env.*.local
 env.json
 *.key
 *.pem
@@ -45,6 +65,11 @@ docs/runner-log.txt
 
 # Knowledge Base (troppo grande per git)
 backend/data/
+
+# Temp/cache
+*.tmp
+*.temp
+.cache/
 
 # Generated
 *.lock

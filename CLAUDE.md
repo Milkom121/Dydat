@@ -72,21 +72,14 @@ CENTRALIZZATI: C:\Users\Mario\Documents\ideas.md (cross-progetto), METODO_VILLA_
 CLAUDE.md globale in ~/.claude/CLAUDE.md (letto automaticamente da Claude Code).
 Dettagli: .claude/metodo-villa/09-struttura-file.md
 
-## 10. Discovery (skill pre-sviluppo)
-Prima di iniziare lo sviluppo, se i requisiti non sono ancora definiti, usa la skill discovery.
-Trigger: nuovo progetto, raccolta requisiti, analisi cliente, concept, discovery, brief, kickoff.
-La skill si trova in skills/discovery/SKILL.md e guida in 9 fasi fino a ROADMAP e PROJECT_CONFIG pronti.
-OUTPUT discovery: PROJECT_CONFIG.md, ROADMAP.md, CLAUDE.md progetto, schema DB, dev-shortcuts.md.
-Dettagli: skills/discovery/SKILL.md
-
-## 11. Runner automatico (5 righe)
+## 10. Runner automatico (5 righe)
 Il runner esegue blocchi in sequenza semi-automatica: ./metodo-villa-runner.sh o avvia-metodo-villa.bat.
 Stato persistito in docs/progress.json. Handoff in .claude/handoff.md (usa .claude/handoff-template.md).
 Stop automatico: CHECKPOINT, PHASE_COMPLETE, ERROR, BLOCKED.
 Log sessioni: docs/session-log.md. Log completo: docs/runner-log.txt.
 Dettagli: README.md del progetto.
 
-## 12. Riferimenti (5 righe)
+## 11. Riferimenti (5 righe)
 Manuale completo: .claude/metodo-villa/README.md
 Versione completa metodo: C:\Users\Mario\Documents\METODO_VILLA_v1.md
 Idee cross-progetto: C:\Users\Mario\Documents\ideas.md
