@@ -118,10 +118,11 @@
 - **Note**: backend/app/api/ripasso.py + router in main.py. Frontend: NodoRipasso model + ripasso.g.dart, RipassoState/RipassoNotifier (ripassoProvider), badge arancione (colorScheme.tertiary) su TemaCardWidget con param nodiDaRipassare, sezione ripasso in HomeViewWidget con Container tertiaryContainer + bottone "Vai". 10 nuovi test frontend. 329 backend + 222 frontend verdi, analyze 0.
 
 ### Blocco B29 — Sessioni Ripasso Dedicate + E2E Loop 5
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S26)
 - **Complessita'**: media
 - **Descrizione**: Sessioni tipo "ripasso" con get_nodi_da_ripassare al posto di _scegli_nodo. E2E completo: esercizi -> promozione -> badge ripasso -> sessione ripasso -> interleaving.
 - **Gate di uscita**: Sessioni ripasso E2E, interleaving visibile, badge, test verdi
+- **Note**: Backend: _scegli_nodo_ripasso() (100% SR, fallback path planner se vuoto). Frontend: onRipassoTap callback in HomeViewWidget, _startRipassoSession() in StudioScreen, tipo param in startSessionStream(). 8 backend + 4 frontend nuovi test. 336 backend + 226 frontend totale.
 
 ---
 
