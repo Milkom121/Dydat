@@ -25,6 +25,7 @@ from app.db.models.grafo import Esercizio
 from app.db.models.stato_utente import StatoNodoUtente, StoricoEsercizi
 from app.db.models.utenti import Sessione
 from app.grafo.algoritmi import nodi_sbloccati_dopo_promozione
+from app.grafo.fsrs import calcola_prossimo_ripasso
 from app.grafo.stato import get_livelli_utente
 from app.grafo.struttura import grafo_knowledge
 
@@ -345,7 +346,10 @@ async def _processa_risposta_esercizio(
         nodo_focale, esito, utente_id,
     )
 
-    # 3. Verifica promozione
+    # 3. Aggiorna scheduling FSRS per spaced repetition
+    await calcola_prossimo_ripasso(utente_id, nodo_focale, esito, db)
+
+    # 4. Verifica promozione
     promozione = await _verifica_promozione(db, utente_id, nodo_focale)
     return promozione
 

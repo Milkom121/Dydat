@@ -28,13 +28,15 @@ class StatoNodoUtente(Base):
     errori_in_corso: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     contesto_sospensione: Mapped[dict | None] = mapped_column(JSONB)
 
-    # Spaced Repetition (Loop 2 — predisposto)
+    # Spaced Repetition (Loop 5 — implementato con FSRS6)
     sr_prossimo_ripasso: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     sr_intervallo_giorni: Mapped[float | None] = mapped_column(Float)
     sr_facilita: Mapped[float] = mapped_column(Float, server_default=text("2.5"))
     sr_ripetizioni: Mapped[int | None] = mapped_column(Integer)
     sr_stabilita: Mapped[float | None] = mapped_column(Float)
     sr_difficolta: Mapped[float | None] = mapped_column(Float)
+    # JSON completo della Card FSRS (serializzato con card.to_json()) per ricostruzione esatta
+    sr_card_json: Mapped[dict | None] = mapped_column(JSONB)
 
     # Promozione multi-segnale (Loop 3 — predisposto)
     feynman_superato: Mapped[bool | None] = mapped_column(Boolean)
