@@ -43,6 +43,9 @@ class ApiConfig {
   // Achievement
   static const String achievements = '/achievement/';
 
+  // Ripasso SR
+  static const String ripassoNodi = '/ripasso/nodi';
+
   // Health
   static const String health = '/health';
 }

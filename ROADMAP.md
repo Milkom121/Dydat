@@ -111,10 +111,11 @@
 - **Note**: _NodoScelto NamedTuple, PROBABILITA_INTERLEAVING=0.35, _nomi_nodi_sr helper. Interleaving anche in aggiorna_nodo_dopo_promozione (elaborazione.py) con esclusione nodo appena promosso. order_by scadenza in get_nodi_da_ripassare. 21 nuovi test (test_b27_interleaving.py + test_interleaving.py). 324 totale backend.
 
 ### Blocco B28 — Sezione Ripasso Frontend + Badge
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S25)
 - **Complessita'**: media
 - **Descrizione**: Nuovo endpoint GET /ripasso/nodi. Frontend: modello NodoRipasso, badge "Da ripassare" su tema_card, sezione ripasso in home con conteggio e bottone.
 - **Gate di uscita**: Badge visibili, sezione ripasso in home, API funziona, analyze 0, test verdi
+- **Note**: backend/app/api/ripasso.py + router in main.py. Frontend: NodoRipasso model + ripasso.g.dart, RipassoState/RipassoNotifier (ripassoProvider), badge arancione (colorScheme.tertiary) su TemaCardWidget con param nodiDaRipassare, sezione ripasso in HomeViewWidget con Container tertiaryContainer + bottone "Vai". 10 nuovi test frontend. 329 backend + 220 frontend verdi, analyze 0.
 
 ### Blocco B29 — Sessioni Ripasso Dedicate + E2E Loop 5
 - [ ] **Stato**: da fare

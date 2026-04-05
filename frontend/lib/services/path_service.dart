@@ -1,5 +1,6 @@
 import 'package:dydat/config/api_config.dart';
 import 'package:dydat/models/percorso.dart';
+import 'package:dydat/models/ripasso.dart';
 import 'package:dydat/models/tema.dart';
 import 'package:dydat/services/dio_client.dart';
 
@@ -34,5 +35,14 @@ class PathService {
   Future<TemaDettaglio> getTopicDetail(String temaId) async {
     final response = await _client.dio.get(ApiConfig.topicDetail(temaId));
     return TemaDettaglio.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Ritorna i nodi SR scaduti da ripassare oggi.
+  Future<List<NodoRipasso>> getNodiDaRipassare() async {
+    final response = await _client.dio.get(ApiConfig.ripassoNodi);
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => NodoRipasso.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

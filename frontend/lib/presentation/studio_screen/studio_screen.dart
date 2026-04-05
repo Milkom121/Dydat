@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
+import '../../providers/ripasso_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../routes/app_router.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -59,7 +60,10 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     StudioScreen.tabReTapNotifier.addListener(_onTabReTap);
-    Future.microtask(() => ref.read(sessionProvider.notifier).loadSessionHistory());
+    Future.microtask(() {
+      ref.read(sessionProvider.notifier).loadSessionHistory();
+      ref.read(ripassoProvider.notifier).carica();
+    });
   }
 
   void _onTabReTap() {
@@ -295,6 +299,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sessionState = ref.watch(sessionProvider);
+    final ripassoTotale = ref.watch(ripassoProvider).totale;
     final session = sessionState.activeSession;
     final isActive = session != null && session.stato == 'attiva';
     final isStreaming = sessionState.isStreaming;
@@ -406,6 +411,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                             isActive: isActive,
                             sessionHistory: sessionState.sessionHistory,
                             isLoadingHistory: sessionState.isLoadingHistory,
+                            ripassoTotale: ripassoTotale,
                           )
                         : ChatViewWidget(
                             messages: _messages,

@@ -1,8 +1,8 @@
 {
   "current_phase": "5",
-  "current_block": "B28",
-  "total_blocks_run": 29,
+  "current_block": "B29",
+  "total_blocks_run": 32,
   "status": "CONTINUE",
-  "last_run": "2026-04-05T10:00:00Z",
-  "last_summary": "Blocco B27 completato (S24). Interleaving SR probabilistico in _scegli_nodo(). _NodoScelto NamedTuple. PROBABILITA_INTERLEAVING=0.35. 320 test verdi."
+  "last_run": "2026-04-05T12:00:00Z",
+  "last_summary": "Blocco B28 completato (S25). Endpoint GET /ripasso/nodi, NodoRipasso model, ripassoProvider, badge SR su TemaCardWidget, sezione ripasso in HomeViewWidget. 329 backend + 220 frontend verdi."
 }

@@ -6,6 +6,7 @@ import 'providers/achievement_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/path_provider.dart';
+import 'providers/ripasso_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/stats_provider.dart';
 import 'providers/theme_provider.dart';
@@ -89,6 +90,9 @@ void main() async {
             onboardingService: onboardingService,
             storageService: storageService,
           ),
+        ),
+        ripassoProvider.overrideWith(
+          (ref) => RipassoNotifier(pathService: pathService),
         ),
       ],
       child: const DydatApp(),

@@ -5,6 +5,7 @@ import '../../core/sizer_extensions.dart';
 
 import '../../models/tema.dart';
 import '../../providers/path_provider.dart';
+import '../../providers/ripasso_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import './widgets/empty_state_widget.dart';
 import './widgets/tema_card_widget.dart';
@@ -27,9 +28,10 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   @override
   void initState() {
     super.initState();
-    // Load topics on first build
+    // Carica temi e nodi SR all'avvio
     Future.microtask(() {
       ref.read(pathProvider.notifier).loadTopics();
+      ref.read(ripassoProvider.notifier).carica();
     });
   }
 
@@ -39,9 +41,12 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     super.dispose();
   }
 
-  /// Handle pull-to-refresh — reload topics from API
+  /// Handle pull-to-refresh — ricarica temi e nodi SR
   Future<void> _handleRefresh() async {
-    await ref.read(pathProvider.notifier).loadTopics();
+    await Future.wait([
+      ref.read(pathProvider.notifier).loadTopics(),
+      ref.read(ripassoProvider.notifier).carica(),
+    ]);
   }
 
   /// Show tema detail bottom sheet
@@ -87,11 +92,13 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pathState = ref.watch(pathProvider);
+    final ripassoState = ref.watch(ripassoProvider);
     final topics = pathState.topics;
     final isLoading = pathState.isLoading;
     final error = pathState.error;
     final overallProgress = _calculateOverallProgress(topics);
     final currentTemaIndex = _findCurrentTemaIndex(topics);
+    final ripassoPerTema = ripassoState.conteggioPerTema;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -109,6 +116,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
             isLoading,
             error,
             currentTemaIndex,
+            ripassoPerTema,
           ),
         ),
       ),
@@ -121,6 +129,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     bool isLoading,
     String? error,
     int currentTemaIndex,
+    Map<String, int> ripassoPerTema,
   ) {
     // Initial loading state
     if (isLoading && topics.isEmpty) {
@@ -180,6 +189,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
           return TemaCardWidget(
             tema: tema,
             isCurrent: isCurrent,
+            nodiDaRipassare: ripassoPerTema[tema.id] ?? 0,
             onTap: () => _showTemaDetail(tema),
             onLongPress: tema.completato
                 ? () {

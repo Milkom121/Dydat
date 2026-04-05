@@ -146,5 +146,46 @@ void main() {
       expect(detail.nodi.length, 1);
       expect(detail.nodi[0].livello, 'operativo');
     });
+
+    test('getNodiDaRipassare returns list of NodoRipasso', () async {
+      dioAdapter.onGet(
+        '/ripasso/nodi',
+        (server) => server.reply(200, [
+          {
+            'nodo_id': 'equazioni_1g',
+            'nodo_nome': 'Equazioni di primo grado',
+            'tema_id': 'algebra',
+            'tema_nome': 'Algebra',
+            'sr_prossimo_ripasso': '2026-04-03T10:00:00+00:00',
+            'sr_ripetizioni': 2,
+          },
+          {
+            'nodo_id': 'derivate_def',
+            'nodo_nome': 'Definizione di Derivata',
+            'tema_id': 'analisi',
+            'tema_nome': 'Analisi',
+            'sr_prossimo_ripasso': '2026-04-04T08:00:00+00:00',
+            'sr_ripetizioni': 1,
+          },
+        ]),
+      );
+
+      final nodi = await pathService.getNodiDaRipassare();
+      expect(nodi.length, 2);
+      expect(nodi[0].nodoId, 'equazioni_1g');
+      expect(nodi[0].temaNome, 'Algebra');
+      expect(nodi[0].srRipetizioni, 2);
+      expect(nodi[1].nodoId, 'derivate_def');
+    });
+
+    test('getNodiDaRipassare returns empty list when no review needed', () async {
+      dioAdapter.onGet(
+        '/ripasso/nodi',
+        (server) => server.reply(200, []),
+      );
+
+      final nodi = await pathService.getNodiDaRipassare();
+      expect(nodi, isEmpty);
+    });
   });
 }

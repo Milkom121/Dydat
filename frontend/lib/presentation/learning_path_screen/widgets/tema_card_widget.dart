@@ -7,11 +7,13 @@ import '../../../widgets/custom_icon_widget.dart';
 
 /// Individual tema card with visual state indicators.
 /// Accepts a [Tema] model from the API instead of raw Map data.
+/// [nodiDaRipassare] > 0 mostra un badge SR arancione in alto a destra.
 class TemaCardWidget extends StatelessWidget {
   final Tema tema;
   final bool isCurrent;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final int nodiDaRipassare;
 
   const TemaCardWidget({
     super.key,
@@ -19,6 +21,7 @@ class TemaCardWidget extends StatelessWidget {
     required this.isCurrent,
     required this.onTap,
     this.onLongPress,
+    this.nodiDaRipassare = 0,
   });
 
   /// Derive visual status from Tema model fields.
@@ -196,8 +199,43 @@ class TemaCardWidget extends StatelessWidget {
               ),
             ),
             if (isFuture) _buildFogOverlay(context),
+            if (nodiDaRipassare > 0)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: _buildRipassoBadge(context),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRipassoBadge(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiary,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomIconWidget(
+            iconName: 'replay',
+            color: theme.colorScheme.onTertiary,
+            size: 12,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            '$nodiDaRipassare',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onTertiary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
