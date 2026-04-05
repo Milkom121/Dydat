@@ -206,6 +206,55 @@ void main() {
       expect(sessions, isEmpty);
     });
 
+    test('start with tipo ripasso sends correct body', () async {
+      final ripassoJson = {
+        'id': 'ripasso-uuid-1',
+        'stato': 'attiva',
+        'tipo': 'ripasso',
+        'nodo_focale_id': 'nodo_sr_urgente',
+        'nodo_focale_nome': 'Equazioni primo grado',
+        'attivita_corrente': 'ripasso_sr',
+        'durata_prevista_min': null,
+        'durata_effettiva_min': null,
+        'nodi_lavorati': null,
+      };
+
+      const sseText = 'event: sessione_creata\n'
+          'data: {"sessione_id":"ripasso-uuid-1","nodo_id":"nodo_sr_urgente","nodo_nome":"Equazioni primo grado"}\n\n';
+
+      dio.interceptors.insert(
+        0,
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path.contains('/sessione/inizia')) {
+              // Verifica che il body contenga tipo ripasso
+              final body = options.data as Map<String, dynamic>?;
+              expect(body, isNotNull);
+              expect(body!['tipo'], 'ripasso');
+              return handler.resolve(Response(
+                data: sseText,
+                statusCode: 200,
+                requestOptions: options,
+              ));
+            }
+            if (options.path.contains('/sessione/ripasso-uuid-1') &&
+                options.method == 'GET') {
+              return handler.resolve(Response(
+                data: ripassoJson,
+                statusCode: 200,
+                requestOptions: options,
+              ));
+            }
+            return handler.next(options);
+          },
+        ),
+      );
+
+      final session = await sessionService.start(tipo: 'ripasso');
+      expect(session.id, 'ripasso-uuid-1');
+      expect(session.tipo, 'ripasso');
+    });
+
     test('listSessions passes limit and offset', () async {
       dioAdapter.onGet(
         '/sessione/',

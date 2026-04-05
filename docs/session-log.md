@@ -38,3 +38,23 @@
 - **Status**: CONTINUE
 - **Summary**: Blocco 4.5.3 completato (S22). iconMap reso static const in custom_icon_widget.dart. studio_screen.dart ridotto da 1207 a 480 righe con split in 6 nuovi file. Fase 4.5 COMPLETATA.
 ---
+
+## 2026-04-05 04:01:13 — Blocco F5BB26
+- **Status**: CONTINUE
+- **Summary**: Blocco B27 completato (S24). Interleaving SR probabilistico implementato in _scegli_nodo() e aggiorna_nodo_dopo_promozione(). _NodoScelto NamedTuple, PROBABILITA_INTERLEAVING=0.35, direttiva ripasso assemblata tramite contesto.py.
+---
+
+## 2026-04-05 04:09:42 — Blocco F5BB26
+- **Status**: CONTINUE
+- **Summary**: Blocco B28 completato (S25). Endpoint GET /ripasso/nodi. NodoRipasso model + ripassoProvider. Badge SR su TemaCardWidget. Sezione ripasso in HomeViewWidget. 10 nuovi test frontend. 329 backend + 220 frontend verdi.
+---
+
+## 2026-04-05 04:11:26 — Blocco F5BB27
+- **Status**: CONTINUE
+- **Summary**: Blocco B28 completato (S25). Endpoint GET /ripasso/nodi. NodoRipasso model + ripassoProvider. Badge SR su TemaCardWidget. Sezione ripasso in HomeViewWidget. 10 nuovi test frontend. 329 backend + 220 frontend verdi.
+---
+
+## 2026-04-05 04:17:10 — Blocco F5BB28
+- **Status**: PHASE_COMPLETE
+- **Summary**: Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: tipo=ripasso instrada su _scegli_nodo_ripasso() (100% SR, fallback path planner). Frontend: bottone Vai avvia sessione ripasso. 8 nuovi test backend + 4 widget test. 336 backend + 226 frontend verdi, analyze 0.
+---

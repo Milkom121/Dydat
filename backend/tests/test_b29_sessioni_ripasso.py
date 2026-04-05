@@ -101,6 +101,37 @@ class TestScegliNodoRipasso:
         assert risultato.nodo_id == "nodo_sr_1"
 
 
+    @pytest.mark.asyncio
+    async def test_fallback_path_planner_con_grafo_caricato(self):
+        """Senza nodi SR, con grafo caricato, usa path_planner per trovare nodo."""
+        from app.core.sessione import _scegli_nodo_ripasso
+
+        utente_id = uuid.uuid4()
+        db = AsyncMock()
+
+        mock_grafo = MagicMock()
+        mock_grafo.caricato = True
+        mock_grafo.grafo = MagicMock()
+
+        with patch(
+            "app.core.sessione.get_nodi_da_ripassare",
+            new=AsyncMock(return_value=[]),
+        ), patch(
+            "app.core.sessione.grafo_knowledge", mock_grafo
+        ), patch(
+            "app.core.sessione.get_livelli_utente",
+            new=AsyncMock(return_value={}),
+        ), patch(
+            "app.core.sessione.path_planner",
+            return_value="nodo_prossimo",
+        ):
+            risultato = await _scegli_nodo_ripasso(db, utente_id)
+
+        assert risultato.nodo_id == "nodo_prossimo"
+        assert risultato.attivita == "spiegazione"
+        assert risultato.concetti_scadenza == []
+
+
 class TestIniziaSessioneRipasso:
     """Test per inizia_sessione() con tipo=ripasso."""
 
@@ -186,3 +217,66 @@ class TestIniziaSessioneRipasso:
         stato = sessione.stato_orchestratore
         assert "concetti_scadenza" in stato
         assert stato["concetti_scadenza"] == ["Algebra", "Geometria"]
+
+    @pytest.mark.asyncio
+    async def test_sessione_ripasso_tipo_salvato(self):
+        """Il tipo 'ripasso' viene salvato nella sessione."""
+        from app.core.sessione import inizia_sessione, _NodoScelto
+
+        utente_id = uuid.uuid4()
+        db = AsyncMock()
+        db.flush = AsyncMock()
+
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = None
+        db.execute = AsyncMock(return_value=result_mock)
+
+        nodo_ripasso = _NodoScelto(
+            nodo_id="nodo_sr",
+            attivita="ripasso_sr",
+            concetti_scadenza=["Algebra"],
+        )
+
+        with patch("app.core.sessione._gestisci_sessione_attiva", new=AsyncMock()), \
+             patch("app.core.sessione._cerca_sessione_sospesa", new=AsyncMock(return_value=None)), \
+             patch("app.core.sessione._scegli_nodo_ripasso", new=AsyncMock(return_value=nodo_ripasso)):
+            sessione = await inizia_sessione(db=db, utente_id=utente_id, tipo="ripasso")
+
+        assert sessione.tipo == "ripasso"
+
+
+class TestDirettivaRipassoSr:
+    """Test per direttiva_ripasso_sr generata dal context builder."""
+
+    def test_direttiva_contiene_concetti(self):
+        """La direttiva ripasso_sr contiene i concetti in scadenza."""
+        from app.llm.prompts.direttive import direttiva_ripasso_sr
+
+        risultato = direttiva_ripasso_sr(
+            concetti_scadenza=["Equazioni di primo grado", "Frazioni"],
+        )
+
+        assert "Equazioni di primo grado" in risultato
+        assert "Frazioni" in risultato
+        assert "Ripasso Spaced Repetition" in risultato
+
+    def test_direttiva_con_ordine_ottimale(self):
+        """La direttiva include l'ordine suggerito se fornito."""
+        from app.llm.prompts.direttive import direttiva_ripasso_sr
+
+        risultato = direttiva_ripasso_sr(
+            concetti_scadenza=["Algebra", "Geometria"],
+            ordine_ottimale=["Geometria", "Algebra"],
+        )
+
+        assert "Geometria, Algebra" in risultato
+
+    def test_direttiva_senza_ordine(self):
+        """Senza ordine ottimale, mostra '(da determinare)'."""
+        from app.llm.prompts.direttive import direttiva_ripasso_sr
+
+        risultato = direttiva_ripasso_sr(
+            concetti_scadenza=["Algebra"],
+        )
+
+        assert "(da determinare)" in risultato

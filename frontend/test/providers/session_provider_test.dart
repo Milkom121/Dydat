@@ -222,6 +222,19 @@ void main() {
       expect(sessionNotifier.state.isLoadingHistory, false);
     });
 
+    test('session tipo ripasso is preserved in state', () {
+      // Verifica che una sessione di tipo ripasso mantenga il tipo nello stato.
+      final ripassoSession = Sessione.fromJson({
+        ...sessionJson,
+        'tipo': 'ripasso',
+        'attivita_corrente': 'ripasso_sr',
+      });
+      sessionNotifier.setActiveSession(ripassoSession);
+
+      expect(sessionNotifier.state.activeSession?.tipo, 'ripasso');
+      expect(sessionNotifier.state.activeSession?.attivitaCorrente, 'ripasso_sr');
+    });
+
     test('initial state has null latestPromotion', () {
       expect(sessionNotifier.state.latestPromotion, isNull);
     });

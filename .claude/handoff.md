@@ -1,12 +1,12 @@
 STATUS: PHASE_COMPLETE
 PHASE: 5
 BLOCK: B29
-SUMMARY: Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: tipo=ripasso instrada su _scegli_nodo_ripasso() (100% SR, fallback path planner). Frontend: bottone Vai avvia sessione ripasso. 8 nuovi test backend + 4 widget test. 336 backend + 226 frontend verdi, analyze 0.
+SUMMARY: Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: _scegli_nodo_ripasso() con fallback path planner. Frontend: bottone Vai avvia sessione ripasso. 12 nuovi test backend + 8 nuovi frontend. 341 backend + 228 frontend verdi, analyze 0.
 NEXT: Fase 6 — Blocco B30 — Feynman Signal Processing (Backend)
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: backend/app/core/sessione.py, backend/tests/test_b29_sessioni_ripasso.py, frontend/lib/providers/session_provider.dart, frontend/lib/presentation/studio_screen/widgets/home_view_widget.dart, frontend/lib/presentation/studio_screen/studio_screen.dart, frontend/test/widgets/home_view_widget_test.dart
-TESTS: PASS (336 backend, 226 frontend, flutter analyze 0)
-VERIFICATION: flutter analyze 0 issues, flutter test 226/226, pytest 336 passed 10 skipped
+FILES_MODIFIED: backend/app/core/sessione.py, backend/tests/test_b29_sessioni_ripasso.py, frontend/test/services/session_service_test.dart, frontend/test/providers/session_provider_test.dart, ROADMAP.md
+TESTS: PASS (341 backend, 228 frontend, flutter analyze 0)
+VERIFICATION: flutter analyze 0 issues, flutter test 228/228, pytest 341 passed 10 skipped
 
 ---
 
@@ -17,19 +17,19 @@ VERIFICATION: flutter analyze 0 issues, flutter test 226/226, pytest 336 passed 
 Loop 5 completato. Tutti i blocchi B26-B29 sono completati.
 
 **Backend — sessione.py:**
-- Nuova funzione _scegli_nodo_ripasso(): quando tipo=ripasso, sceglie sempre il nodo SR piu urgente (nessuna probabilita). Se nessun nodo SR scaduto, fallback al path planner normale.
+- _scegli_nodo_ripasso(): quando tipo=ripasso, sceglie sempre il nodo SR piu urgente (nessuna probabilita). Se nessun nodo SR scaduto, fallback al path planner normale.
 - inizia_sessione(): se tipo == "ripasso" chiama _scegli_nodo_ripasso(), altrimenti _scegli_nodo() (interleaving 35%).
-- 8 nuovi test in test_b29_sessioni_ripasso.py.
+- 12 test in test_b29_sessioni_ripasso.py (5 per _scegli_nodo_ripasso, 4 per inizia_sessione, 3 per direttiva_ripasso_sr).
 
-**Frontend:**
-- session_provider.dart: startSessionStream() ora accetta tipo param (default 'media').
-- home_view_widget.dart: aggiunto onRipassoTap callback opzionale. Il bottone "Vai" invoca il callback se fornito, altrimenti naviga a /studio.
-- studio_screen.dart: _startSession() accetta tipo param. Nuovo metodo _startRipassoSession() che chiama _startSession(tipo: 'ripasso'). Passato onRipassoTap: _startRipassoSession a HomeViewWidget.
-- home_view_widget_test.dart: 4 widget test per la sezione ripasso e il callback.
+**Frontend (gia predisposto da B28, verificato funzionante in B29):**
+- session_provider.dart: startSessionStream() accetta tipo param (default 'media').
+- home_view_widget.dart: onRipassoTap callback. Bottone "Vai" invoca callback se fornito.
+- studio_screen.dart: _startRipassoSession() chiama _startSession(tipo: 'ripasso'). Passato come onRipassoTap a HomeViewWidget.
+- Test aggiunti: session_service_test (tipo ripasso nel body), session_provider_test (stato sessione ripasso), home_view_widget_test (4 test UI ripasso).
 
 ### Stato del progetto
-- Backend: 336 test (+ 10 skipped integration) — Loop 5 FSRS completo
-- Frontend: 226 test, analyze 0 issues — Loop 5 FSRS completo
+- Backend: 341 test (+ 10 skipped integration) — Loop 5 FSRS completo
+- Frontend: 228 test, analyze 0 issues — Loop 5 FSRS completo
 - Branch: develop, Docker attivo
 
 ### Architettura sessioni ripasso

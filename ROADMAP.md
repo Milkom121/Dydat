@@ -122,7 +122,7 @@
 - **Complessita'**: media
 - **Descrizione**: Sessioni tipo "ripasso" con get_nodi_da_ripassare al posto di _scegli_nodo. E2E completo: esercizi -> promozione -> badge ripasso -> sessione ripasso -> interleaving.
 - **Gate di uscita**: Sessioni ripasso E2E, interleaving visibile, badge, test verdi
-- **Note**: Backend: _scegli_nodo_ripasso() (100% SR, fallback path planner se vuoto). Frontend: onRipassoTap callback in HomeViewWidget, _startRipassoSession() in StudioScreen, tipo param in startSessionStream(). 8 backend + 4 frontend nuovi test. 336 backend + 226 frontend totale.
+- **Note**: Backend: _scegli_nodo_ripasso() con fallback a path planner se nessun nodo SR. Frontend: onRipassoTap callback in HomeViewWidget, _startRipassoSession() in StudioScreen, tipo='ripasso' in startSessionStream(). Direttiva ripasso_sr già pronta nel context builder. 12 nuovi test backend (test_b29_sessioni_ripasso.py), 8 nuovi test frontend. 341 backend + 228 frontend verdi, analyze 0.
 
 ---
 

@@ -1,8 +1,8 @@
 {
   "current_phase": "5",
-  "current_block": "B28",
-  "total_blocks_run": 33,
-  "status": "CONTINUE",
-  "last_run": "2026-04-05T04:30:00Z",
-  "last_summary": "Blocco B28 completato (S25). Endpoint GET /ripasso/nodi. NodoRipasso model + ripassoProvider. Badge SR su TemaCardWidget. Sezione ripasso in HomeViewWidget. 12 nuovi test frontend. 329 backend + 222 frontend verdi."
+  "current_block": "B29",
+  "total_blocks_run": 35,
+  "status": "PHASE_COMPLETE",
+  "last_run": "2026-04-05T02:17:10Z",
+  "last_summary": "Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: tipo=ripasso instrada su _scegli_nodo_ripasso() (100% SR, fallback path planner). Frontend: bottone Vai avvia sessione ripasso. 8 nuovi test backend + 4 widget test. 336 backend + 226 frontend verdi, analyze 0."
 }
