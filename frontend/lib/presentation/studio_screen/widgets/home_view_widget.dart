@@ -9,12 +9,14 @@ import './session_history_widget.dart';
 
 /// Vista home della schermata studio: icona chat + testo + storico sessioni.
 /// Se [ripassoTotale] > 0 mostra sezione "Da ripassare" con conteggio e bottone.
+/// [onRipassoTap] se fornito, avvia una sessione ripasso; altrimenti naviga a /studio.
 class HomeViewWidget extends StatelessWidget {
   final bool showingHome;
   final bool isActive;
   final List<SessioneListItem> sessionHistory;
   final bool isLoadingHistory;
   final int ripassoTotale;
+  final VoidCallback? onRipassoTap;
 
   const HomeViewWidget({
     super.key,
@@ -23,6 +25,7 @@ class HomeViewWidget extends StatelessWidget {
     required this.sessionHistory,
     required this.isLoadingHistory,
     this.ripassoTotale = 0,
+    this.onRipassoTap,
   });
 
   @override
@@ -105,7 +108,7 @@ class HomeViewWidget extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           FilledButton.tonal(
-            onPressed: () => context.go('/studio'),
+            onPressed: onRipassoTap ?? () => context.go('/studio'),
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.tertiary,
               foregroundColor: theme.colorScheme.onTertiary,

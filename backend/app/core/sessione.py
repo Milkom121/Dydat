@@ -100,8 +100,11 @@ async def inizia_sessione(
     db.add(sessione)
     await db.flush()
 
-    # 4. Sceglie nodo focale con interleaving SR
-    nodo_scelto = await _scegli_nodo(db, utente_id)
+    # 4. Sceglie nodo focale: ripasso dedicato o interleaving SR normale
+    if tipo == "ripasso":
+        nodo_scelto = await _scegli_nodo_ripasso(db, utente_id)
+    else:
+        nodo_scelto = await _scegli_nodo(db, utente_id)
 
     stato_orch: dict = {
         "nodo_focale_id": nodo_scelto.nodo_id,
@@ -323,6 +326,39 @@ async def _scegli_nodo(
     else:
         logger.info("Percorso completato — nessun nodo da studiare")
 
+    return _NodoScelto(
+        nodo_id=prossimo, attivita="spiegazione", concetti_scadenza=[]
+    )
+
+
+async def _scegli_nodo_ripasso(
+    db: AsyncSession,
+    utente_id: uuid.UUID,
+) -> _NodoScelto:
+    """Sceglie il nodo focale per sessioni di ripasso dedicate.
+
+    A differenza di _scegli_nodo(), non usa probabilità: sceglie sempre
+    il nodo SR più urgente tra quelli scaduti.
+    Se non ci sono nodi da ripassare, fallback al path planner normale.
+    """
+    nodi_sr = await get_nodi_da_ripassare(utente_id, db)
+    if nodi_sr:
+        nodo_sr = nodi_sr[0]  # Il più urgente (ordinato per scadenza)
+        concetti_nomi = _nomi_nodi_sr(nodi_sr)
+        logger.info(
+            "Sessione ripasso dedicata: nodo=%s (su %d scaduti)", nodo_sr, len(nodi_sr)
+        )
+        return _NodoScelto(
+            nodo_id=nodo_sr, attivita="ripasso_sr", concetti_scadenza=concetti_nomi
+        )
+
+    # Nessun nodo da ripassare: fallback a path planner
+    logger.info("Sessione ripasso richiesta ma nessun nodo SR — fallback a path planner")
+    if not grafo_knowledge.caricato:
+        return _NodoScelto(nodo_id=None, attivita="spiegazione", concetti_scadenza=[])
+
+    livelli = await get_livelli_utente(utente_id, db)
+    prossimo = path_planner(grafo_knowledge.grafo, livelli)
     return _NodoScelto(
         nodo_id=prossimo, attivita="spiegazione", concetti_scadenza=[]
     )

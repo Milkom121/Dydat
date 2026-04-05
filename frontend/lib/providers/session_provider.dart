@@ -113,7 +113,10 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
   /// - achievement → adds to currentTurnAchievements
   /// - turno_completo → finalizes the tutor message, updates nodoFocale
   /// - errore → sets error, stream ends
-  Future<void> startSessionStream({int? durataPrevistaMin}) async {
+  Future<void> startSessionStream({
+    String tipo = 'media',
+    int? durataPrevistaMin,
+  }) async {
     _cancelSubscription();
     state = state.copyWith(
       isLoading: true,
@@ -126,6 +129,7 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
     );
 
     final stream = _sessionService.startStream(
+      tipo: tipo,
       durataPrevistaMin: durataPrevistaMin,
     );
 

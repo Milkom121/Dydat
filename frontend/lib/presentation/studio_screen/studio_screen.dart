@@ -182,7 +182,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
 
   void _stopTimer() => _timer?.cancel();
 
-  Future<void> _startSession() async {
+  Future<void> _startSession({String tipo = 'media'}) async {
     HapticFeedback.lightImpact();
     setState(() {
       _showingHome = false;
@@ -194,7 +194,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       _sync.actionsCount = 0;
       _sync.achievementsCount = 0;
     });
-    await ref.read(sessionProvider.notifier).startSessionStream();
+    await ref.read(sessionProvider.notifier).startSessionStream(tipo: tipo);
     _startTimer();
     final err = ref.read(sessionProvider).error;
     if (err != null) {
@@ -206,6 +206,10 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
         ));
       }
     }
+  }
+
+  Future<void> _startRipassoSession() async {
+    await _startSession(tipo: 'ripasso');
   }
 
   Future<void> _toggleSession() async {
@@ -412,6 +416,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                             sessionHistory: sessionState.sessionHistory,
                             isLoadingHistory: sessionState.isLoadingHistory,
                             ripassoTotale: ripassoTotale,
+                            onRipassoTap: _startRipassoSession,
                           )
                         : ChatViewWidget(
                             messages: _messages,
