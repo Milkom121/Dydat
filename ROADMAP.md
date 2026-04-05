@@ -69,7 +69,7 @@
 - **Gate di uscita**: GitHub Actions esegue tutti i test automaticamente su push, badge verde
 
 ### Blocco 4.5.3 — Performance Frontend
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S22)
 - **Complessita'**: alta
 - **Descrizione**: Rendere iconMap statico/const in custom_icon_widget.dart (9000 righe, ricreato ad ogni build). Iniziare split di studio_screen.dart (1207 righe) in widget separati: ChatViewWidget, SessionControlWidget, HomeViewWidget.
 - **Gate di uscita**: iconMap e static const, StudioScreen sotto 500 righe, flutter analyze 0, flutter test verdi
