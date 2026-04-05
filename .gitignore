@@ -39,6 +39,10 @@ env.json
 .claude/worktrees/
 .claude/settings.local.json
 
+# Metodo Villa Runner
+.env.runner
+docs/runner-log.txt
+
 # Knowledge Base (troppo grande per git)
 backend/data/
 

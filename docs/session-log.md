@@ -1,0 +1,10 @@
+# Session Log — Metodo Villa Runner
+
+> Log sintetico delle sessioni eseguite dal runner. Le sessioni S0-S21 sono pre-Metodo Villa (storico in docs/archive/status-loop1-4.md).
+
+---
+
+## 2026-04-05 — Allineamento Metodo Villa
+- **Status**: CHECKPOINT
+- **Summary**: Migrazione completa dei file di gestione al Metodo Villa. Creati PROJECT_CONFIG.md, ROADMAP.md (con fase 4.5 consolidamento), handoff.md, decisions.md, ideas.md, dev-shortcuts.md. Runner integrato. Branch develop creato.
+---
