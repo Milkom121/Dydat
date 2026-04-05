@@ -1,8 +1,8 @@
 {
-  "current_phase": "4.5",
-  "current_block": "4.5.3",
-  "total_blocks_run": 25,
+  "current_phase": "5",
+  "current_block": "B27",
+  "total_blocks_run": 27,
   "status": "CONTINUE",
-  "last_run": "2026-04-05T01:18:00Z",
-  "last_summary": "Ambiente verificato. Runner pronto per 13 blocchi: 4.5.3 + FSRS + Feynman + Atmosfera."
+  "last_run": "2026-04-05T03:50:00Z",
+  "last_summary": "Blocco B26 completato (S23). Algoritmo FSRS6 implementato con calcola_prossimo_ripasso() e get_nodi_da_ripassare(). 303 test backend passano. Fix lint test_fsrs.py."
 }

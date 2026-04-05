@@ -101,7 +101,7 @@
 - **Complessita'**: alta
 - **Descrizione**: Installare libreria `fsrs` da PyPI. Implementare `calcola_prossimo_ripasso()` e `get_nodi_da_ripassare()` in backend/app/grafo/fsrs.py. Integrare in elaborazione.py dopo update contatori esercizio.
 - **Gate di uscita**: FSRS implementato, campi SR aggiornati dopo esercizi, get_nodi_da_ripassare funziona, pytest verde
-- **Note**: Aggiunta colonna sr_card_json JSONB (migrazione 716b95629203) per serializzazione completa Card FSRS6. 21 nuovi test. 295 totale backend.
+- **Note**: Aggiunta colonna sr_card_json JSONB (migrazione 716b95629203) per serializzazione completa Card FSRS6. 21 nuovi test. 303 totale backend.
 
 ### Blocco B27 — Interleaving nelle Sessioni Normali (Backend)
 - [ ] **Stato**: da fare

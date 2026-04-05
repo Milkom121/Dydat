@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -23,7 +23,6 @@ from app.grafo.fsrs import (
     calcola_prossimo_ripasso,
     get_nodi_da_ripassare,
 )
-
 
 # ===================================================================
 # Test: mappatura esiti
@@ -55,38 +54,27 @@ class TestCreaCardDaStato:
     def test_stato_none_ritorna_card_nuova(self):
         """Senza stato DB, crea Card() nuova."""
         card = _crea_card_da_stato(None)
-        try:
-            from fsrs import Card
-
-            assert card is not None
-            assert isinstance(card, Card)
-        except ImportError:
-            assert card is None
+        fsrs_mod = pytest.importorskip("fsrs")
+        assert card is not None
+        assert isinstance(card, fsrs_mod.Card)
 
     def test_stato_senza_card_json_ritorna_card_nuova(self):
         """Stato con sr_card_json=None → Card() nuova (prima review)."""
         stato_mock = MagicMock()
         stato_mock.sr_card_json = None
         card = _crea_card_da_stato(stato_mock)
-        try:
-            from fsrs import Card
-
-            assert card is not None
-            assert isinstance(card, Card)
-        except ImportError:
-            assert card is None
+        fsrs_mod = pytest.importorskip("fsrs")
+        assert card is not None
+        assert isinstance(card, fsrs_mod.Card)
 
     def test_stato_con_card_json_ricostruisce_correttamente(self):
         """Stato con sr_card_json popolato → Card ricostruita correttamente."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        fsrs_mod = pytest.importorskip("fsrs")
 
         # Crea una Card reale e serializzala
-        s = Scheduler()
-        c = Card()
-        c2, _ = s.review_card(c, Rating.Good)
+        s = fsrs_mod.Scheduler()
+        c = fsrs_mod.Card()
+        c2, _ = s.review_card(c, fsrs_mod.Rating.Good)
         card_json_dict = json.loads(c2.to_json())
 
         stato_mock = MagicMock()
@@ -96,16 +84,13 @@ class TestCreaCardDaStato:
         card_ricostruita = _crea_card_da_stato(stato_mock)
 
         assert card_ricostruita is not None
-        assert isinstance(card_ricostruita, Card)
+        assert isinstance(card_ricostruita, fsrs_mod.Card)
         assert card_ricostruita.stability == c2.stability
         assert card_ricostruita.difficulty == c2.difficulty
 
     def test_card_json_malformato_fallback_a_nuova(self):
         """sr_card_json non valido → fallback a Card() nuova."""
-        try:
-            from fsrs import Card
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        fsrs_mod = pytest.importorskip("fsrs")
 
         stato_mock = MagicMock()
         stato_mock.sr_card_json = {"campo_invalido": "valore_errato"}
@@ -114,7 +99,7 @@ class TestCreaCardDaStato:
         # Non deve sollevare eccezioni
         card = _crea_card_da_stato(stato_mock)
         assert card is not None
-        assert isinstance(card, Card)
+        assert isinstance(card, fsrs_mod.Card)
 
 
 # ===================================================================
@@ -126,10 +111,7 @@ class TestCalcolaProssimoRipasso:
     @pytest.mark.asyncio
     async def test_primo_tentativo_aggiorna_campi_sr(self):
         """primo_tentativo → campi SR aggiornati nello stato."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        pytest.importorskip("fsrs")
 
         utente_id = uuid.uuid4()
         nodo_id = "nodo_test_001"
@@ -159,10 +141,7 @@ class TestCalcolaProssimoRipasso:
     @pytest.mark.asyncio
     async def test_non_risolto_intervallo_breve(self):
         """non_risolto → Rating.Again → intervallo molto breve."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        pytest.importorskip("fsrs")
 
         utente_id = uuid.uuid4()
         nodo_id = "nodo_test_002"
@@ -186,10 +165,7 @@ class TestCalcolaProssimoRipasso:
     @pytest.mark.asyncio
     async def test_ripetizioni_si_incrementano(self):
         """sr_ripetizioni deve incrementarsi a ogni review."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        pytest.importorskip("fsrs")
 
         utente_id = uuid.uuid4()
         nodo_id = "nodo_test_003"
@@ -211,10 +187,7 @@ class TestCalcolaProssimoRipasso:
     @pytest.mark.asyncio
     async def test_card_json_salvato_come_dict(self):
         """sr_card_json deve essere un dict (non stringa) per compatibilità JSONB."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        pytest.importorskip("fsrs")
 
         utente_id = uuid.uuid4()
         nodo_id = "nodo_test_004"
@@ -236,10 +209,7 @@ class TestCalcolaProssimoRipasso:
     @pytest.mark.asyncio
     async def test_stato_assente_usa_upsert(self):
         """Se stato_nodi_utente non esiste, usa UPSERT (2 execute: SELECT + INSERT)."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        pytest.importorskip("fsrs")
 
         utente_id = uuid.uuid4()
         nodo_id = "nodo_test_005"
@@ -268,10 +238,7 @@ class TestCalcolaProssimoRipasso:
     @pytest.mark.asyncio
     async def test_esito_sconosciuto_usa_again(self):
         """Esito non mappato → fallback a Rating.Again."""
-        try:
-            from fsrs import Card, Rating, Scheduler
-        except ImportError:
-            pytest.skip("Libreria fsrs non installata")
+        pytest.importorskip("fsrs")
 
         utente_id = uuid.uuid4()
         nodo_id = "nodo_test_006"
