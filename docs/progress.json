@@ -1,8 +1,8 @@
 {
   "current_phase": "5",
-  "current_block": "B29",
-  "total_blocks_run": 32,
+  "current_block": "B28",
+  "total_blocks_run": 33,
   "status": "CONTINUE",
-  "last_run": "2026-04-05T12:00:00Z",
-  "last_summary": "Blocco B28 completato (S25). Endpoint GET /ripasso/nodi, NodoRipasso model, ripassoProvider, badge SR su TemaCardWidget, sezione ripasso in HomeViewWidget. 329 backend + 220 frontend verdi."
+  "last_run": "2026-04-05T04:30:00Z",
+  "last_summary": "Blocco B28 completato (S25). Endpoint GET /ripasso/nodi. NodoRipasso model + ripassoProvider. Badge SR su TemaCardWidget. Sezione ripasso in HomeViewWidget. 12 nuovi test frontend. 329 backend + 222 frontend verdi."
 }
