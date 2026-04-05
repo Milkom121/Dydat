@@ -53,14 +53,17 @@
 
 ## Fase 4.5 — Consolidamento (dall'audit, pre-Loop 5)
 
-### Blocco 4.5.1 — Sicurezza
-- [ ] **Stato**: da fare
+> Blocchi 4.5.1, 4.5.2, 4.5.4, 4.5.5, 4.5.6 rimandati a pre-produzione (siamo ancora in sviluppo).
+> Il runner esegue SOLO il blocco 4.5.3, poi passa direttamente a Fase 5.
+
+### Blocco 4.5.1 — Sicurezza (RIMANDATO)
+- [ ] **Stato**: rimandato a pre-produzione
 - **Complessita'**: media
 - **Descrizione**: Ruotare chiave API Anthropic. Aggiungere validazione fail-fast in backend/app/config.py per JWT_SECRET e ANTHROPIC_API_KEY. Spostare credenziali DB dal docker-compose.yml a .env. Creare backend/.env.example con valori segnaposto.
 - **Gate di uscita**: config.py rifiuta avvio con secrets di default, credenziali non piu in docker-compose.yml, .env.example presente
 
-### Blocco 4.5.2 — CI/CD
-- [ ] **Stato**: da fare
+### Blocco 4.5.2 — CI/CD (RIMANDATO)
+- [ ] **Stato**: rimandato a pre-produzione
 - **Complessita'**: media
 - **Descrizione**: Creare .github/workflows/ci.yml con: pytest backend, ruff lint, flutter analyze, flutter test. Trigger su push e PR verso develop e main.
 - **Gate di uscita**: GitHub Actions esegue tutti i test automaticamente su push, badge verde
@@ -71,20 +74,20 @@
 - **Descrizione**: Rendere iconMap statico/const in custom_icon_widget.dart (9000 righe, ricreato ad ogni build). Iniziare split di studio_screen.dart (1207 righe) in widget separati: ChatViewWidget, SessionControlWidget, HomeViewWidget.
 - **Gate di uscita**: iconMap e static const, StudioScreen sotto 500 righe, flutter analyze 0, flutter test verdi
 
-### Blocco 4.5.4 — Robustezza Backend
-- [ ] **Stato**: da fare
+### Blocco 4.5.4 — Robustezza Backend (RIMANDATO)
+- [ ] **Stato**: rimandato a pre-produzione
 - **Complessita'**: media
 - **Descrizione**: Aggiungere CORS middleware in main.py. Aggiungere logging nelle except bare in turno.py (linee 275-294). Aggiungere cancellation handling SSE per client disconnect. Rimuovere --reload dal Dockerfile CMD.
 - **Gate di uscita**: CORS configurato, exception loggate, SSE cleanup su disconnect, Dockerfile prod-ready, pytest verde
 
-### Blocco 4.5.5 — Robustezza Frontend
-- [ ] **Stato**: da fare
+### Blocco 4.5.5 — Robustezza Frontend (RIMANDATO)
+- [ ] **Stato**: rimandato a pre-produzione
 - **Complessita'**: media
 - **Descrizione**: Implementare JWT token refresh nell'interceptor Dio. Aggiungere ref.onDispose() in SessionNotifier per cleanup stream. Chiudere http.Client in SseClient. Riattivare TextScaler per accessibilita (rimuovere TextScaler.linear(1.0) da main.dart).
 - **Gate di uscita**: Token refresh automatico, nessun memory leak SSE, accessibilita ripristinata, flutter analyze 0, flutter test verdi
 
-### Blocco 4.5.6 — Pulizia
-- [ ] **Stato**: da fare
+### Blocco 4.5.6 — Pulizia (RIMANDATO)
+- [ ] **Stato**: rimandato a pre-produzione
 - **Complessita'**: bassa
 - **Descrizione**: Rimuovere dipendenze inutilizzate dal pubspec.yaml (cached_network_image, connectivity_plus, fl_chart). Aggiungere healthcheck backend al docker-compose. Aggiungere pool_size e pool_pre_ping a engine.py.
 - **Gate di uscita**: 0 dipendenze inutilizzate, healthcheck backend funziona, pool DB configurato, flutter analyze 0, flutter test verdi

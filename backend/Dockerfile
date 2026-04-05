@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Python dependencies (install from pyproject.toml)
 COPY pyproject.toml .
 COPY app/__init__.py app/__init__.py
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -e ".[dev]"
 
 # Application code
 COPY . .

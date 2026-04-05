@@ -1,9 +1,8 @@
 {
   "current_phase": "4.5",
-  "current_block": "1",
-  "blocks_completed": [],
+  "current_block": "4.5.3",
   "total_blocks_run": 25,
-  "status": "checkpoint",
-  "last_run": "2026-04-05T00:00:00Z",
-  "last_summary": "Allineamento al Metodo Villa completato. Fase 4.5 (Consolidamento) pronta."
+  "status": "CONTINUE",
+  "last_run": "2026-04-05T01:18:00Z",
+  "last_summary": "Ambiente verificato. Runner pronto per 13 blocchi: 4.5.3 + FSRS + Feynman + Atmosfera."
 }
