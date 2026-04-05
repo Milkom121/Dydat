@@ -25,7 +25,7 @@ from app.db.models.grafo import Esercizio
 from app.db.models.stato_utente import StatoNodoUtente, StoricoEsercizi
 from app.db.models.utenti import Sessione
 from app.grafo.algoritmi import nodi_sbloccati_dopo_promozione
-from app.grafo.fsrs import calcola_prossimo_ripasso
+from app.grafo.fsrs import calcola_prossimo_ripasso, get_nodi_da_ripassare
 from app.grafo.stato import get_livelli_utente
 from app.grafo.struttura import grafo_knowledge
 
@@ -575,9 +575,14 @@ async def aggiorna_nodo_dopo_promozione(
 ) -> str | None:
     """Dopo promozione, calcola prossimo nodo e aggiorna la sessione.
 
+    Include interleaving SR probabilistico: ~1 ogni 3 promozioni,
+    se ci sono nodi scaduti, il prossimo turno è un ripasso SR
+    invece di un nuovo argomento.
+
     Returns:
         ID del prossimo nodo, o None se percorso completato.
     """
+    from app.core.sessione import PROBABILITA_INTERLEAVING
     from app.grafo.algoritmi import path_planner
 
     if not grafo_knowledge.caricato:
@@ -595,9 +600,32 @@ async def aggiorna_nodo_dopo_promozione(
         grafo_knowledge.grafo, livelli, tema_corrente
     )
 
+    # Interleaving SR: con probabilità ~33%, se ci sono nodi scaduti,
+    # il prossimo turno è un ripasso SR
+    is_ripasso = False
+    concetti_scadenza: list[str] = []
+    if prossimo:
+        nodi_sr = await get_nodi_da_ripassare(utente_id, db)
+        # Escludi il nodo appena promosso (appena visto, non ha senso ripassarlo subito)
+        nodi_sr = [n for n in nodi_sr if n != nodo_promosso]
+        if nodi_sr and random.random() < PROBABILITA_INTERLEAVING:
+            prossimo = nodi_sr[0]  # Il più urgente
+            is_ripasso = True
+            # Nomi leggibili per la direttiva
+            for nodo_id in nodi_sr[:5]:
+                if nodo_id in grafo_knowledge.grafo.nodes:
+                    nome = grafo_knowledge.grafo.nodes[nodo_id].get("nome", nodo_id)
+                else:
+                    nome = nodo_id
+                concetti_scadenza.append(nome)
+            logger.info(
+                "Interleaving SR dopo promozione %s: nodo=%s (su %d scaduti)",
+                nodo_promosso, prossimo, len(nodi_sr),
+            )
+
     # Recupera nome nodo promosso dal grafo
     nodo_promosso_nome = nodo_promosso
-    if grafo_knowledge.caricato and nodo_promosso in grafo_knowledge.grafo.nodes:
+    if nodo_promosso in grafo_knowledge.grafo.nodes:
         nodo_promosso_nome = grafo_knowledge.grafo.nodes[nodo_promosso].get(
             "nome", nodo_promosso
         )
@@ -610,7 +638,14 @@ async def aggiorna_nodo_dopo_promozione(
     if sess:
         stato = sess.stato_orchestratore or {}
         stato["nodo_focale_id"] = prossimo
-        stato["attivita_corrente"] = "spiegazione" if prossimo else None
+        stato["attivita_corrente"] = (
+            "ripasso_sr" if is_ripasso else ("spiegazione" if prossimo else None)
+        )
+        if is_ripasso:
+            stato["concetti_scadenza"] = concetti_scadenza
+        else:
+            # Pulisci eventuali residui di ripasso precedente
+            stato.pop("concetti_scadenza", None)
         # Segnala promozione appena avvenuta per la direttiva del turno successivo
         stato["promozione_appena_avvenuta"] = {
             "nodo_id": nodo_promosso,
@@ -627,8 +662,9 @@ async def aggiorna_nodo_dopo_promozione(
 
     if prossimo:
         logger.info(
-            "Prossimo nodo dopo promozione %s: %s",
+            "Prossimo nodo dopo promozione %s: %s%s",
             nodo_promosso, prossimo,
+            " (ripasso SR)" if is_ripasso else "",
         )
     else:
         logger.info(
