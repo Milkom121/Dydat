@@ -12,10 +12,9 @@ class CustomIconWidget extends StatelessWidget {
     this.color,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    // Map of available icons
-    final Map<String, IconData> iconMap = {
+  // Mappa statica delle icone Material disponibili — dichiarata static const
+  // per evitare la ricreazione ad ogni chiamata a build()
+  static const Map<String, IconData> iconMap = {
       // A
       'abc': Icons.abc,
       'abc_outlined': Icons.abc_outlined,
@@ -9009,8 +9008,10 @@ class CustomIconWidget extends StatelessWidget {
       'zoom_out_outlined': Icons.zoom_out_outlined,
       'zoom_out_rounded': Icons.zoom_out_rounded,
       'zoom_out_sharp': Icons.zoom_out_sharp,
-    };
+  };
 
+  @override
+  Widget build(BuildContext context) {
     // Check if the icon exists
     if (iconMap.containsKey(iconName)) {
       return Icon(
