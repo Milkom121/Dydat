@@ -184,10 +184,12 @@ async def get_nodi_da_ripassare(
     now = datetime.now(timezone.utc)
 
     result = await db.execute(
-        select(StatoNodoUtente.nodo_id).where(
+        select(StatoNodoUtente.nodo_id)
+        .where(
             StatoNodoUtente.utente_id == utente_id,
             StatoNodoUtente.sr_prossimo_ripasso <= now,
             StatoNodoUtente.sr_card_json.is_not(None),
         )
+        .order_by(StatoNodoUtente.sr_prossimo_ripasso)  # più urgente (scaduto prima) per primo
     )
     return [row[0] for row in result.all()]

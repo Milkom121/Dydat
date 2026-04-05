@@ -18,6 +18,7 @@ import pytest
 
 from app.core.sessione import (
     INATTIVITA_MAX_SEC,
+    _NodoScelto,
     SessioneConflitto,
     _calcola_inattivita,
     _scegli_nodo,
@@ -240,20 +241,22 @@ class TestScegliNodo:
         db = AsyncMock()
         utente_id = uuid.uuid4()
 
-        # Mock: nodo in_corso trovato
+        # Mock: nodo in_corso trovato (ritorno early, nessuna query SR)
         result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = "nodo_in_corso_1"
         db.execute = AsyncMock(return_value=result_mock)
 
-        nodo = await _scegli_nodo(db, utente_id)
-        assert nodo == "nodo_in_corso_1"
+        nodo_scelto = await _scegli_nodo(db, utente_id)
+        assert nodo_scelto.nodo_id == "nodo_in_corso_1"
+        assert nodo_scelto.attivita == "spiegazione"  # in_corso → sempre spiegazione
 
     @pytest.mark.asyncio
     @patch("app.core.sessione.grafo_knowledge")
     @patch("app.core.sessione.get_livelli_utente")
     @patch("app.core.sessione.path_planner")
+    @patch("app.core.sessione.get_nodi_da_ripassare")
     async def test_path_planner_se_nessun_nodo_in_corso(
-        self, mock_planner, mock_livelli, mock_grafo
+        self, mock_sr, mock_planner, mock_livelli, mock_grafo
     ):
         db = AsyncMock()
         utente_id = uuid.uuid4()
@@ -263,18 +266,21 @@ class TestScegliNodo:
         result_mock.scalar_one_or_none.return_value = None
         db.execute = AsyncMock(return_value=result_mock)
 
+        mock_sr.return_value = []  # nessun nodo SR → nessun interleaving
         mock_grafo.caricato = True
         mock_grafo.grafo = MagicMock()
         mock_livelli.return_value = {}
         mock_planner.return_value = "nodo_da_path_planner"
 
-        nodo = await _scegli_nodo(db, utente_id)
-        assert nodo == "nodo_da_path_planner"
+        nodo_scelto = await _scegli_nodo(db, utente_id)
+        assert nodo_scelto.nodo_id == "nodo_da_path_planner"
+        assert nodo_scelto.attivita == "spiegazione"
         mock_planner.assert_called_once()
 
     @pytest.mark.asyncio
     @patch("app.core.sessione.grafo_knowledge")
-    async def test_grafo_non_caricato_ritorna_none(self, mock_grafo):
+    @patch("app.core.sessione.get_nodi_da_ripassare")
+    async def test_grafo_non_caricato_ritorna_none(self, mock_sr, mock_grafo):
         db = AsyncMock()
         utente_id = uuid.uuid4()
 
@@ -282,10 +288,11 @@ class TestScegliNodo:
         result_mock.scalar_one_or_none.return_value = None
         db.execute = AsyncMock(return_value=result_mock)
 
+        mock_sr.return_value = []  # nessun nodo SR
         mock_grafo.caricato = False
 
-        nodo = await _scegli_nodo(db, utente_id)
-        assert nodo is None
+        nodo_scelto = await _scegli_nodo(db, utente_id)
+        assert nodo_scelto.nodo_id is None
 
 
 # ===================================================================
@@ -306,7 +313,9 @@ class TestIniziaSessione:
 
         mock_gestisci.return_value = None
         mock_sospesa.return_value = None
-        mock_nodo.return_value = "primo_nodo"
+        mock_nodo.return_value = _NodoScelto(
+            nodo_id="primo_nodo", attivita="spiegazione", concetti_scadenza=[]
+        )
 
         sessione = await inizia_sessione(db, utente_id)
 
@@ -469,7 +478,9 @@ class TestFlussoSessioneE2E:
         # Step 1: Crea sessione
         mock_gestisci.return_value = None
         mock_sospesa.return_value = None
-        mock_nodo.return_value = "nodo_A"
+        mock_nodo.return_value = _NodoScelto(
+            nodo_id="nodo_A", attivita="spiegazione", concetti_scadenza=[]
+        )
 
         sessione = await inizia_sessione(db, utente_id)
         assert sessione.stato == "attiva"
@@ -499,7 +510,9 @@ class TestFlussoSessioneE2E:
 
         mock_gestisci.return_value = None
         mock_sospesa.return_value = None
-        mock_nodo.return_value = "nodo_B"
+        mock_nodo.return_value = _NodoScelto(
+            nodo_id="nodo_B", attivita="spiegazione", concetti_scadenza=[]
+        )
 
         sessione = await inizia_sessione(db, utente_id)
         sessione.created_at = datetime.now(timezone.utc) - timedelta(minutes=25)
@@ -522,7 +535,9 @@ class TestFlussoSessioneE2E:
 
         mock_gestisci.return_value = None
         mock_sospesa.return_value = None
-        mock_nodo.return_value = None  # Percorso completato
+        mock_nodo.return_value = _NodoScelto(
+            nodo_id=None, attivita="spiegazione", concetti_scadenza=[]
+        )
 
         sessione = await inizia_sessione(db, utente_id)
         stato = sessione.stato_orchestratore

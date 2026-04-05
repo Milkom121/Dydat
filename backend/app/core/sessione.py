@@ -1,15 +1,17 @@
 """Session Manager — gestione sessioni di studio.
 
 Creazione, sospensione, ripresa, terminazione.
-Scelta nodo a inizio sessione: sospesa → in_corso → path planner.
+Scelta nodo a inizio sessione: in_corso → interleaving SR → path planner.
 Sessione unica attiva per utente (409 / auto-sospensione 5 min).
 """
 
 from __future__ import annotations
 
 import logging
+import random
 import uuid
 from datetime import datetime, timezone
+from typing import NamedTuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,12 +20,23 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.db.models.stato_utente import StatoNodoUtente
 from app.db.models.utenti import Sessione, TurnoConversazione
 from app.grafo.algoritmi import path_planner
+from app.grafo.fsrs import get_nodi_da_ripassare
 from app.grafo.stato import get_livelli_utente
 from app.grafo.struttura import grafo_knowledge
 
 logger = logging.getLogger(__name__)
 
 INATTIVITA_MAX_SEC = 5 * 60  # 5 minuti
+# Probabilità di interleaving SR: ~1 ogni 3 nodi normali
+PROBABILITA_INTERLEAVING = 0.35
+
+
+class _NodoScelto(NamedTuple):
+    """Risultato della scelta nodo con metadati per stato_orchestratore."""
+
+    nodo_id: str | None
+    attivita: str  # "spiegazione" o "ripasso_sr"
+    concetti_scadenza: list[str]  # nomi concetti SR per direttiva (vuoto se spiegazione)
 
 
 class SessioneConflitto(Exception):
@@ -87,21 +100,24 @@ async def inizia_sessione(
     db.add(sessione)
     await db.flush()
 
-    # 4. Sceglie nodo focale
-    nodo_id = await _scegli_nodo(db, utente_id)
+    # 4. Sceglie nodo focale con interleaving SR
+    nodo_scelto = await _scegli_nodo(db, utente_id)
 
     stato_orch: dict = {
-        "nodo_focale_id": nodo_id,
-        "attivita_corrente": "spiegazione" if nodo_id else None,
+        "nodo_focale_id": nodo_scelto.nodo_id,
+        "attivita_corrente": nodo_scelto.attivita if nodo_scelto.nodo_id else None,
     }
+    if nodo_scelto.concetti_scadenza:
+        stato_orch["concetti_scadenza"] = nodo_scelto.concetti_scadenza
     sessione.stato_orchestratore = stato_orch
     await db.flush()
 
     logger.info(
-        "Nuova sessione: %s, tipo=%s, nodo=%s",
+        "Nuova sessione: %s, tipo=%s, nodo=%s, attivita=%s",
         sessione.id,
         tipo,
-        nodo_id,
+        nodo_scelto.nodo_id,
+        nodo_scelto.attivita,
     )
     return sessione
 
@@ -257,14 +273,15 @@ async def _cerca_sessione_sospesa(
 async def _scegli_nodo(
     db: AsyncSession,
     utente_id: uuid.UUID,
-) -> str | None:
-    """Sceglie il nodo focale per una nuova sessione.
+) -> _NodoScelto:
+    """Sceglie il nodo focale con interleaving SR probabilistico.
 
     Priorità:
-    1. Nodi in_corso (spiegazione iniziata ma non completata)
-    2. Path planner (prossimo nodo sbloccato)
+    1. Nodi in_corso (spiegazione iniziata — nessun interleaving)
+    2. Interleaving SR probabilistico (1 ogni ~3 nodi normali)
+    3. Path planner (prossimo nodo sbloccato)
     """
-    # 1. Cerca nodo in_corso
+    # 1. Cerca nodo in_corso (priorità assoluta, nessun interleaving)
     result = await db.execute(
         select(StatoNodoUtente.nodo_id)
         .where(
@@ -277,12 +294,26 @@ async def _scegli_nodo(
     nodo_in_corso = result.scalar_one_or_none()
     if nodo_in_corso:
         logger.info("Nodo in_corso trovato: %s", nodo_in_corso)
-        return nodo_in_corso
+        return _NodoScelto(
+            nodo_id=nodo_in_corso, attivita="spiegazione", concetti_scadenza=[]
+        )
 
-    # 2. Path planner
+    # 2. Interleaving SR probabilistico
+    nodi_sr = await get_nodi_da_ripassare(utente_id, db)
+    if nodi_sr and random.random() < PROBABILITA_INTERLEAVING:
+        nodo_sr = nodi_sr[0]  # Il più urgente (ordinato per scadenza in get_nodi_da_ripassare)
+        concetti_nomi = _nomi_nodi_sr(nodi_sr)
+        logger.info(
+            "Interleaving SR: nodo=%s (su %d scaduti)", nodo_sr, len(nodi_sr)
+        )
+        return _NodoScelto(
+            nodo_id=nodo_sr, attivita="ripasso_sr", concetti_scadenza=concetti_nomi
+        )
+
+    # 3. Path planner
     if not grafo_knowledge.caricato:
         logger.warning("Grafo non caricato — impossibile scegliere nodo")
-        return None
+        return _NodoScelto(nodo_id=None, attivita="spiegazione", concetti_scadenza=[])
 
     livelli = await get_livelli_utente(utente_id, db)
     prossimo = path_planner(grafo_knowledge.grafo, livelli)
@@ -292,4 +323,21 @@ async def _scegli_nodo(
     else:
         logger.info("Percorso completato — nessun nodo da studiare")
 
-    return prossimo
+    return _NodoScelto(
+        nodo_id=prossimo, attivita="spiegazione", concetti_scadenza=[]
+    )
+
+
+def _nomi_nodi_sr(nodi_sr: list[str]) -> list[str]:
+    """Ritorna i nomi leggibili dei nodi SR scaduti (max 5).
+
+    Usa il grafo in memoria se disponibile, altrimenti l'ID come fallback.
+    """
+    nomi = []
+    for nodo_id in nodi_sr[:5]:
+        if grafo_knowledge.caricato and nodo_id in grafo_knowledge.grafo.nodes:
+            nome = grafo_knowledge.grafo.nodes[nodo_id].get("nome", nodo_id)
+        else:
+            nome = nodo_id
+        nomi.append(nome)
+    return nomi

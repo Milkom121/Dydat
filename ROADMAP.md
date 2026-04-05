@@ -104,10 +104,11 @@
 - **Note**: Aggiunta colonna sr_card_json JSONB (migrazione 716b95629203) per serializzazione completa Card FSRS6. 21 nuovi test. 303 totale backend.
 
 ### Blocco B27 — Interleaving nelle Sessioni Normali (Backend)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S24)
 - **Complessita'**: media
 - **Descrizione**: In sessione.py _scegli_nodo(), aggiungere interleaving probabilistico (1 ogni 2-3 nodi normali) con nodi SR scaduti. Impostare attivita_corrente="ripasso_sr" in stato_orchestratore.
 - **Gate di uscita**: Interleaving funzionante, direttiva ripasso assemblata, pytest verde
+- **Note**: _NodoScelto NamedTuple, PROBABILITA_INTERLEAVING=0.35, _nomi_nodi_sr helper. order_by scadenza in get_nodi_da_ripassare. 17 nuovi test. 320 totale backend.
 
 ### Blocco B28 — Sezione Ripasso Frontend + Badge
 - [ ] **Stato**: da fare
