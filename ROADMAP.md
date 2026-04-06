@@ -144,6 +144,7 @@
 - **Descrizione**: Arricchire la Home creata in B30. (1) Mini-percorso visivo: posizione attuale nel percorso (nodo corrente, prossimo). (2) Invito contestuale: "Eravamo rimasti a [nome nodo]" usando dati sessione precedente. (3) Sezione ripasso FSRS (migrata da home_view_widget, migliorata graficamente). (4) Streak e ultimo risultato. (5) Ritorno dopo assenza: se ultima sessione > 7 giorni, messaggio gentile + lista nodi da ripassare. (6) Tono caldo, nessun senso di colpa.
 - **File da toccare**: home_screen.dart (arricchire), eventuale home_widgets/ per sotto-widget
 - **Gate di uscita**: Home mostra stato percorso, ripasso FSRS, ritorno contestuale, assenza lunga gestita, analyze 0, test verdi
+- **Note**: Estratti 4 sub-widget in home_screen/widgets/: WelcomeHeader (saluto contestuale + card assenza), MiniPercorsoWidget (percorso visivo con cerchi e connessioni, finestra 5 nodi), StreakCard (streak + esercizi settimanali + nodi da statsProvider), RipassoSection (con chip nomi nodi). Caricamento mappa percorso + stats in initState. 41 nuovi test (4 file). 274 frontend verdi, analyze 0.
 
 ---
 

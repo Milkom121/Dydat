@@ -63,3 +63,23 @@
 - **Status**: PHASE_COMPLETE
 - **Summary**: Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: _scegli_nodo_ripasso() con fallback path planner. Frontend: bottone Vai avvia sessione ripasso. 12 nuovi test backend + 8 nuovi frontend. 341 backend + 228 frontend verdi, analyze 0.
 ---
+
+## 2026-04-06 03:49:27 — Blocco F6BB30
+- **Status**: CONTINUE
+- **Summary**: Fase 5 (FSRS) completata in S26. UX Redesign pianificato: concept document v1.1 approvato dal fondatore, ROADMAP aggiornata con Fasi 6-14 (Fase A UX in 6 sotto-fasi + Feynman + Visualizzazioni). Pronto per primo blocco implementativo.
+---
+
+## 2026-04-06 03:50:35 — Blocco F6BB30
+- **Status**: CONTINUE
+- **Summary**: Fase 5 (FSRS) completata in S26. UX Redesign pianificato: concept document v1.1 approvato dal fondatore, ROADMAP aggiornata con Fasi 6-14 (Fase A UX in 6 sotto-fasi + Feynman + Visualizzazioni). Pronto per primo blocco implementativo.
+---
+
+## 2026-04-06 03:59:23 — Blocco F6BB30
+- **Status**: CONTINUE
+- **Summary**: Fase 5 (FSRS) completata in S26. UX Redesign pianificato: concept document v1.1 approvato dal fondatore, ROADMAP aggiornata con Fasi 6-14 (Fase A UX in 6 sotto-fasi + Feynman + Visualizzazioni). Pronto per primo blocco implementativo.
+---
+
+## 2026-04-06 — Blocco F6BB31 (S28)
+- **Status**: CONTINUE
+- **Summary**: B31 — Home Calda con Ritorno Intelligente. 4 sub-widget estratti (WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection). statsProvider per streak reale. Mini-percorso visivo con cerchi/connessioni. Ripasso con chip nomi nodi. Saluto contestuale + gestione assenza >7 giorni. 274 frontend verdi, analyze 0.
+---
