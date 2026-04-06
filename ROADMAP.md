@@ -223,6 +223,15 @@
 - **Gate di uscita**: Forma organica renderizza, occhi espressivi, transizioni beat, animazione ingresso, analyze 0, test verdi
 - **Note**: MascottePainter con blob Bezier (8 punti, deformazione animata), gradiente radiale per profondita, glow luminescente. Occhi espressivi: sclera ovale, pupilla con riflesso, apertura controllata da eyeOpenness (linea quando quasi chiusi). MascotteVisuals con lerp per transizioni smooth 500ms tra stati. EntrancePortalPainter (cerchi concentrici sfalsati) per ingresso sessione. PromotionBurstPainter (12 raggi + cerchio espansione) per celebrazione promozione. Studio screen integrato con showEntrance e showPromotionBurst. 28 nuovi test (2 file). 448 frontend verdi, analyze 0.
 
+### Blocco B38.5 — Fix UI post test manuale (consolidamento)
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Blocco di consolidamento dopo test manuale di Fasi 7-9. Fix chirurgico di 7 bug UI cosmetici emersi durante il test su emulatore con utente creato da zero. Dettaglio in `.claude/test-findings.md`.
+- **Bug da fixare**: BUG-01 overflow mini_percorso_widget, BUG-02 testo "Riprendi" per utente nuovo, BUG-03 "Bentornato" in login alla prima apertura, BUG-04 LinearPathMap ridisegno visivo (da lista a mappa vera), BUG-05 GraphOverview nomi troncati, BUG-06 GraphOverview percorso attuale non evidenziato, BUG-07 GraphOverview vastita orizzontale (InteractiveViewer).
+- **File da toccare**: mini_percorso_widget.dart, home_screen.dart, login_screen.dart, linear_path_map.dart, graph_overview.dart
+- **Gate di uscita**: 7 bug fixati, `flutter analyze` 0, `flutter test` verdi, 7+ nuovi widget test
+- **NON fare**: non toccare UX-01 (primo turno caldo, B33.5 candidato) ne UX-02 (quaderno enciclopedico, B35.5 candidato). Registrati in `.claude/ideas.md`.
+
 ---
 
 ## Fase 10 — UX Redesign: Onboarding + Audio (Fase A.5, B39-B40)

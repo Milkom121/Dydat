@@ -188,3 +188,8 @@
 - **Status**: PHASE_COMPLETE
 - **Summary**: B38 completato (S35). Mascotte evoluta da cerchio ambra a forma organica con CustomPainter. MascottePainter: blob con 8 punti di controllo Bezier cubici, deformazione animata (wobble), gradiente radiale per profondita, glow luminescente esterno. Occhi espressivi: sclera ovale, pupilla con riflesso di luce, apertura controllata da eyeOpenness (linea quando quasi chiusi). MascotteVisuals con lerp() per transizioni smooth 500ms tra stati. EntrancePortalPainter per animazione ingresso sessione (3 cerchi concentrici sfalsati). PromotionBurstPainter per celebrazione promozione (12 raggi + cerchio espansione). Studio screen integrato con showEntrance e showPromotionBurst. 28 nuovi test (2 file), 448 totale frontend, analyze 0. Fase 9 (Atmosfera e Mascotte) COMPLETATA.
 ---
+
+## 2026-04-06 — Test manuale Fasi 7-9 + kickoff B38.5
+- **Status**: READY
+- **Summary**: Test manuale eseguito da Villa su emulatore con utente creato da zero via onboarding reale. 7 scenari testati su 10 (4-5 sospesi per issue strategiche UX-01 "primo turno caldo" e UX-02 "quaderno enciclopedico"). Raccolti 7 bug UI cosmetici in .claude/test-findings.md. Handoff predisposto per B38.5 — fix chirurgico dei 7 bug prima di avanzare a Fase 10.
+---
