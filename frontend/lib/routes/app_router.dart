@@ -137,12 +137,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Studio — fuori dalla shell, fullscreen modale senza bottom bar.
+      // Transizione slide-up + fade per effetto "mascotte porta dentro".
       // Accetta query param: tipo (media|ripasso), default: media.
       GoRoute(
         path: AppPaths.studio,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final tipo = state.uri.queryParameters['tipo'] ?? 'media';
-          return StudioScreen(tipo: tipo);
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: StudioScreen(tipo: tipo),
+            transitionDuration: const Duration(milliseconds: 600),
+            reverseTransitionDuration: const Duration(milliseconds: 400),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              final slideUp = Tween<Offset>(
+                begin: const Offset(0, 0.15),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ));
+              final fade = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeIn,
+              );
+              return FadeTransition(
+                opacity: fade,
+                child: SlideTransition(
+                  position: slideUp,
+                  child: child,
+                ),
+              );
+            },
+          );
         },
       ),
 

@@ -1,8 +1,8 @@
 {
   "current_phase": "7",
-  "current_block": "B33",
-  "total_blocks_run": 43,
+  "current_block": "B34",
+  "total_blocks_run": 45,
   "status": "CONTINUE",
-  "last_run": "2026-04-06T02:11:26Z",
-  "last_summary": "B32 completato (S29). Modello ibrido implementato: esercizi/formule/backtrack escono dal feed in FullscreenActionOverlay (slide-up + fade). Record compatti nel feed post-azione. Coda fullscreen in StudioScreen. 22 nuovi test, 296 totale, analyze 0."
+  "last_run": "2026-04-06T10:00:00Z",
+  "last_summary": "B33 completato (S30). StudioTransitionOverlay (1150ms animazione), SessionGoalPicker (Veloce/Normale/Approfondita), recap narrativo tutor, notifica pausa obiettivo, CustomTransitionPage su route /studio. 47 nuovi test, 343 totale, analyze 0."
 }

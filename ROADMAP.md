@@ -162,11 +162,12 @@
 - **Note**: FullscreenActionOverlay wrappa card esistenti (ExerciseCardWidget, FormulaCardWidget, BacktrackCardWidget) con animazione slide-up+fade. CompactActionRecord mostra record compatto nel feed. StudioScreen gestisce coda fullscreen (_fullscreenQueue). ChatViewWidget: rimossi inline exercise/formula/backtrack, aggiunti _record compatti. onShowFullscreen via addPostFrameCallback in session_sync_helper. 22 nuovi test (296 totale), analyze 0.
 
 ### Blocco B33 — Transizione Sessione + Chiusura Narrativa
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S30)
 - **Complessita'**: media
 - **Descrizione**: (1) Animazione di transizione Home->Studio: la mascotte "porta" lo studente dentro (< 2s). Corrisponde a Beat 1 della direzione visiva. (2) Chiusura sessione narrativa: recap_session_screen mostra prima il commento narrativo del tutor ("Oggi hai capito X, la prossima volta vedremo Y"), poi i numeri sotto (durata, esercizi, nodi). (3) Sessione a obiettivo: prima di iniziare, lo studente sceglie Veloce/Normale/Approfondita. Il tipo viene passato al backend (campo durata_obiettivo). (4) Se supera il tempo: suggerimento pausa dal tutor. Se esce prima: notifica leggera.
 - **File da toccare**: studio_screen.dart (transizione), recap_session_screen.dart (narrativo+numeri), nuovo session_goal_picker.dart, mascotte_widget.dart (animazione transizione)
 - **Gate di uscita**: Transizione animata funziona, recap narrativo+numeri, scelta obiettivo funziona, analyze 0, test verdi
+- **Note**: StudioTransitionOverlay (singolo AnimationController 1150ms, Interval): scale-in mascotte + fade-out overlay. HomeScreen usa Stack+Positioned.fill per l'overlay prima della navigazione. SessionGoalPicker (dialog): 3 opzioni Veloce/Normale/Approfondita, restituisce durataMsMin passato a startSessionStream. recap_session_screen: narrativa tutor in cima (recapBuildNarrativa), poi stats. Notifica snackbar quando si supera l'obiettivo. app_router.dart: CustomTransitionPage slide-up+fade per route /studio. 47 nuovi test (343 totale), analyze 0.
 
 ---
 

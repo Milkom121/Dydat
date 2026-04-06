@@ -15,6 +15,7 @@ import '../studio_screen/widgets/session_history_widget.dart';
 import 'widgets/mini_percorso_widget.dart';
 import 'widgets/ripasso_section.dart';
 import 'widgets/streak_card.dart';
+import 'widgets/studio_transition_overlay.dart';
 import 'widgets/welcome_header.dart';
 
 /// Schermata Home — Tab 0 della navigazione principale.
@@ -28,6 +29,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  // Controlla la visibilità dell'overlay di transizione verso Studio.
+  bool _showTransitionOverlay = false;
+  // Destinazione a cui navigare dopo la transizione (es. con query param tipo=ripasso).
+  String _transitionDestination = AppPaths.studio;
+
   @override
   void initState() {
     super.initState();
@@ -55,12 +61,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _avviaStudio() {
     HapticFeedback.lightImpact();
-    context.push(AppPaths.studio);
+    setState(() {
+      _transitionDestination = AppPaths.studio;
+      _showTransitionOverlay = true;
+    });
   }
 
   void _avviaRipasso() {
     HapticFeedback.lightImpact();
-    context.push('${AppPaths.studio}?tipo=ripasso');
+    setState(() {
+      _transitionDestination = '${AppPaths.studio}?tipo=ripasso';
+      _showTransitionOverlay = true;
+    });
+  }
+
+  void _onTransitionComplete() {
+    if (!mounted) return;
+    setState(() => _showTransitionOverlay = false);
+    context.push(_transitionDestination);
   }
 
   @override
@@ -74,81 +92,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hasActiveSession = sessionState.activeSession?.stato == 'attiva';
     final lastNodeName = _ultimoNodoFormattato(sessionState.sessionHistory);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.home, size: 24, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text('Dydat', style: theme.textTheme.titleLarge),
-          ],
-        ),
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: 1.0,
-        shadowColor: theme.colorScheme.shadow,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4.w),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(height: 3.h),
-
-                // 1. Saluto contestuale con ritorno intelligente
-                WelcomeHeader(
-                  sessionHistory: sessionState.sessionHistory,
-                  hasActiveSession: hasActiveSession,
-                  lastNodeName: lastNodeName,
-                ),
-
-                SizedBox(height: 3.h),
-
-                // 2. Bottone CTA principale
-                _buildBottoneStudio(theme, hasActiveSession),
-
-                // 3. Streak e statistiche (da backend)
-                if (statsState.stats != null) ...[
-                  SizedBox(height: 2.5.h),
-                  StreakCard(stats: statsState.stats!),
-                ],
-
-                // 4. Mini-percorso visivo (mappa nodi con posizione corrente)
-                if (pathState.currentMap != null &&
-                    pathState.currentMap!.nodi.isNotEmpty) ...[
-                  SizedBox(height: 2.5.h),
-                  MiniPercorsoWidget(mappa: pathState.currentMap!),
-                ],
-
-                // 5. Sezione ripasso FSRS (migliorata con lista nodi)
-                if (ripassoState.nodi.isNotEmpty) ...[
-                  SizedBox(height: 2.5.h),
-                  RipassoSection(
-                    nodi: ripassoState.nodi,
-                    onRipassoTap: _avviaRipasso,
-                  ),
-                ],
-
-                // 6. Storico sessioni
-                SizedBox(height: 3.h),
-                SessionHistoryWidget(
-                  sessions: sessionState.sessionHistory,
-                  isLoading: sessionState.isLoadingHistory,
-                  onSessionTap: (sessioneId) {
-                    context.go(AppPaths.recapSession(sessioneId));
-                  },
-                ),
-                SizedBox(height: 2.h),
+                Icon(Icons.home, size: 24, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text('Dydat', style: theme.textTheme.titleLarge),
               ],
+            ),
+            automaticallyImplyLeading: false,
+            backgroundColor: theme.colorScheme.surface,
+            foregroundColor: theme.colorScheme.onSurface,
+            elevation: 1.0,
+            shadowColor: theme.colorScheme.shadow,
+          ),
+          body: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 3.h),
+
+                    // 1. Saluto contestuale con ritorno intelligente
+                    WelcomeHeader(
+                      sessionHistory: sessionState.sessionHistory,
+                      hasActiveSession: hasActiveSession,
+                      lastNodeName: lastNodeName,
+                    ),
+
+                    SizedBox(height: 3.h),
+
+                    // 2. Bottone CTA principale
+                    _buildBottoneStudio(theme, hasActiveSession),
+
+                    // 3. Streak e statistiche (da backend)
+                    if (statsState.stats != null) ...[
+                      SizedBox(height: 2.5.h),
+                      StreakCard(stats: statsState.stats!),
+                    ],
+
+                    // 4. Mini-percorso visivo (mappa nodi con posizione corrente)
+                    if (pathState.currentMap != null &&
+                        pathState.currentMap!.nodi.isNotEmpty) ...[
+                      SizedBox(height: 2.5.h),
+                      MiniPercorsoWidget(mappa: pathState.currentMap!),
+                    ],
+
+                    // 5. Sezione ripasso FSRS (migliorata con lista nodi)
+                    if (ripassoState.nodi.isNotEmpty) ...[
+                      SizedBox(height: 2.5.h),
+                      RipassoSection(
+                        nodi: ripassoState.nodi,
+                        onRipassoTap: _avviaRipasso,
+                      ),
+                    ],
+
+                    // 6. Storico sessioni
+                    SizedBox(height: 3.h),
+                    SessionHistoryWidget(
+                      sessions: sessionState.sessionHistory,
+                      isLoading: sessionState.isLoadingHistory,
+                      onSessionTap: (sessioneId) {
+                        context.go(AppPaths.recapSession(sessioneId));
+                      },
+                    ),
+                    SizedBox(height: 2.h),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
+
+        // Overlay di transizione: mostra mascotte animata prima di navigare a Studio.
+        if (_showTransitionOverlay)
+          Positioned.fill(
+            child: StudioTransitionOverlay(
+              onComplete: _onTransitionComplete,
+            ),
+          ),
+      ],
     );
   }
 

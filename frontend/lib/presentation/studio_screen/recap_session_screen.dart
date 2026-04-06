@@ -91,26 +91,7 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
     return m > 0 ? '${h}h ${m}min' : '${h}h';
   }
 
-  String _formatNodeName(String? name) {
-    if (name == null) return 'Non specificato';
-    if (!name.contains('_')) return name;
-    // Format raw node IDs: "mat_Algebra1_numeri_naturali" -> "Numeri naturali"
-    final parts = name.split('_');
-    int start = 0;
-    for (int i = 0; i < parts.length; i++) {
-      if (parts[i].isNotEmpty &&
-          parts[i] == parts[i].toLowerCase() &&
-          !parts[i].startsWith('mat')) {
-        start = i;
-        break;
-      }
-    }
-    if (start == 0 && parts.length > 1) start = parts.length > 3 ? 3 : 1;
-    final formatted = parts.sublist(start).join(' ');
-    return formatted.isNotEmpty
-        ? formatted[0].toUpperCase() + formatted.substring(1)
-        : name;
-  }
+  String _formatNodeName(String? name) => recapFormatNodeName(name);
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +150,8 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
     );
   }
 
+  String _buildNarrativa(Sessione session) => recapBuildNarrativa(session);
+
   Widget _buildContent(ThemeData theme) {
     final session = _session;
     final nodiLavorati = session?.nodiLavorati ?? [];
@@ -203,7 +186,13 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 3.h),
+          SizedBox(height: 2.h),
+
+          // Narrativa del tutor — prima di tutto
+          if (session != null) ...[
+            _buildNarrativaCard(theme, session),
+            SizedBox(height: 2.h),
+          ],
 
           // Stats cards row
           Row(
@@ -293,6 +282,62 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
             ),
           ),
           SizedBox(height: 2.h),
+        ],
+      ),
+    );
+  }
+
+  /// Card narrativa del tutor — mostra un commento caldo sui progressi della sessione.
+  Widget _buildNarrativaCard(ThemeData theme, Sessione session) {
+    final narrativa = _buildNarrativa(session);
+    return Container(
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 10.w,
+            height: 10.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.primary,
+            ),
+            child: Icon(
+              Icons.school,
+              size: 5.w,
+              color: theme.colorScheme.onPrimary,
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dal tuo tutor',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 0.8.h),
+                Text(
+                  narrativa,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -521,6 +566,83 @@ class _InfoCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Funzioni pure top-level — esposte per test
+// ---------------------------------------------------------------------------
+
+/// Formatta un node ID/nome in stringa leggibile per il recap.
+/// Null → 'Non specificato', nomi senza underscore passano invariati.
+String recapFormatNodeName(String? name) {
+  if (name == null) return 'Non specificato';
+  if (!name.contains('_')) return name;
+  final parts = name.split('_');
+  int start = 0;
+  for (int i = 0; i < parts.length; i++) {
+    if (parts[i].isNotEmpty &&
+        parts[i] == parts[i].toLowerCase() &&
+        !parts[i].startsWith('mat')) {
+      start = i;
+      break;
+    }
+  }
+  if (start == 0 && parts.length > 1) start = parts.length > 3 ? 3 : 1;
+  final formatted = parts.sublist(start).join(' ');
+  return formatted.isNotEmpty
+      ? formatted[0].toUpperCase() + formatted.substring(1)
+      : name;
+}
+
+/// Genera il commento narrativo del tutor per il recap di sessione.
+/// Tono caldo e motivazionale — prima il commento, poi i numeri.
+String recapBuildNarrativa(Sessione session) {
+  final nome = recapFormatNodeName(
+    session.nodoFocaleNome ?? session.nodoFocaleId,
+  );
+  final nodiCount = session.nodiLavorati?.length ?? 0;
+  final durata = session.durataEffettivaMin;
+
+  final buffer = StringBuffer();
+
+  // Prima parte: cosa si è lavorato
+  if (nome != 'Non specificato') {
+    buffer.write('Oggi hai lavorato su "$nome"');
+  } else {
+    buffer.write('Ottimo lavoro oggi');
+  }
+
+  if (nodiCount > 1) {
+    buffer.write(
+      ' e altri ${nodiCount - 1} '
+      '${nodiCount - 1 == 1 ? 'argomento' : 'argomenti'}',
+    );
+  }
+  buffer.write('.');
+
+  // Seconda parte: incoraggiamento in base alla durata
+  if (durata != null && durata > 0) {
+    if (durata < 10) {
+      buffer.write(
+        ' Anche una sessione breve fa la differenza — la costanza è tutto.',
+      );
+    } else if (durata < 30) {
+      buffer.write(' Stai costruendo un\'abitudine solida.');
+    } else {
+      buffer.write(' Una sessione intensa — il cervello ha lavorato bene!');
+    }
+  } else {
+    buffer.write(' Ogni sessione ti avvicina al tuo obiettivo.');
+  }
+
+  // Terza parte: invito al prossimo incontro
+  if (nome != 'Non specificato') {
+    buffer.write(
+      ' La prossima volta approfondiremo ancora "$nome" e vedremo cosa viene dopo.',
+    );
+  }
+
+  return buffer.toString();
 }
 
 class _MiniStat extends StatelessWidget {

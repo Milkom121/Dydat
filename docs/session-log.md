@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-06 — Sessione S30 — B33 Transizione Sessione + Chiusura Narrativa
+- **Status**: CONTINUE
+- **Summary**: StudioTransitionOverlay (1150ms, AnimationController Interval), SessionGoalPicker (Veloce/Normale/Approfondita + durata backend), narrativa tutor nel recap, notifica pausa obiettivo, CustomTransitionPage su route /studio. 47 nuovi test, 343 totale, analyze 0.
+---
+
 ## 2026-04-05 — Allineamento Metodo Villa
 - **Status**: CHECKPOINT
 - **Summary**: Migrazione completa dei file di gestione al Metodo Villa. Creati PROJECT_CONFIG.md, ROADMAP.md (con fase 4.5 consolidamento), handoff.md, decisions.md, ideas.md, dev-shortcuts.md. Runner integrato. Branch develop creato.
@@ -100,6 +105,11 @@
 ---
 
 ## 2026-04-06 04:11:26 — Blocco F6BB30
+- **Status**: CONTINUE
+- **Summary**: B32 completato (S29). Modello ibrido implementato: esercizi/formule/backtrack escono dal feed in FullscreenActionOverlay (slide-up + fade). Record compatti nel feed post-azione. Coda fullscreen in StudioScreen. 22 nuovi test, 296 totale, analyze 0.
+---
+
+## 2026-04-06 04:11:56 — Blocco F6BB30
 - **Status**: CONTINUE
 - **Summary**: B32 completato (S29). Modello ibrido implementato: esercizi/formule/backtrack escono dal feed in FullscreenActionOverlay (slide-up + fade). Record compatti nel feed post-azione. Coda fullscreen in StudioScreen. 22 nuovi test, 296 totale, analyze 0.
 ---

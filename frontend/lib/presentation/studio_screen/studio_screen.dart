@@ -16,6 +16,7 @@ import './widgets/mascotte_widget.dart';
 import './widgets/session_header_widget.dart';
 import './widgets/session_input_bar_widget.dart';
 import './widgets/session_sync_helper.dart';
+import './widgets/session_goal_picker.dart';
 import './widgets/studio_dialogs.dart';
 import './widgets/tools_tray_widget.dart';
 import './widgets/tutor_panel_widget.dart';
@@ -23,11 +24,15 @@ import './widgets/tutor_panel_widget.dart';
 /// Schermata Studio — route fullscreen per la sessione di studio attiva.
 /// Si apre come route modale sopra la shell (niente bottom bar).
 /// Riceve [tipo] dalla route (query param), default 'media'.
+/// Riceve [durataPrevistaMin] dalla route (query param), opzionale.
 class StudioScreen extends ConsumerStatefulWidget {
   /// Tipo di sessione: 'media' o 'ripasso'.
   final String tipo;
 
-  const StudioScreen({super.key, this.tipo = 'media'});
+  /// Durata obiettivo in minuti (da SessionGoalPicker). Null = nessun obiettivo.
+  final int? durataPrevistaMin;
+
+  const StudioScreen({super.key, this.tipo = 'media', this.durataPrevistaMin});
 
   @override
   ConsumerState<StudioScreen> createState() => _StudioScreenState();
@@ -55,6 +60,12 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   bool _suspendedInBackground = false;
   String? _lastShownError;
 
+  // Suggerimento pausa: mostrato una sola volta quando si supera l'obiettivo
+  bool _goalExceededNotified = false;
+
+  // Durata obiettivo scelta dallo studente (null = nessun obiettivo)
+  int? _durataPrevistaMin;
+
   // Coda azioni fullscreen: esercizi, formule, backtrack escono dal feed
   final List<({String type, AzioneEvent action})> _fullscreenQueue = [];
   ({String type, AzioneEvent action})? _currentFullscreen;
@@ -68,6 +79,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   }
 
   /// Controlla se c'è una sessione attiva, altrimenti avvia nuova.
+  /// Per sessioni nuove di tipo 'media', mostra prima il GoalPicker.
   Future<void> _avviaSessioneAllApertura() async {
     if (!mounted || _sessionStartAttempted) return;
     _sessionStartAttempted = true;
@@ -80,8 +92,13 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     final isAlreadyActive = session != null && session.stato == 'attiva';
 
     if (!isAlreadyActive) {
-      // Avvia nuova sessione col tipo ricevuto come parametro
-      await _startSession(tipo: widget.tipo);
+      // Solo per sessioni normali (non ripasso): mostra il GoalPicker
+      if (widget.tipo == 'media') {
+        final goal = await showSessionGoalPicker(context);
+        if (!mounted) return;
+        _durataPrevistaMin = goal?.durataMsMin;
+      }
+      await _startSession(tipo: widget.tipo, durataPrevistaMin: _durataPrevistaMin);
     } else {
       // Sessione già attiva: ricarica history per mostrare messaggi
       await ref.read(sessionProvider.notifier).loadSessionHistory();
@@ -189,13 +206,34 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
           _sessionTime =
               '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
         });
+        // Notifica pausa una sola volta quando si supera l'obiettivo.
+        _checkGoalExceeded();
       }
     });
   }
 
+  /// Mostra un suggerimento leggero se lo studente supera il tempo obiettivo.
+  void _checkGoalExceeded() {
+    if (_goalExceededNotified) return;
+    final durata = _durataPrevistaMin;
+    if (durata == null) return;
+    if (_sessionSeconds >= durata * 60) {
+      _goalExceededNotified = true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Hai raggiunto l\'obiettivo di $durata minuti — ottimo lavoro! Puoi continuare o fare una pausa.',
+          ),
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   void _stopTimer() => _timer?.cancel();
 
-  Future<void> _startSession({String tipo = 'media'}) async {
+  Future<void> _startSession({String tipo = 'media', int? durataPrevistaMin}) async {
     HapticFeedback.lightImpact();
     setState(() {
       _sessionSeconds = 0;
@@ -206,8 +244,12 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       _sync.achievementsCount = 0;
       _fullscreenQueue.clear();
       _currentFullscreen = null;
+      _goalExceededNotified = false;
     });
-    await ref.read(sessionProvider.notifier).startSessionStream(tipo: tipo);
+    await ref.read(sessionProvider.notifier).startSessionStream(
+      tipo: tipo,
+      durataPrevistaMin: durataPrevistaMin ?? _durataPrevistaMin,
+    );
     _startTimer();
     final err = ref.read(sessionProvider).error;
     if (err != null) {
