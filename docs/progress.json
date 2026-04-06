@@ -1,8 +1,8 @@
 {
   "current_phase": "7",
-  "current_block": "B32",
-  "total_blocks_run": 41,
+  "current_block": "B33",
+  "total_blocks_run": 42,
   "status": "CONTINUE",
-  "last_run": "2026-04-06T08:00:00Z",
-  "last_summary": "B31 completato (S28). Home Calda con 4 sub-widget. 274 frontend verdi, analyze 0. Pronto per B32 — Modello Ibrido: Esercizi Fullscreen."
+  "last_run": "2026-04-06T09:00:00Z",
+  "last_summary": "B32 completato (S29). Modello ibrido: esercizi/formule/backtrack in fullscreen overlay con animazione slide-up. Record compatti nel feed. 22 nuovi test. 296 frontend verdi, analyze 0."
 }

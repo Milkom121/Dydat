@@ -93,3 +93,8 @@
 - **Status**: CONTINUE
 - **Summary**: B30 completato (S27) — Nuova navigazione 3 tab + Studio modale fullscreen. B31 completato (S28) — Home Calda con 4 sub-widget (WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection), 41 nuovi test. 274 frontend verdi, analyze 0.
 ---
+
+## 2026-04-06 — S29 — Blocco B32
+- **Status**: CONTINUE
+- **Summary**: B32 completato (S29). Modello ibrido: FullscreenActionOverlay con slide-up+fade, CompactActionRecord nel feed, coda azioni in StudioScreen, ChatViewWidget ripulito dai widget inline. 22 nuovi test (296 totale). Flutter analyze 0.
+---

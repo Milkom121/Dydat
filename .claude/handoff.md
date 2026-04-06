@@ -1,47 +1,37 @@
 STATUS: CONTINUE
 PHASE: 7
-BLOCK: B32
-SUMMARY: B30 (Nuova Navigazione: 3 Tab + Studio Modale) completato in S27. B31 (Home Calda con Ritorno Intelligente) completato in S28. 4 sub-widget in home_screen/widgets/: WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection. 41 nuovi test. 274 frontend verdi, analyze 0.
-NEXT: B32 — Modello Ibrido: Esercizi Fullscreen
+BLOCK: B33
+SUMMARY: B32 completato (S29). Modello ibrido implementato: esercizi/formule/backtrack escono dal feed in FullscreenActionOverlay (slide-up + fade). Record compatti nel feed post-azione. Coda fullscreen in StudioScreen. 22 nuovi test, 296 totale, analyze 0.
+NEXT: B33 — Transizione Sessione + Chiusura Narrativa
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: home_screen.dart, home_screen/widgets/ (4 file), app_router.dart, custom_bottom_bar.dart, studio_screen.dart
-TESTS: PASS (341 backend, 274 frontend, flutter analyze 0)
-VERIFICATION: 274 test verdi, flutter analyze 0 issues, build OK.
+FILES_MODIFIED: studio_screen.dart, chat_view_widget.dart, session_sync_helper.dart, nuovo fullscreen_action_overlay.dart, nuovo compact_action_record.dart
+TESTS: PASS (341 backend, 296 frontend, flutter analyze 0)
+VERIFICATION: 296 test verdi, flutter analyze 0 issues.
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto (Fase 6)
-- B30 (S27): Ristrutturata navigazione - 3 tab (Home/I miei studi/Profilo) + Studio fullscreen modale fuori dalla shell.
-- B31 (S28): Home arricchita con 4 sub-widget: WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection.
-
-### Stato del progetto
-- Backend: 341 test verdi, stabile, NON va toccato in B32
-- Frontend: 274 test verdi, analyze 0
-- Branch: develop
+### Cosa e stato fatto (B32)
+- FullscreenActionOverlay (widgets/): overlay Positioned.fill che wrappa le card esistenti (ExerciseCardWidget, FormulaCardWidget, BacktrackCardWidget). Animazione: FadeTransition + SlideTransition (offset 0.3 -> 0, 350ms easeOutCubic). Chiusura con animazione inversa prima di invocare onDismiss.
+- CompactActionRecord (widgets/): record compatto mostrato nel feed dopo azione fullscreen. Icona + label troncata + risultato in una riga.
+- StudioScreen: _fullscreenQueue + _currentFullscreen. _enqueueFullscreenAction() aggiunge alla coda. _handleFullscreenDismiss() chiude e mostra successiva.
+- ChatViewWidget: rimossi inline exercise/formula/backtrack. Aggiunto rendering exercise_record/formula_record/backtrack_record.
+- session_sync_helper: onShowFullscreen callback via addPostFrameCallback (Riverpod safety).
 
 ### Navigazione corrente
 - Shell: 3 tab (Home /home, I miei studi /studi, Profilo /profilo)
 - Studio: route fullscreen /studio?tipo=media|ripasso FUORI dalla shell
-- context.push('/studio') da tab, context.go('/home') per tornare
+- Esercizi/formule/backtrack: fullscreen overlay, non inline nel feed
 
-### Prossimo passo concreto — B32
+### Prossimo passo concreto — B33
 
-Quando il tutor propone un esercizio (proponi_esercizio), l'ExerciseCardWidget esce dal feed e si prende lo schermo.
+(1) Animazione di transizione Home->Studio: la mascotte "porta" lo studente dentro (< 2s). (2) Chiusura sessione narrativa: recap_session_screen mostra prima commento narrativo del tutor, poi numeri. (3) Sessione a obiettivo: lo studente sceglie Veloce/Normale/Approfondita prima di iniziare.
 
-1. ExerciseFullscreenView — layout dedicato (no chat dietro), transizione slide up/fade
-2. Completato esercizio: record compatto rientra nel feed
-3. Stessa logica per FormulaCardWidget (mostra_formula) e BacktrackCardWidget (suggerisci_backtrack)
-4. Feed conversazionale resta scrollabile per le spiegazioni
-5. Gestione stato in session_provider.dart
+File da leggere:
+1. frontend/lib/presentation/studio_screen/recap_session_screen.dart
+2. frontend/lib/presentation/home_screen/home_screen.dart (per la transizione)
+3. frontend/lib/presentation/studio_screen/widgets/mascotte_widget.dart
+4. docs/dydat-ux-redesign-concept-v1.1.docx (sezioni 5.4, 5.5, 5.6)
 
-Gate di uscita: esercizi/formule/backtrack in fullscreen, record compatto nel feed, transizioni fluide, analyze 0, test verdi
-
-### File da leggere per la prossima sessione
-1. frontend/lib/presentation/studio_screen/studio_screen.dart
-2. frontend/lib/presentation/studio_screen/widgets/chat_view_widget.dart
-3. frontend/lib/presentation/studio_screen/widgets/exercise_card_widget.dart
-4. frontend/lib/presentation/studio_screen/widgets/formula_card_widget.dart
-5. frontend/lib/presentation/studio_screen/widgets/backtrack_card_widget.dart
-6. frontend/lib/providers/session_provider.dart
+Gate di uscita B33: transizione Home->Studio funziona, recap narrativo+numeri, scelta obiettivo funziona, analyze 0, test verdi

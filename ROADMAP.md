@@ -154,11 +154,12 @@
 > Trasforma la sessione da chat a esperienza ibrida: esercizi e visualizzazioni escono dal feed.
 
 ### Blocco B32 — Modello Ibrido: Esercizi Fullscreen
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S29)
 - **Complessita'**: alta
 - **Descrizione**: Quando il tutor propone un esercizio (azione proponi_esercizio), l'ExerciseCardWidget esce dal feed e si prende lo schermo. (1) Creare ExerciseFullscreenView che wrappa ExerciseCardWidget in un layout dedicato (niente chat dietro, focus totale). (2) Transizione animata feed->fullscreen (slide up o fade). (3) Completato l'esercizio, il risultato rientra nel feed come record compatto. (4) Stessa logica per FormulaCardWidget (mostra_formula) e BacktrackCardWidget (suggerisci_backtrack): escono dal feed, tornano come record. (5) Il feed conversazionale resta scrollabile per le spiegazioni.
 - **File da toccare**: studio_screen.dart, exercise_card_widget.dart, formula_card_widget.dart, backtrack_card_widget.dart, chat_view_widget.dart, nuovi file fullscreen view
 - **Gate di uscita**: Esercizi in fullscreen, formule in fullscreen, record compatto nel feed dopo completamento, transizioni fluide, analyze 0, test verdi
+- **Note**: FullscreenActionOverlay wrappa card esistenti (ExerciseCardWidget, FormulaCardWidget, BacktrackCardWidget) con animazione slide-up+fade. CompactActionRecord mostra record compatto nel feed. StudioScreen gestisce coda fullscreen (_fullscreenQueue). ChatViewWidget: rimossi inline exercise/formula/backtrack, aggiunti _record compatti. onShowFullscreen via addPostFrameCallback in session_sync_helper. 22 nuovi test (296 totale), analyze 0.
 
 ### Blocco B33 — Transizione Sessione + Chiusura Narrativa
 - [ ] **Stato**: da fare
