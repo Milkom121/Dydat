@@ -132,7 +132,7 @@
 > Prima sotto-fase del redesign UX. Ridisegna la struttura dell'app: 3 tab (Home, I miei studi, Profilo) + Studio come modalita' immersiva.
 
 ### Blocco B30 — Nuova Navigazione: 3 Tab + Studio Modale
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S27)
 - **Complessita'**: alta
 - **Descrizione**: Ristrutturare la navigazione dell'app. (1) Creare HomeScreen come nuovo Tab 1 con contenuto base (benvenuto, nodi da ripassare FSRS, invito a riprendere, streak). Migrare logica da home_view_widget.dart. (2) Rinominare tab Percorso in "I miei studi" (label e icona). (3) Convertire StudioScreen da tab a route fullscreen modale (push, non tab). I tab spariscono in sessione. (4) Aggiornare app_router.dart: shell con 3 tab (Home, I miei studi, Profilo) + route '/studio' fuori dalla shell. (5) Aggiornare custom_bottom_bar.dart con nuovi nomi e icone. (6) La Home ha un bottone "Riprendi a studiare" che naviga a /studio.
 - **File da toccare**: app_router.dart, custom_bottom_bar.dart, nuovo home_screen.dart (presentation/home_screen/), studio_screen.dart (rimuovere home_view), home_view_widget.dart (migrare contenuto)
