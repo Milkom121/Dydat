@@ -143,7 +143,7 @@ class CustomStudioAppBar extends StatelessWidget
     final colorScheme = theme.colorScheme;
 
     return AppBar(
-      leading: isSessionActive && onBack != null
+      leading: onBack != null
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {

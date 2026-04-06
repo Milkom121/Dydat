@@ -11,7 +11,7 @@ class SessionHeaderWidget extends StatelessWidget {
   final String currentNode;
   final bool isLoading;
   final VoidCallback onStart;
-  final VoidCallback onResume;
+  final VoidCallback? onResume;
 
   const SessionHeaderWidget({
     super.key,
@@ -61,11 +61,11 @@ class SessionHeaderWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (showingHome && isActive)
+            if (showingHome && isActive && onResume != null)
               TextButton(
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  onResume();
+                  onResume!();
                 },
                 child: Text(
                   'Riprendi',

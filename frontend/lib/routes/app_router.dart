@@ -7,6 +7,7 @@ import '../presentation/splash_screen/splash_screen.dart';
 import '../presentation/onboarding_screen/onboarding_screen.dart';
 import '../presentation/login_screen/login_screen.dart';
 import '../presentation/registration_screen/registration_screen.dart';
+import '../presentation/home_screen/home_screen.dart';
 import '../presentation/studio_screen/studio_screen.dart';
 import '../presentation/studio_screen/recap_session_screen.dart';
 import '../presentation/learning_path_screen/learning_path_screen.dart';
@@ -19,14 +20,15 @@ class AppPaths {
   static const login = '/login';
   static const registration = '/registration';
   static const onboarding = '/onboarding';
+  static const home = '/home';
+  static const studi = '/studi';
   static const studio = '/studio';
-  static const percorso = '/percorso';
   static const profilo = '/profilo';
   static const recap = '/recap';
   static String recapSession(String sessioneId) => '/recap/$sessioneId';
 }
 
-/// Shell with bottom navigation bar for the three main tabs.
+/// Shell con bottom navigation bar per i 3 tab principali: Home, I miei studi, Profilo.
 class _ShellScaffold extends StatelessWidget {
   final Widget child;
   final StatefulNavigationShell navigationShell;
@@ -43,10 +45,6 @@ class _ShellScaffold extends StatelessWidget {
       bottomNavigationBar: CustomBottomBar(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) {
-          if (index == 0 && navigationShell.currentIndex == 0) {
-            // Re-tapped Studio tab → signal StudioScreen to show home view
-            StudioScreen.tabReTapNotifier.value++;
-          }
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,
@@ -57,10 +55,10 @@ class _ShellScaffold extends StatelessWidget {
   }
 }
 
-/// Notifier that triggers GoRouter redirect re-evaluation when auth changes.
+/// Notifier che forza il redirect GoRouter al cambio di stato auth.
 ///
-/// This avoids recreating the entire GoRouter (and rebuilding the widget tree)
-/// on every auth state change. Instead, only the redirect logic runs again.
+/// Evita di ricreare l'intero GoRouter (e ricostruire il widget tree)
+/// ad ogni cambio auth — esegue solo il redirect.
 class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier(Ref ref) {
     _sub = ref.listen(authProvider, (_, __) {
@@ -77,8 +75,8 @@ class _AuthRefreshNotifier extends ChangeNotifier {
   }
 }
 
-/// GoRouter provider — uses refreshListenable to react to auth changes
-/// WITHOUT recreating the router instance.
+/// GoRouter provider — usa refreshListenable per reagire ai cambi auth
+/// SENZA ricreare l'istanza router.
 final routerProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _AuthRefreshNotifier(ref);
   ref.onDispose(() => refreshNotifier.dispose());
@@ -88,21 +86,21 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      // Read auth state at redirect-time (not at GoRouter creation time).
+      // Legge auth state al momento del redirect (non alla creazione del GoRouter).
       final isAuthenticated = ref.read(authProvider).isAuthenticated;
       final location = state.matchedLocation;
 
-      // Authenticated users should not be on splash, login or registration.
+      // Utenti autenticati non devono stare su splash, login o registration.
       if (isAuthenticated) {
         if (location == AppPaths.splash ||
             location == AppPaths.login ||
             location == AppPaths.registration) {
-          return AppPaths.studio;
+          return AppPaths.home;
         }
         return null;
       }
 
-      // Not authenticated — allow splash and public routes.
+      // Non autenticato — permette splash e route pubbliche.
       if (location == AppPaths.splash) return null;
 
       const publicRoutes = [
@@ -118,13 +116,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Splash — entry point, handles initial auth check.
+      // Splash — entry point, gestisce il check auth iniziale.
       GoRoute(
         path: AppPaths.splash,
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Auth routes (outside shell — no bottom bar).
+      // Route auth (fuori dalla shell — niente bottom bar).
       GoRoute(
         path: AppPaths.login,
         builder: (context, state) => const LoginScreen(),
@@ -138,7 +136,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const OnboardingScreen(),
       ),
 
-      // Recap session (outside shell — no bottom bar).
+      // Studio — fuori dalla shell, fullscreen modale senza bottom bar.
+      // Accetta query param: tipo (media|ripasso), default: media.
+      GoRoute(
+        path: AppPaths.studio,
+        builder: (context, state) {
+          final tipo = state.uri.queryParameters['tipo'] ?? 'media';
+          return StudioScreen(tipo: tipo);
+        },
+      ),
+
+      // Recap sessione (fuori dalla shell — niente bottom bar).
       GoRoute(
         path: '${AppPaths.recap}/:sessioneId',
         builder: (context, state) {
@@ -147,7 +155,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Main app — shell route with bottom navigation bar.
+      // App principale — shell route con bottom navigation bar (3 tab).
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return _ShellScaffold(
@@ -156,20 +164,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
         branches: [
-          // Tab 0 — Studio
+          // Tab 0 — Home
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppPaths.studio,
-                builder: (context, state) => const StudioScreen(),
+                path: AppPaths.home,
+                builder: (context, state) => const HomeScreen(),
               ),
             ],
           ),
-          // Tab 1 — Percorso
+          // Tab 1 — I miei studi
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppPaths.percorso,
+                path: AppPaths.studi,
                 builder: (context, state) => const LearningPathScreen(),
               ),
             ],

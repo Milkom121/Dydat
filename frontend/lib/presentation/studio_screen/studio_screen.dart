@@ -6,12 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
-import '../../providers/ripasso_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../routes/app_router.dart';
 import '../../widgets/custom_app_bar.dart';
 import './widgets/chat_view_widget.dart';
-import './widgets/home_view_widget.dart';
 import './widgets/mascotte_widget.dart';
 import './widgets/session_header_widget.dart';
 import './widgets/session_input_bar_widget.dart';
@@ -20,11 +18,14 @@ import './widgets/studio_dialogs.dart';
 import './widgets/tools_tray_widget.dart';
 import './widgets/tutor_panel_widget.dart';
 
+/// Schermata Studio — route fullscreen per la sessione di studio attiva.
+/// Si apre come route modale sopra la shell (niente bottom bar).
+/// Riceve [tipo] dalla route (query param), default 'media'.
 class StudioScreen extends ConsumerStatefulWidget {
-  const StudioScreen({super.key});
+  /// Tipo di sessione: 'media' o 'ripasso'.
+  final String tipo;
 
-  /// Notifier incrementato quando il tab Studio viene ri-tappato.
-  static final tabReTapNotifier = ValueNotifier<int>(0);
+  const StudioScreen({super.key, this.tipo = 'media'});
 
   @override
   ConsumerState<StudioScreen> createState() => _StudioScreenState();
@@ -39,11 +40,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   bool _isToolsTrayVisible = false;
   bool _isTutorPanelVisible = false;
 
-  // Guard: evita chiamate infinite a loadSessionHistory da build().
-  bool _historyLoadAttempted = false;
-
-  // Quando true, mostra la home view anche con sessione attiva.
-  bool _showingHome = false;
+  // Guard: evita avvio sessione multiplo.
+  bool _sessionStartAttempted = false;
 
   final List<Map<String, dynamic>> _messages = [];
   final SessionSyncState _sync = SessionSyncState();
@@ -59,30 +57,35 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    StudioScreen.tabReTapNotifier.addListener(_onTabReTap);
-    Future.microtask(() {
-      ref.read(sessionProvider.notifier).loadSessionHistory();
-      ref.read(ripassoProvider.notifier).carica();
-    });
+    // Avvia sessione all'apertura dello schermo (differito per Riverpod safety)
+    Future.microtask(_avviaSessioneAllApertura);
   }
 
-  void _onTabReTap() {
-    if (mounted && !_showingHome) {
-      final session = ref.read(sessionProvider).activeSession;
-      if (session != null && session.stato == 'attiva') {
-        setState(() {
-          _showingHome = true;
-          _historyLoadAttempted = false;
-        });
-        ref.read(sessionProvider.notifier).loadSessionHistory();
-      }
+  /// Controlla se c'è una sessione attiva, altrimenti avvia nuova.
+  Future<void> _avviaSessioneAllApertura() async {
+    if (!mounted || _sessionStartAttempted) return;
+    _sessionStartAttempted = true;
+
+    // Carica la history per vedere se c'è una sessione attiva
+    await ref.read(sessionProvider.notifier).loadSessionHistory();
+    if (!mounted) return;
+
+    final session = ref.read(sessionProvider).activeSession;
+    final isAlreadyActive = session != null && session.stato == 'attiva';
+
+    if (!isAlreadyActive) {
+      // Avvia nuova sessione col tipo ricevuto come parametro
+      await _startSession(tipo: widget.tipo);
+    } else {
+      // Sessione già attiva: ricarica history per mostrare messaggi
+      await ref.read(sessionProvider.notifier).loadSessionHistory();
+      _startTimer();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    StudioScreen.tabReTapNotifier.removeListener(_onTabReTap);
     _messageController.dispose();
     _scrollController.dispose();
     _messageFocusNode.dispose();
@@ -123,7 +126,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
         ref.read(sessionProvider.notifier).clear();
         ref.read(sessionProvider.notifier).loadSessionHistory();
         setState(() {
-          _historyLoadAttempted = false;
+          _sessionStartAttempted = false;
           _sessionSeconds = 0;
           _sessionTime = '00:00';
           _messages.clear();
@@ -131,6 +134,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
           _sync.actionsCount = 0;
           _sync.achievementsCount = 0;
         });
+        // Torna alla home dopo terminazione
+        if (mounted) context.go(AppPaths.home);
       },
     );
   }
@@ -185,8 +190,6 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   Future<void> _startSession({String tipo = 'media'}) async {
     HapticFeedback.lightImpact();
     setState(() {
-      _showingHome = false;
-      _historyLoadAttempted = false;
       _sessionSeconds = 0;
       _sessionTime = '00:00';
       _messages.clear();
@@ -208,17 +211,13 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     }
   }
 
-  Future<void> _startRipassoSession() async {
-    await _startSession(tipo: 'ripasso');
-  }
-
   Future<void> _toggleSession() async {
     if (_isSessionActive) {
       HapticFeedback.lightImpact();
       _stopTimer();
       await ref.read(sessionProvider.notifier).suspend();
     } else {
-      await _startSession();
+      await _startSession(tipo: widget.tipo);
     }
   }
 
@@ -299,23 +298,26 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     showEndSessionDialog(context: context, onEnd: _endSessionAndNavigateToRecap);
   }
 
+  /// Gestisce il back button: se sessione attiva chiede conferma, altrimenti torna alla home.
+  Future<bool> _handleBackPress() async {
+    if (_isSessionActive) {
+      // Sospende la sessione e torna alla home
+      _stopTimer();
+      await ref.read(sessionProvider.notifier).suspend();
+      if (mounted) context.go(AppPaths.home);
+      return false; // Gestito manualmente
+    }
+    context.go(AppPaths.home);
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sessionState = ref.watch(sessionProvider);
-    final ripassoTotale = ref.watch(ripassoProvider).totale;
     final session = sessionState.activeSession;
     final isActive = session != null && session.stato == 'attiva';
     final isStreaming = sessionState.isStreaming;
-
-    if (!isActive && _showingHome) _showingHome = false;
-
-    if (!isActive && !isStreaming && _messages.isEmpty &&
-        sessionState.sessionHistory.isEmpty &&
-        !sessionState.isLoadingHistory && !_historyLoadAttempted) {
-      _historyLoadAttempted = true;
-      Future.microtask(() => ref.read(sessionProvider.notifier).loadSessionHistory());
-    }
 
     syncTutorMessages(
       sessionState: sessionState,
@@ -347,89 +349,78 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
 
     if (isStreaming && sessionState.currentTutorText.isNotEmpty) _scrollToBottom();
 
-    final showChatView = _messages.isNotEmpty || isActive || isStreaming;
-
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomStudioAppBar(
-        sessionTime: _sessionTime,
-        isSessionActive: isActive && !_showingHome,
-        onBack: isActive && !_showingHome
-            ? () {
-                setState(() => _showingHome = true);
-                ref.read(sessionProvider.notifier).loadSessionHistory();
-              }
-            : null,
-        onPause: _toggleSession,
-        onSettings: () {
-          HapticFeedback.lightImpact();
-          _showToolMessage('Impostazioni');
-        },
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                SessionHeaderWidget(
-                  isActive: isActive,
-                  showingHome: _showingHome,
-                  currentNode: _currentNode,
-                  isLoading: sessionState.isLoading,
-                  onStart: _startSession,
-                  onResume: () => setState(() => _showingHome = false),
-                ),
-                if (sessionState.isReconnecting)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                    color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.tertiary,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) await _handleBackPress();
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: CustomStudioAppBar(
+          sessionTime: _sessionTime,
+          isSessionActive: isActive,
+          onBack: () => _handleBackPress(),
+          onPause: _toggleSession,
+          onSettings: () {
+            HapticFeedback.lightImpact();
+            _showToolMessage('Impostazioni');
+          },
+        ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  SessionHeaderWidget(
+                    isActive: isActive,
+                    showingHome: false,
+                    currentNode: _currentNode,
+                    isLoading: sessionState.isLoading,
+                    onStart: _startSession,
+                    onResume: null,
+                  ),
+                  if (sessionState.isReconnecting)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                      color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 14, height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.tertiary,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 2.w),
-                        Text(
-                          'Riconnessione in corso...',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.tertiary,
-                            fontWeight: FontWeight.w600,
+                          SizedBox(width: 2.w),
+                          Text(
+                            'Riconnessione in corso...',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.tertiary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      child: ChatViewWidget(
+                        messages: _messages,
+                        isStreaming: isStreaming,
+                        currentTutorText: sessionState.currentTutorText,
+                        scrollController: _scrollController,
+                        onSendMessage: _sendMessage,
+                        onRemoveItem: (item) =>
+                            setState(() => _messages.remove(item)),
+                        onEndSession: _endSessionAndNavigateToRecap,
+                      ),
                     ),
                   ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: !showChatView || _showingHome
-                        ? HomeViewWidget(
-                            showingHome: _showingHome,
-                            isActive: isActive,
-                            sessionHistory: sessionState.sessionHistory,
-                            isLoadingHistory: sessionState.isLoadingHistory,
-                            ripassoTotale: ripassoTotale,
-                            onRipassoTap: _startRipassoSession,
-                          )
-                        : ChatViewWidget(
-                            messages: _messages,
-                            isStreaming: isStreaming,
-                            currentTutorText: sessionState.currentTutorText,
-                            scrollController: _scrollController,
-                            onSendMessage: _sendMessage,
-                            onRemoveItem: (item) => setState(() => _messages.remove(item)),
-                            onEndSession: _endSessionAndNavigateToRecap,
-                          ),
-                  ),
-                ),
-                if (!_showingHome)
                   SessionInputBarWidget(
                     isActive: isActive,
                     isStreaming: isStreaming,
@@ -437,53 +428,54 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                     messageFocusNode: _messageFocusNode,
                     onSend: _sendMessage,
                   ),
-              ],
-            ),
-            if (isActive && !_showingHome)
-              Positioned(
-                right: 4.w,
-                bottom: 12.h,
-                child: MascotteWidget(
-                  theme: theme,
-                  onTap: _toggleToolsTray,
-                  mascotteState: computeMascotteState(
-                    sessionState,
-                    _sync.lastCelebrationTime,
+                ],
+              ),
+              if (isActive)
+                Positioned(
+                  right: 4.w,
+                  bottom: 12.h,
+                  child: MascotteWidget(
+                    theme: theme,
+                    onTap: _toggleToolsTray,
+                    mascotteState: computeMascotteState(
+                      sessionState,
+                      _sync.lastCelebrationTime,
+                    ),
                   ),
                 ),
-              ),
-            if (_isToolsTrayVisible) ...[
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () => setState(() => _isToolsTrayVisible = false),
-                  child: Container(color: Colors.black.withValues(alpha: 0.5)),
+              if (_isToolsTrayVisible) ...[
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isToolsTrayVisible = false),
+                    child: Container(color: Colors.black.withValues(alpha: 0.5)),
+                  ),
                 ),
-              ),
-              Positioned(
-                left: 0, right: 0, bottom: 0,
-                child: ToolsTrayWidget(
-                  theme: theme,
-                  onToolSelected: _handleToolAction,
-                  onClose: () => setState(() => _isToolsTrayVisible = false),
+                Positioned(
+                  left: 0, right: 0, bottom: 0,
+                  child: ToolsTrayWidget(
+                    theme: theme,
+                    onToolSelected: _handleToolAction,
+                    onClose: () => setState(() => _isToolsTrayVisible = false),
+                  ),
                 ),
-              ),
+              ],
+              if (_isTutorPanelVisible) ...[
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isTutorPanelVisible = false),
+                    child: Container(color: Colors.black.withValues(alpha: 0.5)),
+                  ),
+                ),
+                Positioned(
+                  right: 0, top: 0, bottom: 0,
+                  child: TutorPanelWidget(
+                    theme: theme,
+                    onClose: () => setState(() => _isTutorPanelVisible = false),
+                  ),
+                ),
+              ],
             ],
-            if (_isTutorPanelVisible) ...[
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () => setState(() => _isTutorPanelVisible = false),
-                  child: Container(color: Colors.black.withValues(alpha: 0.5)),
-                ),
-              ),
-              Positioned(
-                right: 0, top: 0, bottom: 0,
-                child: TutorPanelWidget(
-                  theme: theme,
-                  onClose: () => setState(() => _isTutorPanelVisible = false),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );

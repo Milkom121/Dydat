@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Custom bottom navigation bar for Dydat AI tutoring app.
-/// Implements the three-tab structure: Studio, Percorso, Profilo.
+/// Bottom navigation bar per Dydat.
+/// Implementa la struttura a 3 tab: Home, I miei studi, Profilo.
 ///
-/// Features:
-/// - Gesture-aware navigation with swipe-to-reveal capability
-/// - Contextual hiding during focused study sessions
-/// - Haptic feedback on tab selection
-/// - Material 3 elevation system
-/// - Amber accent branding
+/// Studio è una route fullscreen separata (fuori dalla shell) —
+/// non appare nella bottom bar.
 class CustomBottomBar extends StatelessWidget {
-  /// Current selected tab index
+  /// Indice tab selezionato corrente
   final int currentIndex;
 
-  /// Callback when a tab is tapped
+  /// Callback al tap su un tab
   final Function(int) onTap;
 
-  /// Whether the bottom bar should be visible
+  /// Se la bottom bar deve essere visibile
   final bool isVisible;
 
   const CustomBottomBar({
@@ -52,7 +48,7 @@ class CustomBottomBar extends StatelessWidget {
           child: BottomNavigationBar(
             currentIndex: currentIndex,
             onTap: (index) {
-              // Provide haptic feedback on tab selection
+              // Feedback aptico al cambio tab
               HapticFeedback.lightImpact();
               onTap(index);
             },
@@ -72,21 +68,22 @@ class CustomBottomBar extends StatelessWidget {
             items: [
               BottomNavigationBarItem(
                 icon: _buildIcon(
-                  icon: Icons.school_outlined,
+                  icon: Icons.home_outlined,
                   isSelected: currentIndex == 0,
                 ),
-                activeIcon: _buildIcon(icon: Icons.school, isSelected: true),
-                label: 'Studio',
-                tooltip: 'Sessione di studio AI',
+                activeIcon: _buildIcon(icon: Icons.home, isSelected: true),
+                label: 'Home',
+                tooltip: 'Home',
               ),
               BottomNavigationBarItem(
                 icon: _buildIcon(
-                  icon: Icons.timeline_outlined,
+                  icon: Icons.menu_book_outlined,
                   isSelected: currentIndex == 1,
                 ),
-                activeIcon: _buildIcon(icon: Icons.timeline, isSelected: true),
-                label: 'Percorso',
-                tooltip: 'Visualizza il tuo percorso di apprendimento',
+                activeIcon:
+                    _buildIcon(icon: Icons.menu_book, isSelected: true),
+                label: 'I miei studi',
+                tooltip: 'I miei percorsi di apprendimento',
               ),
               BottomNavigationBarItem(
                 icon: _buildIcon(
@@ -104,7 +101,7 @@ class CustomBottomBar extends StatelessWidget {
     );
   }
 
-  /// Builds an icon with consistent sizing and touch target
+  /// Icona con sizing e touch target coerenti
   Widget _buildIcon({required IconData icon, required bool isSelected}) {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -112,4 +109,3 @@ class CustomBottomBar extends StatelessWidget {
     );
   }
 }
-

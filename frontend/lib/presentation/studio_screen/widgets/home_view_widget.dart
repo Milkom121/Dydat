@@ -108,7 +108,7 @@ class HomeViewWidget extends StatelessWidget {
           ),
           SizedBox(width: 2.w),
           FilledButton.tonal(
-            onPressed: onRipassoTap ?? () => context.go('/studio'),
+            onPressed: onRipassoTap ?? () => context.push('/studio?tipo=ripasso'),
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.tertiary,
               foregroundColor: theme.colorScheme.onTertiary,

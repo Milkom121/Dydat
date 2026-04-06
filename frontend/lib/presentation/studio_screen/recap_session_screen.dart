@@ -155,7 +155,7 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
             ),
             SizedBox(height: 3.h),
             ElevatedButton(
-              onPressed: () => context.go(AppPaths.studio),
+              onPressed: () => context.go(AppPaths.home),
               child: Text(
                 'Torna alla home',
                 style: theme.textTheme.labelLarge?.copyWith(
@@ -277,7 +277,7 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
                 HapticFeedback.lightImpact();
                 // Clear session state before going back
                 ref.read(sessionProvider.notifier).clear();
-                context.go(AppPaths.studio);
+                context.go(AppPaths.home);
               },
               icon: CustomIconWidget(
                 iconName: 'home',

@@ -59,7 +59,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
         tema: tema,
         onStudyPressed: () {
           Navigator.pop(context);
-          context.go('/studio');
+          context.push('/studio');
         },
       ),
     );
@@ -167,7 +167,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     if (topics.isEmpty) {
       return EmptyStateWidget(
         onStartLearning: () {
-          context.go('/studio');
+          context.push('/studio');
         },
       );
     }
