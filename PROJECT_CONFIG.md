@@ -10,8 +10,9 @@
 ## Date
 
 - **Data creazione**: 2026-02-18
-- **Data ultimo aggiornamento**: 2026-04-05
-- **Data ultima sessione**: 2026-02-27 (S21 — B25)
+- **Data ultimo aggiornamento**: 2026-04-06
+- **Data ultima sessione**: 2026-04-06 (S30 — B33, Fase 7 completata)
+- **Prossima sessione**: S31 — B34 (Fase 8, Percorso Unificato: Mappa + Zoom)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

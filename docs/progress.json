@@ -1,8 +1,8 @@
 {
-  "current_phase": "7",
+  "current_phase": "8",
   "current_block": "B34",
-  "total_blocks_run": 46,
+  "total_blocks_run": 47,
   "status": "CONTINUE",
-  "last_run": "2026-04-06T02:25:16Z",
-  "last_summary": "B33 completato (S30). StudioTransitionOverlay (1150ms), SessionGoalPicker, recap narrativo tutor, notifica pausa obiettivo. 47 nuovi test, 343 totale, analyze 0."
+  "last_run": "2026-04-06T02:27:16Z",
+  "last_summary": "Fase 7 chiusa con B33 (S30). Handoff predisposto per B34 — Percorso Unificato: Mappa + Zoom. Test manuali B33 rimandati, runner autorizzato a procedere su develop."
 }
