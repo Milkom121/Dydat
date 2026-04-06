@@ -1,35 +1,31 @@
 STATUS: CONTINUE
-PHASE: 8
-BLOCK: B35
-SUMMARY: B34 completato (S31). Riscritta LearningPathScreen da lista card a mappa visiva nodi con vista lineare, zoom grafo, ricerca argomento e tap nodo con placeholder quaderno. 14 nuovi test, 357 totale frontend, analyze 0.
-NEXT: B35 - Quaderno per Nodo (Fase 8)
-DECISIONS_NEEDED: Badge Gia studiato in percorso non implementato - API non espone dato cross-percorso.
-FILES_MODIFIED: learning_path_screen.dart (riscrittura), linear_path_map.dart (nuovo), graph_overview.dart (nuovo), node_detail_bottom_sheet.dart (nuovo), 4 test nuovi
-TESTS: PASS (341 backend, 357 frontend, flutter analyze 0)
-VERIFICATION: flutter analyze 0, flutter test 357 verdi (da 343 baseline +14), commit b2cacaf su develop
+PHASE: 9
+BLOCK: B37
+SUMMARY: B36 completato (S33). Creato surface_decorations.dart con 6 metodi factory (backgroundGradient, card, glowCard, section, glowCircle, depthShadows). Token surfaceInteractive aggiunto al tema. Applicato gradienti, glow ambra e profondita a 4 schermate (Home, I miei studi, Profilo, Studio). Zero colori hardcoded. 10 nuovi test, 389 totale frontend, analyze 0.
+NEXT: B37 - Beat Emotivi + Transizioni (Fase 9)
+DECISIONS_NEEDED: nessuna
+FILES_MODIFIED: surface_decorations.dart (nuovo), app_theme.dart, home_screen.dart, streak_card.dart, ripasso_section.dart, mini_percorso_widget.dart, welcome_header.dart, learning_path_screen.dart, linear_path_map.dart, profile_screen.dart, session_header_widget.dart, exercise_card_widget.dart, formula_card_widget.dart, backtrack_card_widget.dart, tools_tray_widget.dart, surface_decorations_test.dart (nuovo)
+TESTS: PASS (389 frontend, flutter analyze 0)
+VERIFICATION: flutter analyze 0, flutter test 389 verdi (da 379 baseline +10 nuovi), commit 8a2027d su develop
 
 ---
 
 ## Contesto dettagliato
 
 ### Cosa e stato fatto
-- LearningPathScreen riscritta: da lista card a mappa visiva con due viste
-- LinearPathMap: mappa lineare verticale con cerchi nodo collegati da linee
-- GraphOverview: vista grafo con InteractiveViewer pan+zoom, CustomPainter
-- NodeDetailBottomSheet: dettaglio nodo con placeholder Quaderno B35
-- Ricerca argomento: filtro client-side case-insensitive con highlight
-- Toggle vista: IconButton in AppBar per alternare lineare/grafo
+- Creato surface_decorations.dart con classe utility DydatSurface (6 metodi factory)
+- Token surfaceInteractive aggiunto ad app_theme.dart
+- Applicato a Home, I miei studi, Profilo, Studio
 
-### Prossimo passo - B35: Quaderno per Nodo
-1. Backend: nuovo endpoint GET /nodi/{id}/quaderno
-2. Frontend: NodoQuadernoScreen con sezioni Appunti, Esercizi, Formule
-3. Navigazione: da NodeDetailBottomSheet tap Quaderno apre nuova schermata
+### Prossimo passo - B37: Beat Emotivi + Transizioni
+1. Enum BeatState (10 stati)
+2. BeatProvider (Riverpod) che calcola beat da stato sessione
+3. BeatOverlay: cambio atmosfera sottile nel canvas
+4. Transizioni animate < 500ms
+5. Collegamento mascotte a beat
 
 ### File da leggere
-1. CLAUDE.md
-2. PROJECT_CONFIG.md
-3. ROADMAP.md
-4. .claude/handoff.md
-5. docs/dydat_api_reference.md
-6. frontend/lib/presentation/learning_path_screen/
-7. backend/app/api/ e backend/app/models/
+1. CLAUDE.md, PROJECT_CONFIG.md, ROADMAP.md, .claude/handoff.md
+2. docs/dydat_direzione_visiva_v2.md (sezione 4 Mappa Emotiva)
+3. frontend/lib/theme/surface_decorations.dart
+4. frontend/lib/presentation/studio_screen/widgets/mascotte_widget.dart

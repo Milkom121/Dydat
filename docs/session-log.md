@@ -163,3 +163,8 @@
 - **Status**: CONTINUE
 - **Summary**: B34 completato (S31). Riscritta LearningPathScreen da lista card a mappa visiva nodi con vista lineare, zoom grafo, ricerca argomento e tap nodo con placeholder quaderno. 14 nuovi test, 357 totale frontend, analyze 0.
 ---
+
+## 2026-04-06 19:46:35 — Blocco F8BB35
+- **Status**: CONTINUE
+- **Summary**: B34 completato (S31). Riscritta LearningPathScreen da lista card a mappa visiva nodi con vista lineare, zoom grafo, ricerca argomento e tap nodo con placeholder quaderno. 14 nuovi test, 357 totale frontend, analyze 0.
+---
