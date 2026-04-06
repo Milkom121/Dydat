@@ -142,7 +142,7 @@ check_git_branch() {
     local b; b="$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null)"
     [[ "$b" == "main" || "$b" == "master" ]] && die "Sei su '$b'! Lavora su 'develop' o branch di blocco."
     log_verbose "Branch: ${GREEN}$b${NC}"
-    local d; d="$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null)"; [[ -n "$d" ]] && log "${YELLOW}Modifiche non committate${NC}"
+    local d; d="$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null)"; if [[ -n "$d" ]]; then log "${YELLOW}Modifiche non committate${NC}"; fi
 }
 
 build_prompt() {
