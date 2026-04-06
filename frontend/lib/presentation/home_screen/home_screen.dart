@@ -4,14 +4,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
+import '../../models/sessione.dart';
+import '../../providers/path_provider.dart';
 import '../../providers/ripasso_provider.dart';
 import '../../providers/session_provider.dart';
+import '../../providers/stats_provider.dart';
 import '../../routes/app_router.dart';
 import '../../widgets/custom_icon_widget.dart';
 import '../studio_screen/widgets/session_history_widget.dart';
+import 'widgets/mini_percorso_widget.dart';
+import 'widgets/ripasso_section.dart';
+import 'widgets/streak_card.dart';
+import 'widgets/welcome_header.dart';
 
 /// Schermata Home — Tab 0 della navigazione principale.
-/// Mostra benvenuto, sezione ripasso FSRS, storico sessioni e CTA per studiare.
+/// Mostra benvenuto contestuale, mini-percorso, streak, ripasso FSRS,
+/// storico sessioni e CTA per studiare.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,7 +34,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Future.microtask(() {
       ref.read(sessionProvider.notifier).loadSessionHistory();
       ref.read(ripassoProvider.notifier).carica();
+      ref.read(statsProvider.notifier).load();
+      _loadPercorso();
     });
+  }
+
+  /// Carica i percorsi e la mappa del primo percorso attivo.
+  Future<void> _loadPercorso() async {
+    final pathNotifier = ref.read(pathProvider.notifier);
+    await pathNotifier.loadPaths();
+    final paths = ref.read(pathProvider).paths;
+    if (paths.isNotEmpty) {
+      final attivo = paths.firstWhere(
+        (p) => p.stato == 'attivo',
+        orElse: () => paths.first,
+      );
+      await pathNotifier.loadMap(attivo.id);
+    }
   }
 
   void _avviaStudio() {
@@ -43,7 +67,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sessionState = ref.watch(sessionProvider);
-    final ripassoTotale = ref.watch(ripassoProvider).totale;
+    final ripassoState = ref.watch(ripassoProvider);
+    final statsState = ref.watch(statsProvider);
+    final pathState = ref.watch(pathProvider);
+
+    final hasActiveSession = sessionState.activeSession?.stato == 'attiva';
+    final lastNodeName = _ultimoNodoFormattato(sessionState.sessionHistory);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -70,14 +99,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 3.h),
-                _buildBenvenuto(theme, sessionState),
+
+                // 1. Saluto contestuale con ritorno intelligente
+                WelcomeHeader(
+                  sessionHistory: sessionState.sessionHistory,
+                  hasActiveSession: hasActiveSession,
+                  lastNodeName: lastNodeName,
+                ),
+
                 SizedBox(height: 3.h),
-                _buildBottoneStudio(theme),
-                if (ripassoTotale > 0) ...[
-                  SizedBox(height: 2.h),
-                  _buildSezioneRipasso(theme, ripassoTotale),
+
+                // 2. Bottone CTA principale
+                _buildBottoneStudio(theme, hasActiveSession),
+
+                // 3. Streak e statistiche (da backend)
+                if (statsState.stats != null) ...[
+                  SizedBox(height: 2.5.h),
+                  StreakCard(stats: statsState.stats!),
                 ],
-                SizedBox(height: 4.h),
+
+                // 4. Mini-percorso visivo (mappa nodi con posizione corrente)
+                if (pathState.currentMap != null &&
+                    pathState.currentMap!.nodi.isNotEmpty) ...[
+                  SizedBox(height: 2.5.h),
+                  MiniPercorsoWidget(mappa: pathState.currentMap!),
+                ],
+
+                // 5. Sezione ripasso FSRS (migliorata con lista nodi)
+                if (ripassoState.nodi.isNotEmpty) ...[
+                  SizedBox(height: 2.5.h),
+                  RipassoSection(
+                    nodi: ripassoState.nodi,
+                    onRipassoTap: _avviaRipasso,
+                  ),
+                ],
+
+                // 6. Storico sessioni
+                SizedBox(height: 3.h),
                 SessionHistoryWidget(
                   sessions: sessionState.sessionHistory,
                   isLoading: sessionState.isLoadingHistory,
@@ -94,47 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildBenvenuto(ThemeData theme, SessionScreenState sessionState) {
-    final hasHistory = sessionState.sessionHistory.isNotEmpty;
-    final hasActiveSession = sessionState.activeSession?.stato == 'attiva';
-
-    String titolo;
-    String sottotitolo;
-
-    if (hasActiveSession) {
-      titolo = 'Sessione in corso';
-      sottotitolo = 'Continua da dove eri rimasto';
-    } else if (hasHistory) {
-      titolo = 'Bentornato!';
-      sottotitolo = 'Pronto a continuare il tuo percorso?';
-    } else {
-      titolo = 'Benvenuto su Dydat!';
-      sottotitolo = 'Inizia il tuo percorso di apprendimento';
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          titolo,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        SizedBox(height: 0.5.h),
-        Text(
-          sottotitolo,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottoneStudio(ThemeData theme) {
-    final hasActiveSession =
-        ref.read(sessionProvider).activeSession?.stato == 'attiva';
+  Widget _buildBottoneStudio(ThemeData theme, bool hasActiveSession) {
     final label =
         hasActiveSession ? 'Riprendi la sessione' : 'Riprendi a studiare';
 
@@ -155,54 +173,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildSezioneRipasso(ThemeData theme, int totale) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          CustomIconWidget(
-            iconName: 'replay',
-            color: theme.colorScheme.onTertiaryContainer,
-            size: 24,
-          ),
-          SizedBox(width: 3.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$totale ${totale == 1 ? 'nodo' : 'nodi'} da ripassare',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Rinforza la tua memoria con una sessione breve',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer
-                        .withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 2.w),
-          FilledButton.tonal(
-            onPressed: _avviaRipasso,
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.tertiary,
-              foregroundColor: theme.colorScheme.onTertiary,
-              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-            ),
-            child: const Text('Vai'),
-          ),
-        ],
-      ),
-    );
+  String? _ultimoNodoFormattato(List<SessioneListItem> history) {
+    if (history.isEmpty) return null;
+    final last = history.first;
+    return homeFormatNodeName(last.nodoFocaleNome ?? last.nodoFocaleId);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Helper puri — top-level per facilitare i test
+// ---------------------------------------------------------------------------
+
+/// Formatta un nodo ID/nome in stringa leggibile.
+///
+/// "mat_MatematicaC3_Algebra1_numeri_relativi" → "Numeri relativi"
+String? homeFormatNodeName(String? raw) {
+  if (raw == null) return null;
+  if (!raw.contains('_')) return raw;
+  final parts = raw.split('_');
+  int start = 0;
+  for (int i = 0; i < parts.length; i++) {
+    if (parts[i].isNotEmpty &&
+        parts[i] == parts[i].toLowerCase() &&
+        !parts[i].startsWith('mat')) {
+      start = i;
+      break;
+    }
+  }
+  if (start == 0 && parts.length > 1) {
+    start = parts.length > 3 ? 3 : 1;
+  }
+  final name = parts.sublist(start).join(' ');
+  if (name.isEmpty) return raw;
+  return name[0].toUpperCase() + name.substring(1);
+}
+
+/// Giorni trascorsi dall'ultima sessione. Null se nessuna sessione.
+int? homeGiorniDaUltimaSessione(List<SessioneListItem> history) {
+  if (history.isEmpty) return null;
+  final createdAt = history.first.createdAt;
+  if (createdAt == null) return null;
+  try {
+    final dt = DateTime.parse(createdAt);
+    return DateTime.now().difference(dt).inDays;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Calcola il numero di giorni consecutivi di studio (streak).
+/// Conta a ritroso da oggi (o ieri se oggi non c'e sessione).
+int homeCalcolaStreak(List<SessioneListItem> history) {
+  if (history.isEmpty) return 0;
+
+  final oggi = DateTime.now();
+  final oggiDate = DateTime(oggi.year, oggi.month, oggi.day);
+
+  // Raccoglie le date normalizzate con almeno una sessione
+  final dateConSessioni = <DateTime>{};
+  for (final s in history) {
+    if (s.createdAt != null) {
+      try {
+        final dt = DateTime.parse(s.createdAt!);
+        dateConSessioni.add(DateTime(dt.year, dt.month, dt.day));
+      } catch (_) {}
+    }
+  }
+
+  if (dateConSessioni.isEmpty) return 0;
+
+  // Parte da oggi, altrimenti da ieri
+  DateTime start = oggiDate;
+  if (!dateConSessioni.contains(start)) {
+    start = start.subtract(const Duration(days: 1));
+    if (!dateConSessioni.contains(start)) return 0;
+  }
+
+  // Conta a ritroso
+  int streak = 0;
+  DateTime check = start;
+  while (dateConSessioni.contains(check)) {
+    streak++;
+    check = check.subtract(const Duration(days: 1));
+  }
+
+  return streak;
 }
