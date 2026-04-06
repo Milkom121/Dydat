@@ -128,3 +128,23 @@
 - **Status**: PHASE_COMPLETE
 - **Summary**: B33 completato (S30). StudioTransitionOverlay (1150ms), SessionGoalPicker, recap narrativo tutor, notifica pausa obiettivo. 47 nuovi test, 343 totale, analyze 0.
 ---
+
+## 2026-04-06 17:31:28 — Blocco F8BB34
+- **Status**: FAILED
+- **Summary**: Errore o timeout
+---
+
+## 2026-04-06 17:38:15 — Blocco F8BB34
+- **Status**: FAILED
+- **Summary**: Errore o timeout
+---
+
+## 2026-04-06 19:12:41 — Blocco F8BB34
+- **Status**: FAILED
+- **Summary**: Errore o timeout
+---
+
+## 2026-04-06 — Nota: fallimenti F8BB34 precedenti
+- **Status**: INFO
+- **Summary**: I 3 tentativi falliti di F8BB34 (17:31, 17:38, 19:12) sono dovuti a token OAuth Claude Code scaduto (HTTP 401). Nessun codice toccato, develop pulito. Dopo rilogin, progress.json riportato a CONTINUE per permettere rilancio del runner su B34.
+---
