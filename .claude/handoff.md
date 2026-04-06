@@ -1,63 +1,47 @@
 STATUS: CONTINUE
-PHASE: 6
-BLOCK: B30
-SUMMARY: Fase 5 (FSRS) completata in S26. UX Redesign pianificato: concept document v1.1 approvato dal fondatore, ROADMAP aggiornata con Fasi 6-14 (Fase A UX in 6 sotto-fasi + Feynman + Visualizzazioni). Pronto per primo blocco implementativo.
-NEXT: B30 — Nuova Navigazione: 3 Tab + Studio Modale
+PHASE: 7
+BLOCK: B32
+SUMMARY: B30 (Nuova Navigazione: 3 Tab + Studio Modale) completato in S27. B31 (Home Calda con Ritorno Intelligente) completato in S28. 4 sub-widget in home_screen/widgets/: WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection. 41 nuovi test. 274 frontend verdi, analyze 0.
+NEXT: B32 — Modello Ibrido: Esercizi Fullscreen
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: ROADMAP.md, docs/dydat-ux-redesign-concept-v1.1.docx, discovery-notes.md
-TESTS: PASS (341 backend, 228 frontend, flutter analyze 0)
+FILES_MODIFIED: home_screen.dart, home_screen/widgets/ (4 file), app_router.dart, custom_bottom_bar.dart, studio_screen.dart
+TESTS: PASS (341 backend, 274 frontend, flutter analyze 0)
+VERIFICATION: 274 test verdi, flutter analyze 0 issues, build OK.
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto
-- Discovery UX completa: 19 decisioni prese col fondatore su identita, navigazione, sessione, gamification, notifiche, audio, onboarding
-- Concept document v1.1 prodotto e approvato (docs/dydat-ux-redesign-concept-v1.1.docx)
-- ROADMAP aggiornata: vecchie Fasi 6-7 sostituite con piano UX Redesign strutturato in sotto-fasi (A.1-A.6) + Feynman spostato dopo il redesign
-- Note di discovery complete in discovery-notes.md (19 decisioni documentate)
+### Cosa e stato fatto (Fase 6)
+- B30 (S27): Ristrutturata navigazione - 3 tab (Home/I miei studi/Profilo) + Studio fullscreen modale fuori dalla shell.
+- B31 (S28): Home arricchita con 4 sub-widget: WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection.
 
 ### Stato del progetto
-- Backend: 341 test verdi, stabile, NON va toccato in B30
-- Frontend: 228 test verdi, analyze 0
-- Ultimo blocco completato: B29 (Sessioni Ripasso Dedicate) in S26
-- Docker: funziona da backend/
+- Backend: 341 test verdi, stabile, NON va toccato in B32
+- Frontend: 274 test verdi, analyze 0
+- Branch: develop
 
-### Prossimo passo concreto — B30
+### Navigazione corrente
+- Shell: 3 tab (Home /home, I miei studi /studi, Profilo /profilo)
+- Studio: route fullscreen /studio?tipo=media|ripasso FUORI dalla shell
+- context.push('/studio') da tab, context.go('/home') per tornare
 
-Ristrutturare la navigazione dell'app da 3 tab (Studio/Percorso/Profilo) a 3 tab (Home/I miei studi/Profilo) + Studio come route fullscreen modale.
+### Prossimo passo concreto — B32
 
-**ATTENZIONE**: Questo blocco e SOLO frontend. Non toccare il backend.
+Quando il tutor propone un esercizio (proponi_esercizio), l'ExerciseCardWidget esce dal feed e si prende lo schermo.
 
-Operazioni concrete:
-1. Creare `presentation/home_screen/home_screen.dart` — nuovo Tab 1
-   - Migrare contenuto da `presentation/studio_screen/widgets/home_view_widget.dart`
-   - Per ora contenuto base: benvenuto, bottone "Riprendi a studiare", sezione ripasso FSRS
-2. In `routes/app_router.dart`:
-   - Tab 0: '/home' -> HomeScreen (nuovo)
-   - Tab 1: '/studi' -> LearningPathScreen (rinominato)
-   - Tab 2: '/profilo' -> ProfileScreen (invariato)
-   - Route '/studio' FUORI dalla shell (fullscreen, no bottom bar)
-   - Route '/studio' riceve parametri (tipo sessione, nodo_id opzionale)
-3. In `widgets/custom_bottom_bar.dart`:
-   - Tab 1: "Home" con icona home
-   - Tab 2: "I miei studi" con icona book/map
-   - Tab 3: "Profilo" (invariato)
-4. In `studio_screen.dart`:
-   - Rimuovere la logica home (showChat toggle) — la home ora e un screen separato
-   - Lo StudioScreen e SOLO la sessione di studio attiva
-   - Gestire parametri in ingresso (tipo sessione, nodo_id)
-5. Test: navigazione funziona, sessione si apre e chiude, ritorno alla home
+1. ExerciseFullscreenView — layout dedicato (no chat dietro), transizione slide up/fade
+2. Completato esercizio: record compatto rientra nel feed
+3. Stessa logica per FormulaCardWidget (mostra_formula) e BacktrackCardWidget (suggerisci_backtrack)
+4. Feed conversazionale resta scrollabile per le spiegazioni
+5. Gestione stato in session_provider.dart
 
-**Gate di uscita B30:** 3 tab funzionanti, Studio si apre come fullscreen modale, tab spariscono in sessione, navigazione Home->Studio->Home funziona, flutter analyze 0, flutter test verdi
+Gate di uscita: esercizi/formule/backtrack in fullscreen, record compatto nel feed, transizioni fluide, analyze 0, test verdi
 
 ### File da leggere per la prossima sessione
-1. CLAUDE.md
-2. PROJECT_CONFIG.md
-3. ROADMAP.md (aggiornata — leggere Fase 6 / B30)
-4. .claude/handoff.md (questo file)
-5. docs/dydat-ux-redesign-concept-v1.1.docx (sezioni 3, 6 — struttura e navigazione)
-6. frontend/lib/routes/app_router.dart (navigazione attuale)
-7. frontend/lib/widgets/custom_bottom_bar.dart (bottom bar attuale)
-8. frontend/lib/presentation/studio_screen/studio_screen.dart (studio attuale — capire cosa separare)
-9. frontend/lib/presentation/studio_screen/widgets/home_view_widget.dart (contenuto da migrare alla nuova HomeScreen)
+1. frontend/lib/presentation/studio_screen/studio_screen.dart
+2. frontend/lib/presentation/studio_screen/widgets/chat_view_widget.dart
+3. frontend/lib/presentation/studio_screen/widgets/exercise_card_widget.dart
+4. frontend/lib/presentation/studio_screen/widgets/formula_card_widget.dart
+5. frontend/lib/presentation/studio_screen/widgets/backtrack_card_widget.dart
+6. frontend/lib/providers/session_provider.dart

@@ -83,3 +83,13 @@
 - **Status**: CONTINUE
 - **Summary**: B31 — Home Calda con Ritorno Intelligente. 4 sub-widget estratti (WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection). statsProvider per streak reale. Mini-percorso visivo con cerchi/connessioni. Ripasso con chip nomi nodi. Saluto contestuale + gestione assenza >7 giorni. 274 frontend verdi, analyze 0.
 ---
+
+## 2026-04-06 04:01:33 — Blocco F6BB30
+- **Status**: CONTINUE
+- **Summary**: Fase 5 (FSRS) completata in S26. UX Redesign pianificato: concept document v1.1 approvato dal fondatore, ROADMAP aggiornata con Fasi 6-14 (Fase A UX in 6 sotto-fasi + Feynman + Visualizzazioni). Pronto per primo blocco implementativo.
+---
+
+## 2026-04-06 — Sessioni S27-S28 (riepilogo)
+- **Status**: CONTINUE
+- **Summary**: B30 completato (S27) — Nuova navigazione 3 tab + Studio modale fullscreen. B31 completato (S28) — Home Calda con 4 sub-widget (WelcomeHeader, MiniPercorsoWidget, StreakCard, RipassoSection), 41 nuovi test. 274 frontend verdi, analyze 0.
+---
