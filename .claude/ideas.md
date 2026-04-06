@@ -3,6 +3,22 @@
 Idee e intuizioni emerse durante le sessioni di sviluppo che non fanno parte del blocco corrente.
 Ogni voce ha data e contesto. Verranno riprese in fase di pianificazione.
 
+## 2026-04-06 - Quaderno enciclopedico (UX strategica)
+- **Contesto**: Test manuale post-Fase 9. Villa osserva che il quaderno per nodo (B35) dovrebbe essere "fruibile anche senza averlo studiato" — una scheda enciclopedica + log personale, non solo log.
+- **Stato DB**: la tabella `nodi` contiene gia tutti i dati intrinseci (definizioni_formali, formule_proprieta, errori_comuni, esempi_applicazione, parole_chiave) come JSONB, importati da data/Algebra1 + Algebra2. L'endpoint B35 li ignora.
+- **Proposta blocco**: **B35.5 "Quaderno enciclopedico"** — estendere endpoint + frontend per renderizzare scheda intrinseca del nodo sopra al log personale. Formule in LaTeX.
+- **Impatto**: trasforma Dydat da "tutor conversazionale" a "tutor + libro di testo personale". Dato gia in DB, serve solo renderlo.
+- **Priorita**: alta. Rende senso immediato al tab "I miei studi" e al Quaderno anche per utente al primo accesso.
+- **File detail**: vedi `.claude/test-findings.md` UX-02.
+
+## 2026-04-06 - Primo turno caldo di sessione (UX strategica)
+- **Contesto**: Test manuale post-Fase 9. Villa osserva che il primo turno del tutor dopo onboarding e "troppo immediato" — parte direttamente con esempio + definizione + domande, senza ponte con l'onboarding ne presentazione del nodo.
+- **Cosa manca**: continuita con info raccolte nell'onboarding, presentazione del nodo e dei tempi, warm-up esplorativo prima di esporre, ponte conversazionale caldo, riconoscimento del ritmo (Veloce/Normale/Approfondita) scelto.
+- **Proposta**: blocco dedicato **B33.5 "Primo turno caldo"** oppure integrazione nel redesign onboarding di Fase 10 B39. Approccio: primo turno parzialmente deterministico (template "accoglienza + presentazione nodo + proposta") prima di lasciare il timone all'LLM + iniezione esplicita del profilo utente nel contesto.
+- **Priorita**: alta. Impatta la prima impressione dell'utente e il senso di "tutor che ti conosce".
+- **File detail**: vedi `.claude/test-findings.md` UX-01.
+
+
 ## 2026-02-19 - Mascotte "Creatura di Luce"
 - **Contesto**: Discussione design mascotte durante Loop 2
 - **Idea**: Mascotte animata tipo creatura di luce che reagisce allo stato dello studente. Richiede asset design (SVG/Rive). Attualmente placeholder circolare con animazioni stato-driven.
