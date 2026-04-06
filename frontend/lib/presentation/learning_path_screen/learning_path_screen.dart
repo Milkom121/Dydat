@@ -3,17 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
 
+import '../../models/percorso.dart';
 import '../../models/tema.dart';
 import '../../providers/path_provider.dart';
 import '../../providers/ripasso_provider.dart';
-import '../../widgets/custom_app_bar.dart';
+import '../../widgets/custom_icon_widget.dart';
 import './widgets/empty_state_widget.dart';
-import './widgets/tema_card_widget.dart';
-import './widgets/tema_detail_bottom_sheet.dart';
+import './widgets/graph_overview.dart';
+import './widgets/linear_path_map.dart';
+import './widgets/node_detail_bottom_sheet.dart';
 
-/// Learning Path Screen - Visualizes personalized STEM learning progression
-/// Tab 1 in bottom navigation with pull-to-refresh capability.
-/// Uses path_provider to load real data from the API.
+/// "I miei studi" — Mappa del percorso con vista lineare e grafo.
+/// Riscritta in B34: da lista card a mappa visiva nodi.
 class LearningPathScreen extends ConsumerStatefulWidget {
   const LearningPathScreen({super.key});
 
@@ -23,116 +24,196 @@ class LearningPathScreen extends ConsumerStatefulWidget {
 }
 
 class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
-  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isGraphView = false;
 
   @override
   void initState() {
     super.initState();
-    // Carica temi e nodi SR all'avvio
-    Future.microtask(() {
-      ref.read(pathProvider.notifier).loadTopics();
-      ref.read(ripassoProvider.notifier).carica();
-    });
+    // Carica percorsi, mappa e nodi SR
+    Future.microtask(() => _loadData());
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  /// Handle pull-to-refresh — ricarica temi e nodi SR
-  Future<void> _handleRefresh() async {
+  Future<void> _loadData() async {
+    final notifier = ref.read(pathProvider.notifier);
+    // Carica percorsi e temi in parallelo
     await Future.wait([
-      ref.read(pathProvider.notifier).loadTopics(),
+      notifier.loadPaths(),
+      notifier.loadTopics(),
       ref.read(ripassoProvider.notifier).carica(),
     ]);
+    // Carica la mappa del percorso attivo
+    final paths = ref.read(pathProvider).paths;
+    if (paths.isNotEmpty) {
+      final activePath = paths.firstWhere(
+        (p) => p.stato == 'attivo',
+        orElse: () => paths.first,
+      );
+      await notifier.loadMap(activePath.id);
+    }
   }
 
-  /// Show tema detail bottom sheet
-  void _showTemaDetail(Tema tema) {
+  Future<void> _handleRefresh() async {
+    await _loadData();
+  }
+
+  void _showNodeDetail(NodoMappa nodo) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TemaDetailBottomSheet(
-        tema: tema,
-        onStudyPressed: () {
-          Navigator.pop(context);
-          context.push('/studio');
-        },
-      ),
+      builder: (context) => NodeDetailBottomSheet(nodo: nodo),
     );
   }
 
-  /// Calculate overall progress from all topics
-  double _calculateOverallProgress(List<Tema> topics) {
-    if (topics.isEmpty) return 0.0;
-    int totalNodi = 0;
-    int completedNodi = 0;
-    for (final t in topics) {
-      totalNodi += t.nodiTotali;
-      completedNodi += t.nodiCompletati;
-    }
-    if (totalNodi == 0) return 0.0;
-    return completedNodi / totalNodi;
+  /// IDs dei nodi che matchano la ricerca (vuoto = mostra tutti)
+  Set<String> _getHighlightedNodeIds(List<NodoMappa> nodi) {
+    if (_searchQuery.isEmpty) return {};
+    final query = _searchQuery.toLowerCase();
+    return nodi
+        .where((n) => n.nome.toLowerCase().contains(query))
+        .map((n) => n.id)
+        .toSet();
   }
 
-  /// Find the index of the first "current" (in-progress) tema
-  int _findCurrentTemaIndex(List<Tema> topics) {
-    for (int i = 0; i < topics.length; i++) {
-      if (!topics[i].completato && topics[i].nodiCompletati > 0) {
-        return i;
-      }
-    }
-    return -1;
+  /// Set di nodo_id da ripassare
+  Set<String> _getNodiDaRipassare() {
+    final ripassoState = ref.read(ripassoProvider);
+    return ripassoState.nodi.map((n) => n.nodoId).toSet();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pathState = ref.watch(pathProvider);
-    final ripassoState = ref.watch(ripassoProvider);
+    final nodi = pathState.currentMap?.nodi ?? [];
     final topics = pathState.topics;
     final isLoading = pathState.isLoading;
     final error = pathState.error;
-    final overallProgress = _calculateOverallProgress(topics);
-    final currentTemaIndex = _findCurrentTemaIndex(topics);
-    final ripassoPerTema = ripassoState.conteggioPerTema;
+
+    // Osserva ripasso per rebuild quando cambia
+    ref.watch(ripassoProvider);
+    final nodiDaRipassare = _getNodiDaRipassare();
+    final highlightedIds = _getHighlightedNodeIds(nodi);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomPercorsoAppBar(
-        progress: overallProgress,
-        onFilter: () {},
-        activeFilters: 0,
-      ),
+      appBar: _buildAppBar(theme, nodi.length),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
-          child: _buildBody(
-            theme,
-            topics,
-            isLoading,
-            error,
-            currentTemaIndex,
-            ripassoPerTema,
+        child: Column(
+          children: [
+            // Barra di ricerca
+            _buildSearchBar(theme),
+            // Contenuto principale
+            Expanded(
+              child: _buildBody(
+                theme,
+                nodi,
+                topics,
+                isLoading,
+                error,
+                nodiDaRipassare,
+                highlightedIds,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(ThemeData theme, int nodeCount) {
+    return AppBar(
+      title: Row(
+        children: [
+          Icon(Icons.map_outlined, size: 24, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text('I miei studi', style: theme.textTheme.titleLarge),
+        ],
+      ),
+      actions: [
+        // Toggle vista lineare / grafo
+        IconButton(
+          icon: CustomIconWidget(
+            iconName: _isGraphView ? 'view_list' : 'account_tree',
+            color: theme.colorScheme.onSurface,
+            size: 24,
+          ),
+          tooltip: _isGraphView ? 'Vista lineare' : 'Vista grafo',
+          onPressed: () {
+            setState(() => _isGraphView = !_isGraphView);
+          },
+        ),
+      ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+    );
+  }
+
+  Widget _buildSearchBar(ThemeData theme) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Cerca argomento...',
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 3.w,
+            vertical: 1.2.h,
           ),
         ),
+        style: theme.textTheme.bodyMedium,
+        onChanged: (value) {
+          setState(() => _searchQuery = value);
+        },
       ),
     );
   }
 
   Widget _buildBody(
     ThemeData theme,
+    List<NodoMappa> nodi,
     List<Tema> topics,
     bool isLoading,
     String? error,
-    int currentTemaIndex,
-    Map<String, int> ripassoPerTema,
+    Set<String> nodiDaRipassare,
+    Set<String> highlightedIds,
   ) {
-    // Initial loading state
-    if (isLoading && topics.isEmpty) {
+    // Caricamento iniziale
+    if (isLoading && nodi.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
           color: theme.colorScheme.primary,
@@ -140,8 +221,8 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
       );
     }
 
-    // Error state with no data
-    if (error != null && topics.isEmpty) {
+    // Errore senza dati
+    if (error != null && nodi.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -155,57 +236,64 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
             ),
             SizedBox(height: 2.h),
             ElevatedButton(
-              onPressed: () => ref.read(pathProvider.notifier).loadTopics(),
-              child: Text('Riprova'),
+              onPressed: () => _loadData(),
+              child: const Text('Riprova'),
             ),
           ],
         ),
       );
     }
 
-    // Empty state
-    if (topics.isEmpty) {
+    // Stato vuoto (nessun percorso/nodo)
+    if (nodi.isEmpty) {
       return EmptyStateWidget(
-        onStartLearning: () {
-          context.push('/studio');
-        },
+        onStartLearning: () => context.push('/studio'),
       );
     }
 
-    // Data loaded — show topic list
+    // Nessun risultato di ricerca
+    if (_searchQuery.isNotEmpty && highlightedIds.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CustomIconWidget(
+              iconName: 'search_off',
+              color: theme.colorScheme.onSurfaceVariant,
+              size: 12.w,
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              'Nessun argomento trovato per "$_searchQuery"',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Vista lineare o grafo
+    if (_isGraphView) {
+      return GraphOverview(
+        nodi: nodi,
+        temi: topics,
+        nodiDaRipassare: nodiDaRipassare,
+        highlightedNodeIds: highlightedIds,
+        onNodeTap: _showNodeDetail,
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       color: theme.colorScheme.primary,
-      child: ListView.separated(
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(vertical: 2.h),
-        itemCount: topics.length,
-        separatorBuilder: (context, index) => SizedBox(height: 2.h),
-        itemBuilder: (context, index) {
-          final tema = topics[index];
-          final isCurrent = index == currentTemaIndex;
-
-          return TemaCardWidget(
-            tema: tema,
-            isCurrent: isCurrent,
-            nodiDaRipassare: ripassoPerTema[tema.id] ?? 0,
-            onTap: () => _showTemaDetail(tema),
-            onLongPress: tema.completato
-                ? () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Opzioni di revisione per ${tema.nome}',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                : null,
-          );
-        },
+      child: LinearPathMap(
+        nodi: nodi,
+        nodiDaRipassare: nodiDaRipassare,
+        highlightedNodeIds: highlightedIds,
+        onNodeTap: _showNodeDetail,
       ),
     );
   }
