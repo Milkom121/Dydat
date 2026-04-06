@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-06
-- **Data ultima sessione**: 2026-04-06 (S34 — B37, Fase 9 Beat Emotivi + Transizioni)
-- **Prossima sessione**: S35 — B38 (Fase 9, Mascotte CustomPainter)
+- **Data ultima sessione**: 2026-04-06 (S35 — B38, Fase 9 Mascotte CustomPainter)
+- **Prossima sessione**: S36 — B39 (Fase 10, Onboarding con Momento Wow)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

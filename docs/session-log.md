@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-06 — Sessione S35 — B38 Mascotte CustomPainter
+- **Status**: PHASE_COMPLETE
+- **Summary**: Mascotte evoluta da cerchio ambra a blob organico CustomPainter (Bezier 8 punti). Occhi espressivi con apertura, pupilla e riflesso. MascotteVisuals con lerp() per transizioni 500ms. EntrancePortalPainter (ingresso sessione). PromotionBurstPainter (celebrazione promozione). 28 nuovi test, 448 totale frontend, analyze 0. Fase 9 COMPLETATA (B36-B38).
+---
+
 ## 2026-04-06 — Sessione S32 — B35 Quaderno per Nodo
 - **Status**: PHASE_COMPLETE
 - **Summary**: Backend GET /quaderno/{nodo_id} aggrega stato, esercizi, formule (deduplicate), spiegazioni (>50 char, markdown). Frontend: QuadernoNodo model (5 classi), QuadernoNotifier, NodoQuadernoScreen con 4 sub-widget (StatoHeader, FormuleSection LaTeX, EserciziSection badge esito, SpiegazioniSection expand/collapse). Route /quaderno/:nodoId fullscreen. NodeDetailBottomSheet navigazione tap->quaderno. 7 test backend + 22 test frontend nuovi. 330 backend + 379 frontend verdi, analyze 0. Fase 8 COMPLETATA.
@@ -167,4 +172,14 @@
 ## 2026-04-06 19:46:35 — Blocco F8BB35
 - **Status**: CONTINUE
 - **Summary**: B34 completato (S31). Riscritta LearningPathScreen da lista card a mappa visiva nodi con vista lineare, zoom grafo, ricerca argomento e tap nodo con placeholder quaderno. 14 nuovi test, 357 totale frontend, analyze 0.
+---
+
+## 2026-04-06 20:02:57 — Blocco F8BB35
+- **Status**: CONTINUE
+- **Summary**: B36 completato (S33). Creato surface_decorations.dart con 6 metodi factory (backgroundGradient, card, glowCard, section, glowCircle, depthShadows). Token surfaceInteractive aggiunto al tema. Applicato gradienti, glow ambra e profondita a 4 schermate (Home, I miei studi, Profilo, Studio). Zero colori hardcoded. 10 nuovi test, 389 totale frontend, analyze 0.
+---
+
+## 2026-04-06 20:13:04 — Blocco F9BB37
+- **Status**: CONTINUE
+- **Summary**: B37 completato (S34). BeatState enum con 10 stati emotivi dalla mappa emotiva v2. BeatNotifier (Riverpod) calcola il beat corrente dalla sessione con priorita (promozione > esito > fullscreen > chiusura > attesa > streaming > accoglienza) e durate minime per beat transitori. BeatOverlayWidget renderizza gradiente radiale animato sotto il contenuto (opacita 0.03-0.15, mai invasivo). mascotteStateFromBeat() mappa beat->MascotteState secondo tabella direzione visiva. Studio screen integrato: overlay + mascotte reagisce ai beat. 31 nuovi test (3 file), 420 totale frontend, analyze 0.
 ---

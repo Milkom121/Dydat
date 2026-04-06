@@ -62,6 +62,12 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
   bool _suspendedInBackground = false;
   String? _lastShownError;
 
+  // Animazione ingresso mascotte ("la mascotte apre la porta")
+  bool _showMascotteEntrance = true;
+
+  // Celebrazione speciale promozione (raggi di luce dalla mascotte)
+  bool _showPromotionBurst = false;
+
   // Suggerimento pausa: mostrato una sola volta quando si supera l'obiettivo
   bool _goalExceededNotified = false;
 
@@ -440,7 +446,16 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       context: context,
       onScrollToBottom: _scrollToBottom,
       onClearEsito: () => ref.read(sessionProvider.notifier).clearEsito(),
-      onClearPromotion: () => ref.read(sessionProvider.notifier).clearPromotion(),
+      onClearPromotion: () {
+        ref.read(sessionProvider.notifier).clearPromotion();
+        // Trigga l'animazione raggi di luce dalla mascotte
+        if (mounted) {
+          setState(() => _showPromotionBurst = true);
+          Future.delayed(const Duration(milliseconds: 1600), () {
+            if (mounted) setState(() => _showPromotionBurst = false);
+          });
+        }
+      },
       onShowFullscreen: _enqueueFullscreenAction,
     );
 
@@ -554,6 +569,11 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                     theme: theme,
                     onTap: _toggleToolsTray,
                     mascotteState: mascotteStateFromBeat(currentBeat),
+                    showEntrance: _showMascotteEntrance,
+                    onEntranceComplete: () {
+                      if (mounted) setState(() => _showMascotteEntrance = false);
+                    },
+                    showPromotionBurst: _showPromotionBurst,
                   ),
                 ),
               if (_isToolsTrayVisible) ...[

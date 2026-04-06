@@ -1,41 +1,45 @@
-STATUS: CONTINUE
+STATUS: PHASE_COMPLETE
 PHASE: 9
 BLOCK: B38
-SUMMARY: B37 completato (S34). BeatState enum con 10 stati emotivi dalla mappa emotiva v2. BeatNotifier (Riverpod) calcola il beat corrente dalla sessione con priorita (promozione > esito > fullscreen > chiusura > attesa > streaming > accoglienza) e durate minime per beat transitori. BeatOverlayWidget renderizza gradiente radiale animato sotto il contenuto (opacita 0.03-0.15, mai invasivo). mascotteStateFromBeat() mappa beat->MascotteState secondo tabella direzione visiva. Studio screen integrato: overlay + mascotte reagisce ai beat. 31 nuovi test (3 file), 420 totale frontend, analyze 0.
-NEXT: B38 - Mascotte CustomPainter (Fase 9)
-DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: beat_provider.dart (nuovo), beat_overlay_widget.dart (nuovo), studio_screen.dart, session_sync_helper.dart, beat_provider_test.dart (nuovo), beat_overlay_test.dart (nuovo), mascotte_beat_mapping_test.dart (nuovo)
-TESTS: PASS (420 frontend, flutter analyze 0)
-VERIFICATION: flutter analyze 0, flutter test 420 verdi (da 389 baseline +31 nuovi)
+SUMMARY: B38 completato (S35). Mascotte evoluta da cerchio ambra a forma organica con CustomPainter. MascottePainter: blob con 8 punti di controllo Bezier cubici, deformazione animata (wobble), gradiente radiale per profondita, glow luminescente esterno. Occhi espressivi: sclera ovale, pupilla con riflesso di luce, apertura controllata da eyeOpenness (linea quando quasi chiusi). MascotteVisuals con lerp() per transizioni smooth 500ms tra stati. EntrancePortalPainter per animazione ingresso sessione (3 cerchi concentrici sfalsati). PromotionBurstPainter per celebrazione promozione (12 raggi + cerchio espansione). Studio screen integrato con showEntrance e showPromotionBurst. 28 nuovi test (2 file), 448 totale frontend, analyze 0. Fase 9 (Atmosfera e Mascotte) COMPLETATA.
+NEXT: B39 - Onboarding con Momento Wow (Fase 10)
+DECISIONS_NEEDED: PR develop->main per chiusura Fase 9? (da confermare con Villa)
+FILES_MODIFIED: mascotte_painter.dart (nuovo), mascotte_widget.dart (riscrittura), studio_screen.dart, docs/dev-shortcuts.md, mascotte_painter_test.dart (nuovo), mascotte_widget_test.dart (nuovo)
+TESTS: PASS (448 frontend, flutter analyze 0)
+VERIFICATION: flutter analyze 0, flutter test 448 verdi (da 420 baseline +28 nuovi). Backend invariato (341 test).
 
 ---
 
 ## Contesto dettagliato
 
 ### Cosa e stato fatto
-- Creato beat_provider.dart con enum BeatState (10 stati) e BeatNotifier
-- BeatNotifier ascolta sessionProvider e calcola beat con priorita e durate minime
-- Creato beat_overlay_widget.dart con gradiente radiale animato per ogni beat
-- Integrato BeatOverlayWidget in studio_screen.dart (Positioned.fill sotto contenuto)
-- Aggiunto mascotteStateFromBeat() in session_sync_helper.dart
-- MascotteWidget ora usa beat per determinare il suo stato (non piu computeMascotteState)
-- Studio screen segnala al beatProvider quando azioni fullscreen sono attive/inattive
+- Creato mascotte_painter.dart con 3 CustomPainter:
+  - MascottePainter: blob organico (Bezier cubiche, 8 punti), glow radiale, occhi espressivi
+  - PromotionBurstPainter: 12 raggi di luce + cerchio espansione per promozione
+  - EntrancePortalPainter: 3 cerchi concentrici sfalsati per ingresso sessione
+- Creato MascotteVisuals: parametri visivi interpolabili (blobDeformation, scale, eyeOpenness, pupilOffsetY, glowRadius, glowOpacity)
+- visualsForState() mappa MascotteState -> MascotteVisuals secondo direzione visiva v2
+- Riscritto mascotte_widget.dart: usa CustomPaint con MascottePainter, TickerProviderStateMixin per animazioni multiple (pulse, wobble, transition, entrance, promotion)
+- Transizioni animate 500ms tra stati con MascotteVisuals.lerp()
+- Animazione ingresso (elasticOut 1000ms): mascotte scala da 0 a 1.0 con bounce
+- Studio screen: _showMascotteEntrance e _showPromotionBurst integrati
+- Registrato colore pupilla hardcoded in dev-shortcuts.md
 
 ### Stato del progetto
-- 420 test frontend verdi, flutter analyze 0
+- 448 test frontend verdi, flutter analyze 0
 - Backend invariato (341 test)
+- Fase 9 completata (B36 Superfici + B37 Beat + B38 Mascotte)
 
-### Prossimo passo - B38: Mascotte CustomPainter
-1. CustomPainter per forma morbida, organica (blob con curve di Bezier)
-2. Occhi espressivi che riflettono il beat corrente
-3. Transizioni di forma/espressione per ogni beat
-4. Mantenere tap per tools tray
-5. Animazione la mascotte ti apre la porta (Beat 1, ingresso sessione)
-6. Celebrazione speciale per promozione
+### Prossimo passo - B39: Onboarding con Momento Wow (Fase 10)
+1. Momento wow (30-60s): domanda curiosa + visualizzazione animata
+2. Domande rapide: eta, cosa studi, perche sei qui (scelta multipla)
+3. Poi il flusso attuale (conversazione tutor + costruzione percorso)
+4. Registrazione alla fine, non all'inizio
+5. La mascotte compare qui per la prima volta
 
 ### File da leggere
 1. CLAUDE.md, PROJECT_CONFIG.md, ROADMAP.md, .claude/handoff.md
-2. docs/dydat_direzione_visiva_v2.md (sezione 5 Mascotte)
-3. frontend/lib/presentation/studio_screen/widgets/mascotte_widget.dart
-4. frontend/lib/providers/beat_provider.dart
-5. frontend/lib/presentation/studio_screen/widgets/beat_overlay_widget.dart
+2. docs/dydat-ux-redesign-concept-v1.1.docx (sezione 4 Onboarding)
+3. frontend/lib/presentation/onboarding/ (flusso onboarding attuale)
+4. frontend/lib/presentation/studio_screen/widgets/mascotte_widget.dart (mascotte evoluta)
+5. frontend/lib/presentation/studio_screen/widgets/mascotte_painter.dart (painters)

@@ -216,11 +216,12 @@
 - **Note**: BeatState enum con 10 stati (dalla mappa emotiva v2). BeatNotifier con priorita: promozione > esito > fullscreen > chiusura > attesa > streaming > accoglienza. Durate minime per beat transitori (evita flickering). BeatOverlayWidget con gradiente radiale animato per ogni beat (opacita 0.03-0.15). mascotteStateFromBeat() mappa beat->MascotteState secondo tabella direzione visiva. 31 nuovi test (3 file). 420 frontend verdi, analyze 0.
 
 ### Blocco B38 — Mascotte CustomPainter
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S35)
 - **Complessita'**: alta
 - **Descrizione**: Evolvere la mascotte da cerchio ambra a forma organica. (1) CustomPainter per forma morbida, organica (blob con curve di Bezier). (2) Occhi espressivi che riflettono il beat corrente. (3) Transizioni di forma/espressione per ogni beat. (4) Mantenere tap per tools tray. (5) Animazione di transizione "la mascotte ti apre la porta" (Beat 1, ingresso sessione). (6) Celebrazione speciale per promozione.
 - **File da toccare**: mascotte_widget.dart (riscrittura), nuovo mascotte_painter.dart
 - **Gate di uscita**: Forma organica renderizza, occhi espressivi, transizioni beat, animazione ingresso, analyze 0, test verdi
+- **Note**: MascottePainter con blob Bezier (8 punti, deformazione animata), gradiente radiale per profondita, glow luminescente. Occhi espressivi: sclera ovale, pupilla con riflesso, apertura controllata da eyeOpenness (linea quando quasi chiusi). MascotteVisuals con lerp per transizioni smooth 500ms tra stati. EntrancePortalPainter (cerchi concentrici sfalsati) per ingresso sessione. PromotionBurstPainter (12 raggi + cerchio espansione) per celebrazione promozione. Studio screen integrato con showEntrance e showPromotionBurst. 28 nuovi test (2 file). 448 frontend verdi, analyze 0.
 
 ---
 

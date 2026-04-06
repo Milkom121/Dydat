@@ -57,3 +57,10 @@ Registro delle scorciatoie prese durante lo sviluppo da risolvere prima della pr
 - **Tipo**: altro
 - **Dettaglio**: `cached_network_image`, `connectivity_plus`, `fl_chart` — aggiunte ma mai utilizzate nel codice. Appesantiscono inutilmente il build.
 - **Priorità di risoluzione**: bassa (pulizia)
+
+## 2026-04-06 - Colore pupilla hardcoded nel mascotte painter
+- **File**: frontend/lib/presentation/studio_screen/widgets/mascotte_painter.dart
+- **Riga**: ~241
+- **Tipo**: colore-hardcoded
+- **Dettaglio**: `Color(0xFF1A1A2E)` usato per la pupilla della mascotte. Non viene dal tema perché è un dettaglio grafico interno (non UI). In produzione potrebbe essere estratto come token del tema.
+- **Priorità di risoluzione**: bassa (pulizia)
