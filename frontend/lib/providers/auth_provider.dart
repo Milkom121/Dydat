@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dydat/models/utente.dart';
 import 'package:dydat/models/api_response.dart';
@@ -99,6 +100,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _userService.getMe();
       state = state.copyWith(user: user);
     } on DioException catch (e) {
+      debugPrint('[AUTH] Login DioException: type=${e.type}, statusCode=${e.response?.statusCode}, url=${e.requestOptions.uri}, responseData=${e.response?.data}, message=${e.message}');
       final apiError = e.error;
       final message = apiError is ApiException
           ? apiError.message

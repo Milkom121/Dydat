@@ -51,3 +51,7 @@
 | 2026-04-05 | Allineamento al Metodo Villa | Standardizzare gestione progetto cross-progetto, file piu snelli, runner automatico | Mantenere sistema custom |
 | 2026-04-05 | Branch develop per commit autonomi | Piu velocita per Claude, Villa come gate su main | Autorizzazione esplicita per ogni commit |
 | 2026-04-05 | Fase 4.5 Consolidamento prima di Loop 5 | Risolvere debito tecnico dall'audit prima di aggiungere feature | Procedere con Loop 5 e fixare dopo |
+| 2026-04-06 | UX Redesign prima di Feynman | Il redesign cambia la struttura di navigazione e sessione — Feynman deve essere costruito sulla struttura nuova, non su quella vecchia | Feynman prima, redesign dopo |
+| 2026-04-06 | Fase A UX in 6 sotto-fasi (13 blocchi) | Ogni sotto-fase ha un obiettivo chiaro e gate di uscita. Ordine per dipendenza: navigazione -> sessione -> studi/quaderno -> atmosfera -> onboarding/audio -> E2E | Piano unico monolitico, 9 roadmap separate |
+| 2026-04-06 | Studio come route modale, non tab | La sessione di studio e immersiva — i tab devono sparire. Studio diventa una route fullscreen push, non un tab nella shell | Tenere Studio come tab con bottom bar nascosta |
+| 2026-04-06 | Concept document v1.1 come riferimento UX | 19 decisioni prese col fondatore. 13 sezioni. Fonte di verita per tutte le scelte UX della Fase A | Decisioni sparse nel codice/chat |

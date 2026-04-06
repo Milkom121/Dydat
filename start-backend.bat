@@ -14,11 +14,11 @@ echo Attendo che il backend sia pronto...
 timeout /t 5 /nobreak >nul
 
 echo Verifico health check...
-curl -s http://localhost:8000/health
+curl -s http://localhost:8001/health
 
 echo.
 echo ========================================
-echo   Backend avviato su http://localhost:8000
+echo   Backend avviato su http://localhost:8001
 echo   Per fermare: docker compose down
 echo ========================================
 pause

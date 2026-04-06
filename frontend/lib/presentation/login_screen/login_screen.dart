@@ -369,7 +369,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleDevLogin() async {
     ref.read(authProvider.notifier).clearError();
 
-    // Try login first (faster path when user already exists)
+    debugPrint('[DEV LOGIN] Tentativo login con ${AppConfig.devEmail}...');
+
+    // Prova login (percorso veloce se utente esiste gia)
     await ref.read(authProvider.notifier).login(
           email: AppConfig.devEmail,
           password: AppConfig.devPassword,
@@ -377,19 +379,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (!mounted) return;
 
-    // If login failed (user doesn't exist yet), register instead
-    if (!ref.read(authProvider).isAuthenticated) {
+    final stateAfterLogin = ref.read(authProvider);
+    debugPrint('[DEV LOGIN] Dopo login: authenticated=${stateAfterLogin.isAuthenticated}, error=${stateAfterLogin.error}');
+
+    // Se login fallito (utente non esiste), registra e riprova
+    if (!stateAfterLogin.isAuthenticated) {
+      debugPrint('[DEV LOGIN] Login fallito, provo registrazione...');
       ref.read(authProvider.notifier).clearError();
       await ref.read(authProvider.notifier).register(
             email: AppConfig.devEmail,
             password: AppConfig.devPassword,
             nome: AppConfig.devNome,
           );
+
+      if (!mounted) return;
+      final stateAfterRegister = ref.read(authProvider);
+      debugPrint('[DEV LOGIN] Dopo registrazione: authenticated=${stateAfterRegister.isAuthenticated}, error=${stateAfterRegister.error}');
     }
 
     if (!mounted) return;
     if (ref.read(authProvider).isAuthenticated) {
+      debugPrint('[DEV LOGIN] Successo!');
       HapticFeedback.lightImpact();
+    } else {
+      debugPrint('[DEV LOGIN] FALLITO: ${ref.read(authProvider).error}');
     }
   }
 

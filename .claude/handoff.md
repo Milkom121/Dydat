@@ -1,61 +1,63 @@
-STATUS: PHASE_COMPLETE
-PHASE: 5
-BLOCK: B29
-SUMMARY: Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: _scegli_nodo_ripasso() con fallback path planner. Frontend: bottone Vai avvia sessione ripasso. 12 nuovi test backend + 8 nuovi frontend. 341 backend + 228 frontend verdi, analyze 0.
-NEXT: Fase 6 — Blocco B30 — Feynman Signal Processing (Backend)
+STATUS: CONTINUE
+PHASE: 6
+BLOCK: B30
+SUMMARY: Fase 5 (FSRS) completata in S26. UX Redesign pianificato: concept document v1.1 approvato dal fondatore, ROADMAP aggiornata con Fasi 6-14 (Fase A UX in 6 sotto-fasi + Feynman + Visualizzazioni). Pronto per primo blocco implementativo.
+NEXT: B30 — Nuova Navigazione: 3 Tab + Studio Modale
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: backend/app/core/sessione.py, backend/tests/test_b29_sessioni_ripasso.py, frontend/test/services/session_service_test.dart, frontend/test/providers/session_provider_test.dart, ROADMAP.md
+FILES_MODIFIED: ROADMAP.md, docs/dydat-ux-redesign-concept-v1.1.docx, discovery-notes.md
 TESTS: PASS (341 backend, 228 frontend, flutter analyze 0)
-VERIFICATION: flutter analyze 0 issues, flutter test 228/228, pytest 341 passed 10 skipped
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto — B29
-
-Loop 5 completato. Tutti i blocchi B26-B29 sono completati.
-
-**Backend — sessione.py:**
-- _scegli_nodo_ripasso(): quando tipo=ripasso, sceglie sempre il nodo SR piu urgente (nessuna probabilita). Se nessun nodo SR scaduto, fallback al path planner normale.
-- inizia_sessione(): se tipo == "ripasso" chiama _scegli_nodo_ripasso(), altrimenti _scegli_nodo() (interleaving 35%).
-- 12 test in test_b29_sessioni_ripasso.py (5 per _scegli_nodo_ripasso, 4 per inizia_sessione, 3 per direttiva_ripasso_sr).
-
-**Frontend (gia predisposto da B28, verificato funzionante in B29):**
-- session_provider.dart: startSessionStream() accetta tipo param (default 'media').
-- home_view_widget.dart: onRipassoTap callback. Bottone "Vai" invoca callback se fornito.
-- studio_screen.dart: _startRipassoSession() chiama _startSession(tipo: 'ripasso'). Passato come onRipassoTap a HomeViewWidget.
-- Test aggiunti: session_service_test (tipo ripasso nel body), session_provider_test (stato sessione ripasso), home_view_widget_test (4 test UI ripasso).
+### Cosa e stato fatto
+- Discovery UX completa: 19 decisioni prese col fondatore su identita, navigazione, sessione, gamification, notifiche, audio, onboarding
+- Concept document v1.1 prodotto e approvato (docs/dydat-ux-redesign-concept-v1.1.docx)
+- ROADMAP aggiornata: vecchie Fasi 6-7 sostituite con piano UX Redesign strutturato in sotto-fasi (A.1-A.6) + Feynman spostato dopo il redesign
+- Note di discovery complete in discovery-notes.md (19 decisioni documentate)
 
 ### Stato del progetto
-- Backend: 341 test (+ 10 skipped integration) — Loop 5 FSRS completo
-- Frontend: 228 test, analyze 0 issues — Loop 5 FSRS completo
-- Branch: develop, Docker attivo
-
-### Architettura sessioni ripasso
-bottone Vai (HomeViewWidget)
-  -> onRipassoTap callback
-  -> _startRipassoSession() in StudioScreen
-  -> startSessionStream(tipo: 'ripasso')
-  -> SessionService.startStream(tipo: 'ripasso')
-  -> POST /sessione/inizia {"tipo": "ripasso"}
-  -> inizia_sessione(tipo="ripasso")
-  -> _scegli_nodo_ripasso()
-    -> get_nodi_da_ripassare() -> nodo SR piu urgente
-    -> se vuoto -> path_planner fallback
-  -> stato_orchestratore.attivita_corrente = "ripasso_sr"
-  -> direttiva_ripasso_sr() nel context package
+- Backend: 341 test verdi, stabile, NON va toccato in B30
+- Frontend: 228 test verdi, analyze 0
+- Ultimo blocco completato: B29 (Sessioni Ripasso Dedicate) in S26
+- Docker: funziona da backend/
 
 ### Prossimo passo concreto — B30
-Fase 6 — Feynman Signal Processing (Backend):
-1. Attivare tool avvia_feynman e valutazione_feynman in tools.py
-2. Implementare _processa_valutazione_feynman() in elaborazione.py
-3. Routing azione avvia_feynman in elaborazione.py
-4. feynman_superato aggiornato dopo valutazione positiva
+
+Ristrutturare la navigazione dell'app da 3 tab (Studio/Percorso/Profilo) a 3 tab (Home/I miei studi/Profilo) + Studio come route fullscreen modale.
+
+**ATTENZIONE**: Questo blocco e SOLO frontend. Non toccare il backend.
+
+Operazioni concrete:
+1. Creare `presentation/home_screen/home_screen.dart` — nuovo Tab 1
+   - Migrare contenuto da `presentation/studio_screen/widgets/home_view_widget.dart`
+   - Per ora contenuto base: benvenuto, bottone "Riprendi a studiare", sezione ripasso FSRS
+2. In `routes/app_router.dart`:
+   - Tab 0: '/home' -> HomeScreen (nuovo)
+   - Tab 1: '/studi' -> LearningPathScreen (rinominato)
+   - Tab 2: '/profilo' -> ProfileScreen (invariato)
+   - Route '/studio' FUORI dalla shell (fullscreen, no bottom bar)
+   - Route '/studio' riceve parametri (tipo sessione, nodo_id opzionale)
+3. In `widgets/custom_bottom_bar.dart`:
+   - Tab 1: "Home" con icona home
+   - Tab 2: "I miei studi" con icona book/map
+   - Tab 3: "Profilo" (invariato)
+4. In `studio_screen.dart`:
+   - Rimuovere la logica home (showChat toggle) — la home ora e un screen separato
+   - Lo StudioScreen e SOLO la sessione di studio attiva
+   - Gestire parametri in ingresso (tipo sessione, nodo_id)
+5. Test: navigazione funziona, sessione si apre e chiude, ritorno alla home
+
+**Gate di uscita B30:** 3 tab funzionanti, Studio si apre come fullscreen modale, tab spariscono in sessione, navigazione Home->Studio->Home funziona, flutter analyze 0, flutter test verdi
 
 ### File da leggere per la prossima sessione
-1. CLAUDE.md, PROJECT_CONFIG.md, ROADMAP.md (B30), .claude/handoff.md
-2. backend/app/core/elaborazione.py (signal processor, action executor)
-3. backend/app/llm/tools.py (tool schemas)
-4. backend/app/llm/prompts/direttive.py (direttiva_feynman gia presente)
-5. backend/app/db/models/stato_utente.py (campo feynman_superato)
+1. CLAUDE.md
+2. PROJECT_CONFIG.md
+3. ROADMAP.md (aggiornata — leggere Fase 6 / B30)
+4. .claude/handoff.md (questo file)
+5. docs/dydat-ux-redesign-concept-v1.1.docx (sezioni 3, 6 — struttura e navigazione)
+6. frontend/lib/routes/app_router.dart (navigazione attuale)
+7. frontend/lib/widgets/custom_bottom_bar.dart (bottom bar attuale)
+8. frontend/lib/presentation/studio_screen/studio_screen.dart (studio attuale — capire cosa separare)
+9. frontend/lib/presentation/studio_screen/widgets/home_view_widget.dart (contenuto da migrare alla nuova HomeScreen)

@@ -4,7 +4,7 @@ class ApiConfig {
   ApiConfig._();
 
   static String get baseUrl =>
-      Platform.isAndroid ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+      Platform.isAndroid ? 'http://10.0.2.2:8001' : 'http://localhost:8001';
 
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 30);

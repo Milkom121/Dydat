@@ -1,8 +1,8 @@
 {
-  "current_phase": "5",
-  "current_block": "B29",
-  "total_blocks_run": 35,
-  "status": "PHASE_COMPLETE",
-  "last_run": "2026-04-05T02:17:10Z",
-  "last_summary": "Blocco B29 completato (S26). Loop 5 FSRS completo. Sessioni ripasso dedicate: tipo=ripasso instrada su _scegli_nodo_ripasso() (100% SR, fallback path planner). Frontend: bottone Vai avvia sessione ripasso. 8 nuovi test backend + 4 widget test. 336 backend + 226 frontend verdi, analyze 0."
+  "current_phase": "6",
+  "current_block": "B30",
+  "total_blocks_run": 36,
+  "status": "CONTINUE",
+  "last_run": "2026-04-06T03:15:00Z",
+  "last_summary": "Fase 5 completata. UX Redesign pianificato: concept v1.1 approvato, ROADMAP aggiornata con Fasi 6-14. Pronto per B30 — Nuova Navigazione: 3 Tab + Studio Modale."
 }
