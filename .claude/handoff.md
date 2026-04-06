@@ -1,9 +1,9 @@
-STATUS: CONTINUE
+STATUS: PHASE_COMPLETE
 PHASE: 7
-BLOCK: B34
+BLOCK: B33
 SUMMARY: B33 completato (S30). StudioTransitionOverlay (1150ms), SessionGoalPicker, recap narrativo tutor, notifica pausa obiettivo. 47 nuovi test, 343 totale, analyze 0.
 NEXT: B34 — Percorso Unificato: Mappa + Zoom (Fase 8)
-DECISIONS_NEEDED: nessuna
+DECISIONS_NEEDED: Fase 7 completata — serve review e ok Villa per avanzare a Fase 8
 FILES_MODIFIED: home_screen.dart, studio_screen.dart, recap_session_screen.dart, app_router.dart, nuovo studio_transition_overlay.dart, nuovo session_goal_picker.dart
 TESTS: PASS (341 backend, 343 frontend, flutter analyze 0)
 VERIFICATION: 343 test verdi, flutter analyze 0. Test SSE flaky passa in isolamento, non correlato a B33.
