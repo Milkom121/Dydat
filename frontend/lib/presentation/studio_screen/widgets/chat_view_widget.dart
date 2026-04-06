@@ -3,20 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/sse_events.dart';
 import '../../../widgets/markdown_text.dart';
-import './backtrack_card_widget.dart';
 import './chiudi_sessione_card_widget.dart';
-import './exercise_card_widget.dart';
-import './formula_card_widget.dart';
+import './compact_action_record.dart';
 import './tutor_message_widget.dart';
 
-/// Lista messaggi della sessione: messaggi utente/tutor, card azione, streaming bubble.
+/// Lista messaggi della sessione: messaggi utente/tutor, record compatti, streaming bubble.
 class ChatViewWidget extends StatelessWidget {
   final List<Map<String, dynamic>> messages;
   final bool isStreaming;
   final String currentTutorText;
   final ScrollController scrollController;
-  final void Function(String text) onSendMessage;
-  final void Function(Map<String, dynamic> item) onRemoveItem;
   final Future<void> Function() onEndSession;
 
   const ChatViewWidget({
@@ -25,8 +21,6 @@ class ChatViewWidget extends StatelessWidget {
     required this.isStreaming,
     required this.currentTutorText,
     required this.scrollController,
-    required this.onSendMessage,
-    required this.onRemoveItem,
     required this.onEndSession,
   });
 
@@ -72,44 +66,16 @@ class ChatViewWidget extends StatelessWidget {
       case 'tutor':
         return TutorMessageWidget(message: item, theme: theme);
 
-      case 'exercise':
-        final action = item['data'] as AzioneEvent;
-        final exercise = action.asProponiEsercizio;
-        if (exercise == null) return const SizedBox.shrink();
+      // Record compatti: mostrati dopo che un'azione fullscreen è stata completata
+      case 'exercise_record':
+      case 'formula_record':
+      case 'backtrack_record':
         return Padding(
-          padding: EdgeInsets.only(top: 2.h),
-          child: ExerciseCardWidget(
-            exercise: exercise,
-            theme: theme,
-            onVerify: (risposta) => onSendMessage(risposta),
-            onDismiss: () => onRemoveItem(item),
-          ),
-        );
-
-      case 'formula':
-        final action = item['data'] as AzioneEvent;
-        final formula = action.asMostraFormula;
-        if (formula == null) return const SizedBox.shrink();
-        return Padding(
-          padding: EdgeInsets.only(top: 2.h),
-          child: FormulaCardWidget(
-            formula: formula,
-            theme: theme,
-            onDismiss: () => onRemoveItem(item),
-          ),
-        );
-
-      case 'backtrack':
-        final action = item['data'] as AzioneEvent;
-        final backtrack = action.asSuggerisciBacktrack;
-        if (backtrack == null) return const SizedBox.shrink();
-        return Padding(
-          padding: EdgeInsets.only(top: 2.h),
-          child: BacktrackCardWidget(
-            suggestion: backtrack,
-            theme: theme,
-            onAccept: () => onSendMessage('Ok, rivediamolo'),
-            onDismiss: () => onSendMessage('Continua qui'),
+          padding: EdgeInsets.only(top: 1.h),
+          child: CompactActionRecord(
+            actionType: type!,
+            label: item['label'] as String? ?? '',
+            result: item['result'] as String? ?? '',
           ),
         );
 

@@ -22,8 +22,21 @@ class SessionSyncState {
         achievementsCount = 0;
 }
 
+/// Tipi di azione che vengono mostrati fullscreen invece che inline nel feed.
+const _fullscreenActionTypes = {'proponi_esercizio', 'mostra_formula', 'suggerisci_backtrack'};
+
+/// Mappa tipo azione SSE -> tipo item per la coda fullscreen.
+String? fullscreenItemType(String tipo) => switch (tipo) {
+  'proponi_esercizio' => 'exercise',
+  'mostra_formula' => 'formula',
+  'suggerisci_backtrack' => 'backtrack',
+  _ => null,
+};
+
 /// Sincronizza messaggi tutor, azioni e achievement dal [sessionState] nella lista
 /// [messages]. Aggiorna i contatori in [syncState] e mostra overlay/toast via callbacks.
+/// Le azioni fullscreen (esercizi, formule, backtrack) vengono inviate al callback
+/// [onShowFullscreen] invece di essere aggiunte inline al feed.
 void syncTutorMessages({
   required SessionScreenState sessionState,
   required List<Map<String, dynamic>> messages,
@@ -33,6 +46,7 @@ void syncTutorMessages({
   required VoidCallback onScrollToBottom,
   required VoidCallback onClearEsito,
   required VoidCallback onClearPromotion,
+  void Function(String actionType, AzioneEvent action)? onShowFullscreen,
 }) {
   final tutorMessages = sessionState.tutorMessages;
   if (tutorMessages.length > syncState.tutorCount) {
@@ -53,6 +67,27 @@ void syncTutorMessages({
   if (actions.length > syncState.actionsCount) {
     for (int i = syncState.actionsCount; i < actions.length; i++) {
       final action = actions[i];
+
+      // Esercizi senza disponibilità: skip
+      if (action.tipo == 'proponi_esercizio') {
+        final ex = action.asProponiEsercizio;
+        if (ex != null && ex.nessunoDisponibile) continue;
+      }
+
+      // Azioni fullscreen: devia all'overlay via post-frame (sicuro durante build)
+      if (_fullscreenActionTypes.contains(action.tipo) && onShowFullscreen != null) {
+        final itemType = fullscreenItemType(action.tipo);
+        if (itemType != null) {
+          final capturedType = itemType;
+          final capturedAction = action;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) onShowFullscreen(capturedType, capturedAction);
+          });
+          continue;
+        }
+      }
+
+      // Azioni inline (chiudi_sessione e fallback)
       final itemType = switch (action.tipo) {
         'proponi_esercizio' => 'exercise',
         'mostra_formula' => 'formula',
@@ -60,10 +95,6 @@ void syncTutorMessages({
         'chiudi_sessione' => 'chiudi',
         _ => null,
       };
-      if (action.tipo == 'proponi_esercizio') {
-        final ex = action.asProponiEsercizio;
-        if (ex != null && ex.nessunoDisponibile) continue;
-      }
       if (itemType != null) {
         messages.add({'type': itemType, 'data': action, 'timestamp': DateTime.now()});
       }

@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
 import '../../providers/session_provider.dart';
+import '../../models/sse_events.dart';
 import '../../routes/app_router.dart';
 import '../../widgets/custom_app_bar.dart';
 import './widgets/chat_view_widget.dart';
+import './widgets/fullscreen_action_overlay.dart';
 import './widgets/mascotte_widget.dart';
 import './widgets/session_header_widget.dart';
 import './widgets/session_input_bar_widget.dart';
@@ -52,6 +54,10 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
 
   bool _suspendedInBackground = false;
   String? _lastShownError;
+
+  // Coda azioni fullscreen: esercizi, formule, backtrack escono dal feed
+  final List<({String type, AzioneEvent action})> _fullscreenQueue = [];
+  ({String type, AzioneEvent action})? _currentFullscreen;
 
   @override
   void initState() {
@@ -133,6 +139,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
           _sync.tutorCount = 0;
           _sync.actionsCount = 0;
           _sync.achievementsCount = 0;
+          _fullscreenQueue.clear();
+          _currentFullscreen = null;
         });
         // Torna alla home dopo terminazione
         if (mounted) context.go(AppPaths.home);
@@ -196,6 +204,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       _sync.tutorCount = 0;
       _sync.actionsCount = 0;
       _sync.achievementsCount = 0;
+      _fullscreenQueue.clear();
+      _currentFullscreen = null;
     });
     await ref.read(sessionProvider.notifier).startSessionStream(tipo: tipo);
     _startTimer();
@@ -239,6 +249,60 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     _scrollToBottom();
     await ref.read(sessionProvider.notifier).sendTurnStream(text);
   }
+
+  /// Aggiunge un'azione alla coda fullscreen. Se nessuna è attiva, la mostra subito.
+  void _enqueueFullscreenAction(String actionType, AzioneEvent action) {
+    final entry = (type: actionType, action: action);
+    if (_currentFullscreen == null) {
+      setState(() => _currentFullscreen = entry);
+    } else {
+      _fullscreenQueue.add(entry);
+    }
+  }
+
+  /// Chiude l'azione fullscreen corrente, aggiunge record compatto al feed,
+  /// e mostra la prossima dalla coda se presente.
+  void _handleFullscreenDismiss(String resultLabel) {
+    final current = _currentFullscreen;
+    if (current != null) {
+      // Genera etichetta per il record compatto
+      final label = _compactLabel(current.type, current.action);
+      setState(() {
+        _messages.add({
+          'type': '${current.type}_record',
+          'label': label,
+          'result': resultLabel,
+          'timestamp': DateTime.now(),
+        });
+        // Mostra prossima azione dalla coda o chiudi
+        if (_fullscreenQueue.isNotEmpty) {
+          _currentFullscreen = _fullscreenQueue.removeAt(0);
+        } else {
+          _currentFullscreen = null;
+        }
+      });
+      _scrollToBottom();
+    }
+  }
+
+  /// Invocato quando lo studente verifica un esercizio dal fullscreen.
+  void _handleFullscreenExerciseVerify(String risposta) {
+    // Invia la risposta come messaggio al tutor
+    _sendMessage(risposta);
+  }
+
+  /// Genera l'etichetta per il record compatto in base al tipo di azione.
+  String _compactLabel(String type, AzioneEvent action) {
+    return switch (type) {
+      'exercise' => 'Esercizio: ${_truncate(action.asProponiEsercizio?.testo ?? 'Proposto dal tutor', 40)}',
+      'formula' => 'Formula: ${action.asMostraFormula?.etichetta ?? 'Mostrata dal tutor'}',
+      'backtrack' => 'Ripasso: ${_truncate(action.asSuggerisciBacktrack?.motivo ?? '', 40)}',
+      _ => '',
+    };
+  }
+
+  String _truncate(String s, int maxLen) =>
+      s.length <= maxLen ? s : '${s.substring(0, maxLen)}…';
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -328,6 +392,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       onScrollToBottom: _scrollToBottom,
       onClearEsito: () => ref.read(sessionProvider.notifier).clearEsito(),
       onClearPromotion: () => ref.read(sessionProvider.notifier).clearPromotion(),
+      onShowFullscreen: _enqueueFullscreenAction,
     );
 
     final error = sessionState.error;
@@ -414,9 +479,6 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                         isStreaming: isStreaming,
                         currentTutorText: sessionState.currentTutorText,
                         scrollController: _scrollController,
-                        onSendMessage: _sendMessage,
-                        onRemoveItem: (item) =>
-                            setState(() => _messages.remove(item)),
                         onEndSession: _endSessionAndNavigateToRecap,
                       ),
                     ),
@@ -474,6 +536,17 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                   ),
                 ),
               ],
+              // Overlay fullscreen per azioni (esercizi, formule, backtrack)
+              if (_currentFullscreen != null)
+                Positioned.fill(
+                  child: FullscreenActionOverlay(
+                    key: ValueKey(_currentFullscreen.hashCode),
+                    actionType: _currentFullscreen!.type,
+                    action: _currentFullscreen!.action,
+                    onExerciseVerify: _handleFullscreenExerciseVerify,
+                    onDismiss: _handleFullscreenDismiss,
+                  ),
+                ),
             ],
           ),
         ),
