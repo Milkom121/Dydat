@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-06
-- **Data ultima sessione**: 2026-04-06 (S30 — B33, Fase 7 completata)
-- **Prossima sessione**: S31 — B34 (Fase 8, Percorso Unificato: Mappa + Zoom)
+- **Data ultima sessione**: 2026-04-06 (S31 — B34, Fase 8 Percorso Unificato: Mappa + Zoom)
+- **Prossima sessione**: S32 — B35 (Fase 8, Quaderno per Nodo)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

@@ -177,11 +177,12 @@
 > Unifica Percorso e Quaderno in un unico tab con mappa e notebook per nodo.
 
 ### Blocco B34 — Percorso Unificato: Mappa + Zoom
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S31)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare LearningPathScreen come "I miei studi". (1) Vista default: mappa lineare del percorso attuale (nodi come cerchi collegati, non card lista). (2) Zoom out: grafo completo delle connessioni tra concetti (algebra->geometria->fisica). Usa dati da pathProvider. (3) Nodi gia studiati in altri percorsi: indicatore "Gia studiato in [percorso]". (4) Ricerca per argomento: barra di ricerca che filtra nodi per nome. (5) Tap su nodo: apre quaderno (B35).
 - **File da toccare**: learning_path_screen.dart (riscrittura), tema_card_widget.dart (sostituire con nodo visivo), nuovi widget mappa
 - **Gate di uscita**: Mappa lineare funziona, zoom grafo funziona, ricerca funziona, tap su nodo navigabile, analyze 0, test verdi
+- **Note**: Riscritta LearningPathScreen da lista TemaCardWidget a mappa visiva nodi. LinearPathMap (cerchi + linee verticali), GraphOverview (InteractiveViewer + CustomPainter raggruppato per tema), NodeDetailBottomSheet con placeholder quaderno (B35). Ricerca client-side case-insensitive con highlight. Badge "Già studiato in [percorso]" non implementato (API non espone dato cross-percorso) — segnalato per B35 o futuro. 14 nuovi test (357 totale frontend), analyze 0.
 
 ### Blocco B35 — Quaderno per Nodo
 - [ ] **Stato**: da fare
