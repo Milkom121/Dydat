@@ -208,11 +208,12 @@
 - **Note**: Creato surface_decorations.dart con 6 metodi factory (backgroundGradient, card, glowCard, section, glowCircle, depthShadows). Aggiunto token surfaceInteractive (#2E2E34 dark / #EDE9E3 light) ad app_theme.dart. Applicato a 4 schermate: Home (sfondo radiale, card gradiente, glow nodo corrente, sezione ripasso con tint), I miei studi (sfondo radiale, nodi con glow, card nodo gradiente), Profilo (sfondo radiale, card con gradiente e profondita), Studio (header gradiente, exercise/formula/backtrack con glow ambra, tools tray con ombre profonde). 10 nuovi test surface_decorations. 389 frontend verdi, analyze 0.
 
 ### Blocco B37 — Beat Emotivi + Transizioni
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S34)
 - **Complessita'**: alta
 - **Descrizione**: Implementare il sistema di beat emotivi dalla direzione visiva v2. (1) Enum BeatState: accoglienza, spiegazione, esercizio, attesa, esito_corretto, esito_errato, esito_dopo_guida, promozione, chiusura, scoperta. (2) BeatProvider (Riverpod) che calcola il beat corrente dallo stato sessione. (3) BeatOverlay: sottile cambio di atmosfera nel canvas (gradient overlay, animazione mascotte, tono colori). Opacita 0.05-0.15, mai invasivo. (4) Transizioni tra beat: animate, < 500ms. (5) La mascotte reagisce ai beat (collegamento con MascotteState esistente).
 - **File da toccare**: nuovo beat_provider.dart, nuovo beat_overlay_widget.dart, studio_screen.dart, mascotte_widget.dart
 - **Gate di uscita**: Beat si aggiornano con lo stato sessione, overlay visibile ma sottile, mascotte reagisce, analyze 0, test verdi
+- **Note**: BeatState enum con 10 stati (dalla mappa emotiva v2). BeatNotifier con priorita: promozione > esito > fullscreen > chiusura > attesa > streaming > accoglienza. Durate minime per beat transitori (evita flickering). BeatOverlayWidget con gradiente radiale animato per ogni beat (opacita 0.03-0.15). mascotteStateFromBeat() mappa beat->MascotteState secondo tabella direzione visiva. 31 nuovi test (3 file). 420 frontend verdi, analyze 0.
 
 ### Blocco B38 — Mascotte CustomPainter
 - [ ] **Stato**: da fare

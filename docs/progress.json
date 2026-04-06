@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B37",
-  "total_blocks_run": 55,
+  "current_block": "B38",
+  "total_blocks_run": 57,
   "status": "CONTINUE",
-  "last_run": "2026-04-06T19:00:00Z",
-  "last_summary": "B36 completato (S33). Creato surface_decorations.dart con 6 metodi factory. Aggiunto token surfaceInteractive. Applicato gradienti, glow e profondita a 4 schermate. 10 nuovi test, 389 totale frontend, analyze 0."
+  "last_run": "2026-04-06T19:30:00Z",
+  "last_summary": "B37 completato (S34). BeatState enum 10 stati, BeatNotifier con priorita e durate minime, BeatOverlayWidget gradiente radiale animato, mascotteStateFromBeat() mappatura beat->mascotte. 31 nuovi test, 420 totale frontend, analyze 0."
 }

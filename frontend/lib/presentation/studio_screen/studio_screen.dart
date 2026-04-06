@@ -6,11 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
+import '../../providers/beat_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../models/sse_events.dart';
 import '../../routes/app_router.dart';
 import '../../widgets/custom_app_bar.dart';
 import './widgets/chat_view_widget.dart';
+import './widgets/beat_overlay_widget.dart';
 import './widgets/fullscreen_action_overlay.dart';
 import './widgets/mascotte_widget.dart';
 import './widgets/session_header_widget.dart';
@@ -300,6 +302,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     } else {
       _fullscreenQueue.add(entry);
     }
+    // Segnala al beat provider che c'e un'azione fullscreen attiva
+    ref.read(beatProvider.notifier).setFullscreenActive(true);
   }
 
   /// Chiude l'azione fullscreen corrente, aggiunge record compatto al feed,
@@ -321,6 +325,8 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
           _currentFullscreen = _fullscreenQueue.removeAt(0);
         } else {
           _currentFullscreen = null;
+          // Nessuna azione fullscreen rimasta
+          ref.read(beatProvider.notifier).setFullscreenActive(false);
         }
       });
       _scrollToBottom();
@@ -424,6 +430,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     final session = sessionState.activeSession;
     final isActive = session != null && session.stato == 'attiva';
     final isStreaming = sessionState.isStreaming;
+    final currentBeat = ref.watch(beatProvider).beat;
 
     syncTutorMessages(
       sessionState: sessionState,
@@ -476,6 +483,11 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
         body: SafeArea(
           child: Stack(
             children: [
+              // Overlay atmosferico beat emotivo (sotto tutto il contenuto)
+              if (isActive)
+                Positioned.fill(
+                  child: BeatOverlayWidget(beat: currentBeat),
+                ),
               Column(
                 children: [
                   SessionHeaderWidget(
@@ -541,10 +553,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                   child: MascotteWidget(
                     theme: theme,
                     onTap: _toggleToolsTray,
-                    mascotteState: computeMascotteState(
-                      sessionState,
-                      _sync.lastCelebrationTime,
-                    ),
+                    mascotteState: mascotteStateFromBeat(currentBeat),
                   ),
                 ),
               if (_isToolsTrayVisible) ...[

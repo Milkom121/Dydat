@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/sse_events.dart';
+import '../../../providers/beat_provider.dart';
 import '../../../providers/session_provider.dart';
 import './achievement_toast_widget.dart';
 import './celebration_overlay.dart';
@@ -140,6 +141,7 @@ void syncTutorMessages({
 }
 
 /// Calcola lo stato visivo della mascotte in base alla sessione corrente.
+/// Versione legacy — preferire [mascotteStateFromBeat] quando il beat e disponibile.
 MascotteState computeMascotteState(
   SessionScreenState sessionState,
   DateTime? lastCelebrationTime,
@@ -154,3 +156,18 @@ MascotteState computeMascotteState(
   if (sessionState.isStreaming) return MascotteState.thinking;
   return MascotteState.idle;
 }
+
+/// Mappa il beat emotivo corrente allo stato visivo della mascotte.
+/// Segue la tabella della direzione visiva v2 sezione 5.
+MascotteState mascotteStateFromBeat(BeatState beat) => switch (beat) {
+  BeatState.accoglienza   => MascotteState.idle,
+  BeatState.spiegazione   => MascotteState.thinking,
+  BeatState.transizione   => MascotteState.listening,
+  BeatState.attesa        => MascotteState.thinking,
+  BeatState.esercizio     => MascotteState.listening,
+  BeatState.esitoCorretto => MascotteState.celebrating,
+  BeatState.esitoErrato   => MascotteState.idle,
+  BeatState.esitoDopoGuida => MascotteState.celebrating,
+  BeatState.promozione    => MascotteState.celebrating,
+  BeatState.chiusura      => MascotteState.sleeping,
+};
