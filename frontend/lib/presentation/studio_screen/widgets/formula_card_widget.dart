@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/sse_events.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 class FormulaCardWidget extends StatelessWidget {
@@ -21,13 +22,11 @@ class FormulaCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.3),
-          width: 2,
-        ),
+      decoration: DydatSurface.glowCard(
+        context,
+        borderRadius: 12.0,
+        glowIntensity: 0.3,
+        depthLevel: 2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

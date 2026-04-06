@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/sizer_extensions.dart';
 
 import '../../../core/app_export.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 class ToolsTrayWidget extends StatelessWidget {
@@ -30,15 +31,16 @@ class ToolsTrayWidget extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(theme.colorScheme.surface, theme.colorScheme.primary, 0.03)!,
+            theme.colorScheme.surface,
+          ],
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow,
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        boxShadow: DydatSurface.depthShadows(context, level: 3),
       ),
       child: SafeArea(
         top: false,

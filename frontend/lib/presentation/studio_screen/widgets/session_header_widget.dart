@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/sizer_extensions.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Header della schermata studio: mostra nodo corrente e bottone inizia/riprendi.
@@ -34,13 +35,7 @@ class SessionHeaderWidget extends StatelessWidget {
           horizontal: 4.w,
           vertical: 1.5.h,
         ),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.2),
-          ),
-        ),
+        decoration: DydatSurface.card(context, borderRadius: 12.0),
         child: Row(
           children: [
             CustomIconWidget(

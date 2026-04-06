@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/sse_events.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 class ExerciseCardWidget extends StatefulWidget {
@@ -54,13 +55,11 @@ class _ExerciseCardWidgetState extends State<ExerciseCardWidget> {
 
     return Container(
       padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.3),
-          width: 2,
-        ),
+      decoration: DydatSurface.glowCard(
+        context,
+        borderRadius: 12.0,
+        glowIntensity: 0.3,
+        depthLevel: 2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

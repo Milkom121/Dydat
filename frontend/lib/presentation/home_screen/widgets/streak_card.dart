@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/sizer_extensions.dart';
 import '../../../models/statistiche.dart';
+import '../../../theme/surface_decorations.dart';
 
 /// Card compatta che mostra streak e ultimo risultato settimanale.
 /// Tono positivo: enfatizza continuita e progresso, non punizioni.
@@ -16,10 +17,7 @@ class StreakCard extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: DydatSurface.card(context),
       child: Row(
         children: [
           // Streak

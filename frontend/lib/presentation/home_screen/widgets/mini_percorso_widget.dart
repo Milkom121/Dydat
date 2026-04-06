@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/sizer_extensions.dart';
 import '../../../models/percorso.dart';
+import '../../../theme/surface_decorations.dart';
 
 /// Mini-percorso visivo: mostra la posizione attuale nel percorso
 /// con fino a 5 nodi intorno alla posizione corrente.
@@ -25,10 +26,7 @@ class MiniPercorsoWidget extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: DydatSurface.card(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,8 +47,9 @@ class MiniPercorsoWidget extends StatelessWidget {
           SizedBox(
             height: 80,
             child: LayoutBuilder(
-              builder: (context, constraints) {
+              builder: (layoutContext, constraints) {
                 return _buildNodeRow(
+                  context,
                   theme,
                   window.nodi,
                   window.currentIndexInWindow,
@@ -76,6 +75,7 @@ class MiniPercorsoWidget extends StatelessWidget {
   }
 
   Widget _buildNodeRow(
+    BuildContext context,
     ThemeData theme,
     List<NodoMappa> nodi,
     int currentInWindow,
@@ -96,13 +96,13 @@ class MiniPercorsoWidget extends StatelessWidget {
         for (int i = 0; i < nodi.length; i++) ...[
           if (i > 0)
             _buildConnector(theme, effectiveSpacing, _isCompleted(nodi[i - 1])),
-          _buildNode(theme, nodi[i], i == currentInWindow),
+          _buildNode(context, theme, nodi[i], i == currentInWindow),
         ],
       ],
     );
   }
 
-  Widget _buildNode(ThemeData theme, NodoMappa nodo, bool isCurrent) {
+  Widget _buildNode(BuildContext context, ThemeData theme, NodoMappa nodo, bool isCurrent) {
     final completed = _isCompleted(nodo);
 
     Color bgColor;
@@ -129,11 +129,16 @@ class MiniPercorsoWidget extends StatelessWidget {
         Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: isCurrent ? 2.5 : 1.5),
-          ),
+          decoration: isCurrent
+              ? DydatSurface.glowCircle(
+                  context,
+                  nodeColor: theme.colorScheme.primary,
+                )
+              : BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: borderColor, width: 1.5),
+                ),
           child: icon != null
               ? Icon(
                   icon,

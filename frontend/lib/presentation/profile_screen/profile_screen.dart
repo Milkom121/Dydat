@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/sizer_extensions.dart';
+import '../../theme/surface_decorations.dart';
 import '../../providers/achievement_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/stats_provider.dart';
@@ -94,7 +95,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CustomAppBar(title: 'Profilo'),
-      body: isLoading
+      body: Container(
+        decoration: DydatSurface.backgroundGradient(context),
+        child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _refresh,
@@ -117,6 +120,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 
@@ -128,13 +132,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Container(
       padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
+      decoration: DydatSurface.card(context),
       child: Row(
         children: [
           CircleAvatar(
@@ -274,13 +272,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildCardShell(ThemeData theme, {required Widget child}) {
     return Container(
       padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
+      decoration: DydatSurface.card(context),
       child: child,
     );
   }

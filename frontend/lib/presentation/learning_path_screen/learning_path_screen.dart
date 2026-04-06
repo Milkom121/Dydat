@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/sizer_extensions.dart';
+import '../../theme/surface_decorations.dart';
 
 import '../../models/percorso.dart';
 import '../../models/tema.dart';
@@ -106,8 +107,10 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(theme, nodi.length),
-      body: SafeArea(
-        child: Column(
+      body: Container(
+        decoration: DydatSurface.backgroundGradient(context),
+        child: SafeArea(
+          child: Column(
           children: [
             // Barra di ricerca
             _buildSearchBar(theme),
@@ -124,6 +127,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

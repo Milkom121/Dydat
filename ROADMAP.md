@@ -200,11 +200,12 @@
 > Porta personalita visiva all'app: superfici, beat emotivi, mascotte evoluta.
 
 ### Blocco B36 — Superfici: Gradienti, Glow, Profondita
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S33)
 - **Complessita'**: media
 - **Descrizione**: Aggiornare le superfici dell'app per riflettere il mood "studio notturno illuminato". (1) Card con gradienti sottili e bordi luminosi (glow ambra). (2) Profondita sulle superfici: ombre realistiche, layering. (3) Sfondi con gradienti radiali/lineari invece di colori piatti. (4) Applicare a: Home, I miei studi, Profilo, Studio. (5) Rispettare Theme.of(context) — zero colori hardcoded.
 - **File da toccare**: app_theme.dart (nuovi token), widget delle varie schermate, possibile nuovo file surface_decorations.dart per mixin/widget condivisi
 - **Gate di uscita**: Superfici con profondita, gradienti coerenti, zero colori hardcoded, analyze 0, test verdi
+- **Note**: Creato surface_decorations.dart con 6 metodi factory (backgroundGradient, card, glowCard, section, glowCircle, depthShadows). Aggiunto token surfaceInteractive (#2E2E34 dark / #EDE9E3 light) ad app_theme.dart. Applicato a 4 schermate: Home (sfondo radiale, card gradiente, glow nodo corrente, sezione ripasso con tint), I miei studi (sfondo radiale, nodi con glow, card nodo gradiente), Profilo (sfondo radiale, card con gradiente e profondita), Studio (header gradiente, exercise/formula/backtrack con glow ambra, tools tray con ombre profonde). 10 nuovi test surface_decorations. 389 frontend verdi, analyze 0.
 
 ### Blocco B37 — Beat Emotivi + Transizioni
 - [ ] **Stato**: da fare

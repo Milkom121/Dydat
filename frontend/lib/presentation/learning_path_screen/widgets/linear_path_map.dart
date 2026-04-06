@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/percorso.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Mappa lineare verticale del percorso: nodi come cerchi collegati da linee.
@@ -80,7 +81,7 @@ class _NodeRow extends StatelessWidget {
                 width: 12.w,
                 child: Column(
                   children: [
-                    _buildNodeCircle(theme, nodeState),
+                    _buildNodeCircle(context, theme, nodeState),
                     if (!isLast)
                       Expanded(
                         child: Container(
@@ -96,7 +97,7 @@ class _NodeRow extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(bottom: isLast ? 0 : 2.h),
-                  child: _buildNodeContent(theme, nodeState),
+                  child: _buildNodeContent(context, theme, nodeState),
                 ),
               ),
             ],
@@ -106,28 +107,28 @@ class _NodeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildNodeCircle(ThemeData theme, _NodeState state) {
+  Widget _buildNodeCircle(BuildContext context, ThemeData theme, _NodeState state) {
     final size = 10.w;
     final color = _circleColor(theme, state);
     final borderColor = _circleBorderColor(theme, state);
+    final hasGlow = state == _NodeState.inCorso ||
+        state == _NodeState.operativo ||
+        state == _NodeState.comprensivo;
 
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: borderColor, width: 2.5),
-        boxShadow: state == _NodeState.inCorso
-            ? [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
+      decoration: hasGlow
+          ? DydatSurface.glowCircle(
+              context,
+              nodeColor: borderColor,
+              glowIntensity: state == _NodeState.inCorso ? 0.4 : 0.2,
+            )
+          : BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 2.5),
+            ),
       child: Center(
         child: CustomIconWidget(
           iconName: _nodeIcon(state),
@@ -138,22 +139,15 @@ class _NodeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildNodeContent(ThemeData theme, _NodeState state) {
+  Widget _buildNodeContent(BuildContext context, ThemeData theme, _NodeState state) {
     final isActive = state != _NodeState.nonIniziato;
 
     return Container(
       constraints: BoxConstraints(minHeight: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: state == _NodeState.inCorso
-            ? Border.all(color: theme.colorScheme.primary, width: 1.5)
-            : Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.15),
-                width: 1,
-              ),
-      ),
+      decoration: state == _NodeState.inCorso
+          ? DydatSurface.glowCard(context, borderRadius: 12.0, glowIntensity: 0.2)
+          : DydatSurface.card(context, borderRadius: 12.0, depthLevel: isActive ? 1 : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,

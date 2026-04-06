@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B36",
-  "total_blocks_run": 53,
-  "status": "PHASE_COMPLETE",
-  "last_run": "2026-04-06T18:30:00Z",
-  "last_summary": "B35 completato (S32). Quaderno per Nodo: backend GET /quaderno/{nodo_id}, frontend NodoQuadernoScreen con 4 sub-widget. 7 test backend + 22 test frontend nuovi. 330 backend, 379 frontend verdi, analyze 0. Fase 8 completata."
+  "current_block": "B37",
+  "total_blocks_run": 55,
+  "status": "CONTINUE",
+  "last_run": "2026-04-06T19:00:00Z",
+  "last_summary": "B36 completato (S33). Creato surface_decorations.dart con 6 metodi factory. Aggiunto token surfaceInteractive. Applicato gradienti, glow e profondita a 4 schermate. 10 nuovi test, 389 totale frontend, analyze 0."
 }

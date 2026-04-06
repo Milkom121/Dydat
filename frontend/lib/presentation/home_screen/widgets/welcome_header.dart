@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/sizer_extensions.dart';
 import '../../../models/sessione.dart';
+import '../../../theme/surface_decorations.dart';
 
 /// Header di benvenuto contestuale.
 /// Mostra un messaggio diverso in base a: primo accesso, ritorno normale,
@@ -47,7 +48,7 @@ class WelcomeHeader extends StatelessWidget {
         // Avviso assenza prolungata (tono caldo, nessun senso di colpa)
         if (info.assenzaMessaggio != null) ...[
           SizedBox(height: 1.5.h),
-          _buildAssenzaCard(theme, info.assenzaMessaggio!),
+          _buildAssenzaCard(context, theme, info.assenzaMessaggio!),
         ],
       ],
     );
@@ -75,12 +76,14 @@ class WelcomeHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildAssenzaCard(ThemeData theme, String messaggio) {
+  Widget _buildAssenzaCard(BuildContext context, ThemeData theme, String messaggio) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+      decoration: DydatSurface.section(
+        context,
+        tintColor: theme.colorScheme.primary,
+        borderRadius: 12.0,
+        tintStrength: 0.1,
       ),
       child: Row(
         children: [

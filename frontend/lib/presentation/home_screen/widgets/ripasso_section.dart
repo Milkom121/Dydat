@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/sizer_extensions.dart';
 import '../../../models/ripasso.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Sezione ripasso FSRS migliorata graficamente.
@@ -26,13 +27,10 @@ class RipassoSection extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.tertiary.withValues(alpha: 0.3),
-          width: 1,
-        ),
+      decoration: DydatSurface.section(
+        context,
+        tintColor: theme.colorScheme.tertiary,
+        tintStrength: 0.12,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

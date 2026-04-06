@@ -10,6 +10,7 @@ import '../../providers/ripasso_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../providers/stats_provider.dart';
 import '../../routes/app_router.dart';
+import '../../theme/surface_decorations.dart';
 import '../../widgets/custom_icon_widget.dart';
 import '../studio_screen/widgets/session_history_widget.dart';
 import 'widgets/mini_percorso_widget.dart';
@@ -111,11 +112,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             elevation: 1.0,
             shadowColor: theme.colorScheme.shadow,
           ),
-          body: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: SingleChildScrollView(
-                child: Column(
+          body: Container(
+            decoration: DydatSurface.backgroundGradient(context),
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.w),
+                child: SingleChildScrollView(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: 3.h),
@@ -163,8 +166,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         context.go(AppPaths.recapSession(sessioneId));
                       },
                     ),
-                    SizedBox(height: 2.h),
-                  ],
+                      SizedBox(height: 2.h),
+                    ],
+                  ),
                 ),
               ),
             ),

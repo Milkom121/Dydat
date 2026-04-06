@@ -14,11 +14,13 @@ class AppTheme {
   // Dark Theme Colors
   static const Color darkBackground = Color(0xFF1A1A1E);
   static const Color darkSurface = Color(0xFF242428);
+  static const Color darkSurfaceInteractive = Color(0xFF2E2E34);
   static const Color darkBorder = Color(0xFF3A3A42);
 
   // Light Theme Colors
   static const Color lightBackground = Color(0xFFF5F2ED);
   static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightSurfaceInteractive = Color(0xFFEDE9E3);
   static const Color lightBorder = Color(0xFFD9D5CE);
 
   // Semantic Colors
