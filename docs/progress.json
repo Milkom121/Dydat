@@ -1,8 +1,8 @@
 {
-  "current_phase": "10",
-  "current_block": "B39",
-  "total_blocks_run": 59,
+  "current_phase": "9",
+  "current_block": "B38",
+  "total_blocks_run": 60,
   "status": "PHASE_COMPLETE",
-  "last_run": "2026-04-06T19:00:00Z",
-  "last_summary": "B38 completato (S35). Mascotte CustomPainter: blob organico Bezier (8 punti), occhi espressivi, transizioni 500ms, animazione ingresso (portale), celebrazione promozione (raggi). 28 nuovi test, 448 totale frontend, analyze 0. Fase 9 COMPLETATA (B36-B38)."
+  "last_run": "2026-04-06T18:24:15Z",
+  "last_summary": "B38 completato (S35). Mascotte evoluta da cerchio ambra a forma organica con CustomPainter. MascottePainter: blob con 8 punti di controllo Bezier cubici, deformazione animata (wobble), gradiente radiale per profondita, glow luminescente esterno. Occhi espressivi: sclera ovale, pupilla con riflesso di luce, apertura controllata da eyeOpenness (linea quando quasi chiusi). MascotteVisuals con lerp() per transizioni smooth 500ms tra stati. EntrancePortalPainter per animazione ingresso sessione (3 cerchi concentrici sfalsati). PromotionBurstPainter per celebrazione promozione (12 raggi + cerchio espansione). Studio screen integrato con showEntrance e showPromotionBurst. 28 nuovi test (2 file), 448 totale frontend, analyze 0. Fase 9 (Atmosfera e Mascotte) COMPLETATA."
 }
