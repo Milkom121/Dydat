@@ -187,8 +187,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBottoneStudio(ThemeData theme, bool hasActiveSession) {
-    final label =
-        hasActiveSession ? 'Riprendi la sessione' : 'Riprendi a studiare';
+    final hasHistory = ref.read(sessionProvider).sessionHistory.isNotEmpty;
+    final String label;
+    if (hasActiveSession) {
+      label = 'Riprendi la sessione';
+    } else if (hasHistory) {
+      label = 'Riprendi a studiare';
+    } else {
+      label = 'Inizia a studiare';
+    }
 
     return SizedBox(
       width: double.infinity,

@@ -2,15 +2,21 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../models/percorso.dart';
 import '../../../models/tema.dart';
+import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Vista grafo completo con InteractiveViewer: nodi raggruppati per tema,
 /// con connessioni sequenziali. Pan + zoom per esplorare.
+/// Supporta evidenziazione del percorso attuale tramite [activePathNodeIds].
 class GraphOverview extends StatelessWidget {
   final List<NodoMappa> nodi;
   final List<Tema> temi;
   final Set<String> nodiDaRipassare;
   final Set<String> highlightedNodeIds;
+  /// IDs dei nodi nel percorso attualmente attivo dell'utente
+  final Set<String> activePathNodeIds;
+  /// ID del nodo corrente (primo non completato nel percorso attivo)
+  final String? currentNodeId;
   final ValueChanged<NodoMappa> onNodeTap;
 
   const GraphOverview({
@@ -19,6 +25,8 @@ class GraphOverview extends StatelessWidget {
     required this.temi,
     this.nodiDaRipassare = const {},
     this.highlightedNodeIds = const {},
+    this.activePathNodeIds = const {},
+    this.currentNodeId,
     required this.onNodeTap,
   });
 
@@ -41,12 +49,12 @@ class GraphOverview extends StatelessWidget {
       temaNomi[t.id] = t.nome;
     }
 
-    // Calcola layout: ogni gruppo occupa una colonna
+    // Layout: ogni gruppo occupa una colonna con piu spazio verticale
     final groupKeys = temaGroups.keys.toList();
     const nodeSize = 52.0;
-    const nodeSpacingY = 72.0;
-    const groupSpacingX = 180.0;
-    const groupHeaderHeight = 40.0;
+    const nodeSpacingY = 100.0; // piu spazio per testo sotto
+    const groupSpacingX = 200.0; // piu spazio orizzontale tra colonne
+    const groupHeaderHeight = 48.0;
     const padding = 40.0;
 
     // Posiziona nodi
@@ -65,13 +73,13 @@ class GraphOverview extends StatelessWidget {
     }
 
     final totalWidth = padding * 2 + groupKeys.length * groupSpacingX;
-    final totalHeight = maxHeight + padding;
+    final totalHeight = maxHeight + padding + 40; // spazio extra per testo ultimo nodo
 
     return InteractiveViewer(
       constrained: false,
-      boundaryMargin: const EdgeInsets.all(60),
+      boundaryMargin: const EdgeInsets.all(200),
       minScale: 0.3,
-      maxScale: 2.0,
+      maxScale: 2.5,
       child: SizedBox(
         width: totalWidth,
         height: totalHeight,
@@ -84,6 +92,8 @@ class GraphOverview extends StatelessWidget {
                 nodi: nodi,
                 positions: nodePositions,
                 color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                activeNodeIds: activePathNodeIds,
+                activeColor: theme.colorScheme.primary.withValues(alpha: 0.5),
               ),
             ),
             // Etichette gruppi (temi)
@@ -115,6 +125,8 @@ class GraphOverview extends StatelessWidget {
                     needsReview: nodiDaRipassare.contains(nodo.id),
                     isHighlighted: highlightedNodeIds.isEmpty ||
                         highlightedNodeIds.contains(nodo.id),
+                    isInActivePath: activePathNodeIds.contains(nodo.id),
+                    isCurrent: nodo.id == currentNodeId,
                     onTap: () => onNodeTap(nodo),
                   ),
                 ),
@@ -130,41 +142,57 @@ class _ConnectionPainter extends CustomPainter {
   final List<NodoMappa> nodi;
   final Map<String, Offset> positions;
   final Color color;
+  final Set<String> activeNodeIds;
+  final Color activeColor;
 
   _ConnectionPainter({
     required this.nodi,
     required this.positions,
     required this.color,
+    required this.activeNodeIds,
+    required this.activeColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final defaultPaint = Paint()
       ..color = color
       ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final activePaint = Paint()
+      ..color = activeColor
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
 
     for (int i = 0; i < nodi.length - 1; i++) {
       final from = positions[nodi[i].id];
       final to = positions[nodi[i + 1].id];
       if (from != null && to != null) {
-        canvas.drawLine(from, to, paint);
+        // Evidenzia la connessione se entrambi i nodi sono nel percorso attivo
+        final isActive = activeNodeIds.contains(nodi[i].id) &&
+            activeNodeIds.contains(nodi[i + 1].id);
+        canvas.drawLine(from, to, isActive ? activePaint : defaultPaint);
       }
     }
   }
 
   @override
   bool shouldRepaint(covariant _ConnectionPainter oldDelegate) {
-    return oldDelegate.nodi != nodi || oldDelegate.color != color;
+    return oldDelegate.nodi != nodi ||
+        oldDelegate.color != color ||
+        oldDelegate.activeNodeIds != activeNodeIds;
   }
 }
 
-/// Singolo nodo nel grafo: cerchio con icona stato.
+/// Singolo nodo nel grafo: cerchio con icona stato, nome sotto.
 class _GraphNode extends StatelessWidget {
   final NodoMappa nodo;
   final double size;
   final bool needsReview;
   final bool isHighlighted;
+  final bool isInActivePath;
+  final bool isCurrent;
   final VoidCallback onTap;
 
   const _GraphNode({
@@ -172,6 +200,8 @@ class _GraphNode extends StatelessWidget {
     required this.size,
     required this.needsReview,
     required this.isHighlighted,
+    required this.isInActivePath,
+    required this.isCurrent,
     required this.onTap,
   });
 
@@ -194,15 +224,28 @@ class _GraphNode extends StatelessWidget {
                 Container(
                   width: size,
                   height: size,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: borderColor, width: 2.5),
-                  ),
+                  decoration: (isInActivePath || isCurrent)
+                      ? DydatSurface.glowCircle(
+                          context,
+                          nodeColor: isCurrent
+                              ? theme.colorScheme.primary
+                              : borderColor,
+                          glowIntensity: isCurrent ? 0.5 : 0.25,
+                          borderWidth: isCurrent ? 3.5 : 2.5,
+                        )
+                      : BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: borderColor, width: 2.5),
+                        ),
                   child: Center(
                     child: CustomIconWidget(
                       iconName: _nodeIcon(state),
-                      color: borderColor,
+                      color: (isInActivePath || isCurrent)
+                          ? (isCurrent
+                              ? theme.colorScheme.primary
+                              : borderColor)
+                          : borderColor,
                       size: size * 0.4,
                     ),
                   ),
@@ -229,15 +272,18 @@ class _GraphNode extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             SizedBox(
-              width: size * 2.2,
+              width: size * 2.8,
               child: Text(
                 nodo.nome,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isCurrent
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
                   fontSize: 10,
+                  fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

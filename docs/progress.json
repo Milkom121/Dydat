@@ -1,8 +1,8 @@
 {
-  "current_phase": "9",
-  "current_block": "B38.5",
-  "total_blocks_run": 60,
+  "current_phase": "10",
+  "current_block": "B39",
+  "total_blocks_run": 61,
   "status": "CONTINUE",
-  "last_run": "2026-04-06T18:24:15Z",
-  "last_summary": "Test manuale post-Fase 9 completato, 7 bug UI cosmetici raccolti. Handoff predisposto per B38.5 (fix chirurgico) prima di Fase 10. Issue strategiche UX-01 e UX-02 registrate in ideas.md per blocchi futuri."
+  "last_run": "2026-04-07T10:00:00Z",
+  "last_summary": "B38.5 completato: 7 bug UI cosmetici fixati (overflow, testi, LinearPathMap ridisegnata, GraphOverview con percorso evidenziato). 459 test frontend verdi, analyze 0. Prossimo: B39 Onboarding Wow."
 }

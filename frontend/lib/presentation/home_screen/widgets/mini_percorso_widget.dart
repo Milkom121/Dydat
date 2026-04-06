@@ -90,15 +90,19 @@ class MiniPercorsoWidget extends StatelessWidget {
     // Limita spacing
     final effectiveSpacing = spacing.clamp(8.0, 40.0);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (int i = 0; i < nodi.length; i++) ...[
-          if (i > 0)
-            _buildConnector(theme, effectiveSpacing, _isCompleted(nodi[i - 1])),
-          _buildNode(context, theme, nodi[i], i == currentInWindow),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const ClampingScrollPhysics(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (int i = 0; i < nodi.length; i++) ...[
+            if (i > 0)
+              _buildConnector(theme, effectiveSpacing, _isCompleted(nodi[i - 1])),
+            _buildNode(context, theme, nodi[i], i == currentInWindow),
+          ],
         ],
-      ],
+      ),
     );
   }
 

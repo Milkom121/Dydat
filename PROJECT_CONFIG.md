@@ -10,9 +10,9 @@
 ## Date
 
 - **Data creazione**: 2026-02-18
-- **Data ultimo aggiornamento**: 2026-04-06
-- **Data ultima sessione**: 2026-04-06 (S35 — B38, Fase 9 Mascotte CustomPainter)
-- **Prossima sessione**: S36 — B39 (Fase 10, Onboarding con Momento Wow)
+- **Data ultimo aggiornamento**: 2026-04-07
+- **Data ultima sessione**: 2026-04-07 (S36 — B38.5, Fix UI post test manuale)
+- **Prossima sessione**: S37 — B39 (Fase 10, Onboarding con Momento Wow)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

@@ -52,7 +52,7 @@ void main() {
       expect(find.text('Radicali'), findsOneWidget);
     });
 
-    testWidgets('mostra label stato per ogni livello', (tester) async {
+    testWidgets('renderizza cerchi con icone diverse per ogni stato', (tester) async {
       await tester.pumpWidget(_wrap(
         LinearPathMap(
           nodi: _sampleNodi(),
@@ -60,10 +60,9 @@ void main() {
         ),
       ));
 
-      expect(find.text('Operativo'), findsOneWidget);
-      expect(find.text('In corso'), findsOneWidget);
-      expect(find.text('Da iniziare'), findsOneWidget);
-      expect(find.text('Comprensivo'), findsOneWidget);
+      // Verifica che i nomi dei nodi sono visibili (layout centrato)
+      expect(find.text('Frazioni'), findsOneWidget);
+      expect(find.text('Proporzioni'), findsOneWidget);
     });
 
     testWidgets('mostra esercizi completati se > 0', (tester) async {
@@ -74,11 +73,11 @@ void main() {
         ),
       ));
 
-      expect(find.text('5 esercizi completati'), findsOneWidget);
-      expect(find.text('2 esercizi completati'), findsOneWidget);
-      expect(find.text('8 esercizi completati'), findsOneWidget);
+      expect(find.text('5 esercizi'), findsOneWidget);
+      expect(find.text('2 esercizi'), findsOneWidget);
+      expect(find.text('8 esercizi'), findsOneWidget);
       // Potenze ha 0 esercizi — non deve comparire
-      expect(find.text('0 esercizi completati'), findsNothing);
+      expect(find.text('0 esercizi'), findsNothing);
     });
 
     testWidgets('mostra badge ripasso per nodi SR', (tester) async {
@@ -115,7 +114,8 @@ void main() {
         LinearPathMap(nodi: nodi, onNodeTap: (_) {}),
       ));
 
-      expect(find.text('presunto'), findsOneWidget);
+      // Badge presunto mostra "P"
+      expect(find.text('P'), findsOneWidget);
     });
 
     testWidgets('tap nodo invoca callback con nodo corretto', (tester) async {

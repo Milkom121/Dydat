@@ -281,11 +281,25 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
 
     // Vista lineare o grafo
     if (_isGraphView) {
+      // Nodi del percorso attivo per evidenziarli nel grafo
+      final mapNodi = ref.read(pathProvider).currentMap?.nodi ?? [];
+      final activePathIds = mapNodi.map((n) => n.id).toSet();
+      // Primo nodo non completato = nodo corrente
+      String? currentNodeId;
+      for (final n in mapNodi) {
+        if (n.livello != 'operativo' && n.livello != 'comprensivo' && n.livello != 'connesso') {
+          currentNodeId = n.id;
+          break;
+        }
+      }
+
       return GraphOverview(
         nodi: nodi,
         temi: topics,
         nodiDaRipassare: nodiDaRipassare,
         highlightedNodeIds: highlightedIds,
+        activePathNodeIds: activePathIds,
+        currentNodeId: currentNodeId,
         onNodeTap: _showNodeDetail,
       );
     }

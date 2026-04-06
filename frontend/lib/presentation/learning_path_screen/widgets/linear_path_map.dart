@@ -4,8 +4,8 @@ import '../../../models/percorso.dart';
 import '../../../theme/surface_decorations.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
-/// Mappa lineare verticale del percorso: nodi come cerchi collegati da linee.
-/// Ogni nodo mostra nome, stato (colore/icona) e badge ripasso se applicabile.
+/// Mappa lineare verticale del percorso: nodi come cerchi grandi collegati
+/// da linee verticali graduate. Layout centrato, nome sotto il cerchio.
 class LinearPathMap extends StatelessWidget {
   final List<NodoMappa> nodi;
   final Set<String> nodiDaRipassare;
@@ -34,7 +34,7 @@ class LinearPathMap extends StatelessWidget {
             highlightedNodeIds.contains(nodo.id);
         final needsReview = nodiDaRipassare.contains(nodo.id);
 
-        return _NodeRow(
+        return _CenteredNodeTile(
           nodo: nodo,
           isLast: isLast,
           isHighlighted: isHighlighted,
@@ -46,14 +46,14 @@ class LinearPathMap extends StatelessWidget {
   }
 }
 
-class _NodeRow extends StatelessWidget {
+class _CenteredNodeTile extends StatelessWidget {
   final NodoMappa nodo;
   final bool isLast;
   final bool isHighlighted;
   final bool needsReview;
   final VoidCallback onTap;
 
-  const _NodeRow({
+  const _CenteredNodeTile({
     required this.nodo,
     required this.isLast,
     required this.isHighlighted,
@@ -72,124 +72,113 @@ class _NodeRow extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Opacity(
         opacity: opacity,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Colonna sinistra: cerchio + linea di connessione
-              SizedBox(
-                width: 12.w,
-                child: Column(
-                  children: [
-                    _buildNodeCircle(context, theme, nodeState),
-                    if (!isLast)
-                      Expanded(
-                        child: Container(
-                          width: 2,
-                          color: _connectionColor(theme, nodeState),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 3.w),
-              // Colonna destra: nome + info
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: isLast ? 0 : 2.h),
-                  child: _buildNodeContent(context, theme, nodeState),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Cerchio grande centrato
+            _buildCircle(context, theme, nodeState),
+            SizedBox(height: 0.8.h),
+            // Nome sotto il cerchio
+            _buildLabel(theme, nodeState),
+            // Badge ripasso
+            if (needsReview) ...[
+              SizedBox(height: 0.5.h),
+              _buildReviewBadge(theme),
+            ],
+            // Esercizi completati
+            if (nodo.eserciziCompletati > 0) ...[
+              SizedBox(height: 0.3.h),
+              Text(
+                '${nodo.eserciziCompletati} esercizi',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
                 ),
               ),
             ],
-          ),
+            // Linea di connessione verso il nodo successivo
+            if (!isLast) _buildConnector(theme, nodeState),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNodeCircle(BuildContext context, ThemeData theme, _NodeState state) {
-    final size = 10.w;
+  Widget _buildCircle(BuildContext context, ThemeData theme, _NodeState state) {
+    const double size = 56.0;
     final color = _circleColor(theme, state);
     final borderColor = _circleBorderColor(theme, state);
     final hasGlow = state == _NodeState.inCorso ||
         state == _NodeState.operativo ||
         state == _NodeState.comprensivo;
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: hasGlow
-          ? DydatSurface.glowCircle(
-              context,
-              nodeColor: borderColor,
-              glowIntensity: state == _NodeState.inCorso ? 0.4 : 0.2,
-            )
-          : BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 2.5),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: hasGlow
+              ? DydatSurface.glowCircle(
+                  context,
+                  nodeColor: borderColor,
+                  glowIntensity: state == _NodeState.inCorso ? 0.4 : 0.2,
+                )
+              : BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: borderColor, width: 2.5),
+                ),
+          child: Center(
+            child: CustomIconWidget(
+              iconName: _nodeIcon(state),
+              color: _nodeIconColor(theme, state),
+              size: 24,
             ),
-      child: Center(
-        child: CustomIconWidget(
-          iconName: _nodeIcon(state),
-          color: _nodeIconColor(theme, state),
-          size: 5.w,
+          ),
         ),
-      ),
+        // Badge presunto
+        if (nodo.presunto)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'P',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.tertiary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildNodeContent(BuildContext context, ThemeData theme, _NodeState state) {
+  Widget _buildLabel(ThemeData theme, _NodeState state) {
     final isActive = state != _NodeState.nonIniziato;
-
-    return Container(
-      constraints: BoxConstraints(minHeight: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
-      decoration: state == _NodeState.inCorso
-          ? DydatSurface.glowCard(context, borderRadius: 12.0, glowIntensity: 0.2)
-          : DydatSurface.card(context, borderRadius: 12.0, depthLevel: isActive ? 1 : 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  nodo.nome,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: isActive
-                        ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontWeight:
-                        state == _NodeState.inCorso ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-              ),
-              if (needsReview) _buildReviewBadge(theme),
-              if (nodo.presunto) ...[
-                SizedBox(width: 1.w),
-                _buildPresuntoBadge(theme),
-              ],
-            ],
-          ),
-          SizedBox(height: 0.5.h),
-          Text(
-            _stateLabel(state),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: _stateLabelColor(theme, state),
-            ),
-          ),
-          if (nodo.eserciziCompletati > 0) ...[
-            SizedBox(height: 0.3.h),
-            Text(
-              '${nodo.eserciziCompletati} esercizi completati',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
+    return SizedBox(
+      width: 140,
+      child: Text(
+        nodo.nome,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: isActive
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          fontWeight: state == _NodeState.inCorso
+              ? FontWeight.w600
+              : FontWeight.w500,
+        ),
       ),
     );
   }
@@ -223,18 +212,27 @@ class _NodeRow extends StatelessWidget {
     );
   }
 
-  Widget _buildPresuntoBadge(ThemeData theme) {
+  Widget _buildConnector(ThemeData theme, _NodeState state) {
+    final completed = state == _NodeState.operativo ||
+        state == _NodeState.comprensivo;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      width: 3,
+      height: 32,
+      margin: EdgeInsets.symmetric(vertical: 0.5.h),
       decoration: BoxDecoration(
-        color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        'presunto',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.tertiary,
-          fontSize: 10,
+        borderRadius: BorderRadius.circular(1.5),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: completed
+              ? [
+                  theme.colorScheme.primary.withValues(alpha: 0.6),
+                  theme.colorScheme.primary.withValues(alpha: 0.2),
+                ]
+              : [
+                  theme.colorScheme.outline.withValues(alpha: 0.25),
+                  theme.colorScheme.outline.withValues(alpha: 0.1),
+                ],
         ),
       ),
     );
@@ -266,19 +264,6 @@ class _NodeRow extends StatelessWidget {
     }
   }
 
-  Color _connectionColor(ThemeData theme, _NodeState state) {
-    switch (state) {
-      case _NodeState.nonIniziato:
-        return theme.colorScheme.outline.withValues(alpha: 0.15);
-      case _NodeState.inCorso:
-        return theme.colorScheme.primary.withValues(alpha: 0.4);
-      case _NodeState.operativo:
-        return theme.colorScheme.secondary.withValues(alpha: 0.4);
-      case _NodeState.comprensivo:
-        return theme.colorScheme.tertiary.withValues(alpha: 0.4);
-    }
-  }
-
   Color _nodeIconColor(ThemeData theme, _NodeState state) {
     switch (state) {
       case _NodeState.nonIniziato:
@@ -295,39 +280,13 @@ class _NodeRow extends StatelessWidget {
   String _nodeIcon(_NodeState state) {
     switch (state) {
       case _NodeState.nonIniziato:
-        return 'radio_button_unchecked';
+        return 'lock_outline';
       case _NodeState.inCorso:
-        return 'timelapse';
+        return 'play_arrow_rounded';
       case _NodeState.operativo:
         return 'check_circle';
       case _NodeState.comprensivo:
         return 'verified';
-    }
-  }
-
-  String _stateLabel(_NodeState state) {
-    switch (state) {
-      case _NodeState.nonIniziato:
-        return 'Da iniziare';
-      case _NodeState.inCorso:
-        return 'In corso';
-      case _NodeState.operativo:
-        return 'Operativo';
-      case _NodeState.comprensivo:
-        return 'Comprensivo';
-    }
-  }
-
-  Color _stateLabelColor(ThemeData theme, _NodeState state) {
-    switch (state) {
-      case _NodeState.nonIniziato:
-        return theme.colorScheme.onSurfaceVariant;
-      case _NodeState.inCorso:
-        return theme.colorScheme.primary;
-      case _NodeState.operativo:
-        return theme.colorScheme.secondary;
-      case _NodeState.comprensivo:
-        return theme.colorScheme.tertiary;
     }
   }
 
