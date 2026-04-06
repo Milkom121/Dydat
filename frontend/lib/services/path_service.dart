@@ -1,5 +1,6 @@
 import 'package:dydat/config/api_config.dart';
 import 'package:dydat/models/percorso.dart';
+import 'package:dydat/models/quaderno.dart';
 import 'package:dydat/models/ripasso.dart';
 import 'package:dydat/models/tema.dart';
 import 'package:dydat/services/dio_client.dart';
@@ -44,5 +45,11 @@ class PathService {
     return list
         .map((e) => NodoRipasso.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Ritorna il quaderno aggregato per un nodo specifico.
+  Future<QuadernoNodo> getQuadernoNodo(String nodoId) async {
+    final response = await _client.dio.get(ApiConfig.quaderno(nodoId));
+    return QuadernoNodo.fromJson(response.data as Map<String, dynamic>);
   }
 }

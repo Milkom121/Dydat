@@ -46,6 +46,9 @@ class ApiConfig {
   // Ripasso SR
   static const String ripassoNodi = '/ripasso/nodi';
 
+  // Quaderno
+  static String quaderno(String nodoId) => '/quaderno/$nodoId';
+
   // Health
   static const String health = '/health';
 }

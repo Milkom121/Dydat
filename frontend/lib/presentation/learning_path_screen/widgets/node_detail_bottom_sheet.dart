@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/percorso.dart';
+import '../../../routes/app_router.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Bottom sheet dettaglio nodo — placeholder per il Quaderno (B35).
@@ -150,46 +152,64 @@ class NodeDetailBottomSheet extends StatelessWidget {
 
               SizedBox(height: 2.h),
 
-              // Placeholder quaderno (B35)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              // Bottone Quaderno — naviga alla schermata dettaglio
+              Material(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    CustomIconWidget(
-                      iconName: 'auto_stories',
-                      color: theme.colorScheme.primary,
-                      size: 6.w,
-                    ),
-                    SizedBox(width: 3.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Quaderno',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'Appunti, esercizi e formule per questo nodo — in arrivo!',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                  onTap: () {
+                    Navigator.pop(context);
+                    final encodedNome = Uri.encodeComponent(nodo.nome);
+                    context.push(
+                      '${AppPaths.quadernoNodo(nodo.id)}?nome=$encodedNome',
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(3.w),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
                       ),
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        CustomIconWidget(
+                          iconName: 'auto_stories',
+                          color: theme.colorScheme.primary,
+                          size: 6.w,
+                        ),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Quaderno',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Appunti, esercizi e formule per questo nodo',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CustomIconWidget(
+                          iconName: 'chevron_right',
+                          color: theme.colorScheme.primary,
+                          size: 5.w,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               SizedBox(height: 3.h),

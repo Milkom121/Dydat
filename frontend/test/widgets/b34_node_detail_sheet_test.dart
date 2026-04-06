@@ -113,13 +113,16 @@ void main() {
       expect(find.text('Presunto'), findsOneWidget);
     });
 
-    testWidgets('mostra placeholder quaderno B35', (tester) async {
+    testWidgets('mostra bottone quaderno navigabile', (tester) async {
       await tester.pumpWidget(_wrap(
         NodeDetailBottomSheet(nodo: _nodo()),
       ));
 
       expect(find.text('Quaderno'), findsOneWidget);
-      expect(find.textContaining('in arrivo'), findsOneWidget);
+      expect(
+        find.textContaining('Appunti, esercizi e formule'),
+        findsOneWidget,
+      );
     });
   });
 }

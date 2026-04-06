@@ -1,8 +1,8 @@
 {
-  "current_phase": "8",
-  "current_block": "B35",
-  "total_blocks_run": 51,
-  "status": "CONTINUE",
+  "current_phase": "9",
+  "current_block": "B36",
+  "total_blocks_run": 53,
+  "status": "PHASE_COMPLETE",
   "last_run": "2026-04-06T18:30:00Z",
-  "last_summary": "B34 completato (S31). Riscritta LearningPathScreen: mappa lineare + zoom grafo + ricerca + tap nodo. 357 test frontend verdi, analyze 0."
+  "last_summary": "B35 completato (S32). Quaderno per Nodo: backend GET /quaderno/{nodo_id}, frontend NodoQuadernoScreen con 4 sub-widget. 7 test backend + 22 test frontend nuovi. 330 backend, 379 frontend verdi, analyze 0. Fase 8 completata."
 }

@@ -6,6 +6,7 @@ import 'providers/achievement_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/path_provider.dart';
+import 'providers/quaderno_provider.dart';
 import 'providers/ripasso_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/stats_provider.dart';
@@ -93,6 +94,9 @@ void main() async {
         ),
         ripassoProvider.overrideWith(
           (ref) => RipassoNotifier(pathService: pathService),
+        ),
+        quadernoProvider.overrideWith(
+          (ref) => QuadernoNotifier(pathService: pathService),
         ),
       ],
       child: const DydatApp(),

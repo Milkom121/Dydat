@@ -185,11 +185,12 @@
 - **Note**: Riscritta LearningPathScreen da lista TemaCardWidget a mappa visiva nodi. LinearPathMap (cerchi + linee verticali), GraphOverview (InteractiveViewer + CustomPainter raggruppato per tema), NodeDetailBottomSheet con placeholder quaderno (B35). Ricerca client-side case-insensitive con highlight. Badge "Già studiato in [percorso]" non implementato (API non espone dato cross-percorso) — segnalato per B35 o futuro. 14 nuovi test (357 totale frontend), analyze 0.
 
 ### Blocco B35 — Quaderno per Nodo
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S32)
 - **Complessita'**: alta
 - **Descrizione**: Creare il Quaderno associato a ogni nodo del grafo. (1) NodoQuadernoScreen: raccoglie appunti, esercizi svolti, formule viste, spiegazioni chiave dal tutor per quel nodo. (2) Backend: nuovo endpoint GET /nodi/{id}/quaderno che aggrega sessioni, esercizi, azioni formula per quel nodo. (3) Frontend: schermata con sezioni (Appunti, Esercizi, Formule). Dati organizzati per tipo, non per sessione. (4) Il quaderno e uno per nodo (non per percorso): se "proporzioni" appare in algebra e chimica, il quaderno e lo stesso. (5) Da "I miei studi", tap su nodo apre il quaderno.
 - **File da toccare**: nuovo nodo_quaderno_screen.dart, nuovo quaderno_service.dart, nuovo quaderno_provider.dart, backend endpoint, learning_path_screen.dart (navigazione)
 - **Gate di uscita**: Quaderno mostra dati reali per nodo, aggregazione corretta, nodo condiviso = stesso quaderno, backend+frontend, analyze 0, test verdi
+- **Note**: Backend: GET /quaderno/{nodo_id} aggrega stato utente, storico esercizi (limit 50), formule deduplicate per titolo, spiegazioni tutor (>50 char), conteggio sessioni. Frontend: QuadernoNodo model (5 classi), QuadernoNotifier/QuadernoState, NodoQuadernoScreen con 4 sub-widget (StatoHeader, FormuleSection con LaTeX, EserciziSection con badge esito, SpiegazioniSection con expand/collapse markdown). Route /quaderno/:nodoId fullscreen. NodeDetailBottomSheet aggiornato con navigazione tap->quaderno. 7 nuovi test backend, 22 nuovi test frontend. 330 backend (+ 20 skipped), 379 frontend verdi, analyze 0.
 
 ---
 

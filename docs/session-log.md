@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-04-06 — Sessione S32 — B35 Quaderno per Nodo
+- **Status**: PHASE_COMPLETE
+- **Summary**: Backend GET /quaderno/{nodo_id} aggrega stato, esercizi, formule (deduplicate), spiegazioni (>50 char, markdown). Frontend: QuadernoNodo model (5 classi), QuadernoNotifier, NodoQuadernoScreen con 4 sub-widget (StatoHeader, FormuleSection LaTeX, EserciziSection badge esito, SpiegazioniSection expand/collapse). Route /quaderno/:nodoId fullscreen. NodeDetailBottomSheet navigazione tap->quaderno. 7 test backend + 22 test frontend nuovi. 330 backend + 379 frontend verdi, analyze 0. Fase 8 COMPLETATA.
+---
+
+## 2026-04-06 — Sessione S31 — B34 Percorso Unificato: Mappa + Zoom
+- **Status**: CONTINUE
+- **Summary**: LearningPathScreen riscritta da lista card a mappa visiva nodi. LinearPathMap, GraphOverview, NodeDetailBottomSheet, ricerca argomento. 14 nuovi test, 357 frontend verdi, analyze 0.
+---
+
 ## 2026-04-06 — Preparazione Sessione S31 — Kickoff B34
 - **Status**: READY
 - **Summary**: Fase 7 chiusa con B33 (S30). Handoff, progress.json e session-log predisposti per Fase 8 B34 (Percorso Unificato: Mappa + Zoom). Test manuali B33 rimandati su richiesta di Villa; runner autorizzato a procedere su develop. Baseline: 341 backend + 343 frontend verdi, analyze 0.
@@ -147,4 +157,9 @@
 ## 2026-04-06 — Nota: fallimenti F8BB34 precedenti
 - **Status**: INFO
 - **Summary**: I 3 tentativi falliti di F8BB34 (17:31, 17:38, 19:12) sono dovuti a token OAuth Claude Code scaduto (HTTP 401). Nessun codice toccato, develop pulito. Dopo rilogin, progress.json riportato a CONTINUE per permettere rilancio del runner su B34.
+---
+
+## 2026-04-06 19:29:21 — Blocco F8BB34
+- **Status**: CONTINUE
+- **Summary**: B34 completato (S31). Riscritta LearningPathScreen da lista card a mappa visiva nodi con vista lineare, zoom grafo, ricerca argomento e tap nodo con placeholder quaderno. 14 nuovi test, 357 totale frontend, analyze 0.
 ---

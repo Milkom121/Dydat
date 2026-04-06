@@ -10,6 +10,7 @@ import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/home_screen/home_screen.dart';
 import '../presentation/studio_screen/studio_screen.dart';
 import '../presentation/studio_screen/recap_session_screen.dart';
+import '../presentation/quaderno_screen/nodo_quaderno_screen.dart';
 import '../presentation/learning_path_screen/learning_path_screen.dart';
 import '../presentation/profile_screen/profile_screen.dart';
 import '../widgets/custom_bottom_bar.dart';
@@ -26,6 +27,8 @@ class AppPaths {
   static const profilo = '/profilo';
   static const recap = '/recap';
   static String recapSession(String sessioneId) => '/recap/$sessioneId';
+  static const quaderno = '/quaderno';
+  static String quadernoNodo(String nodoId) => '/quaderno/$nodoId';
 }
 
 /// Shell con bottom navigation bar per i 3 tab principali: Home, I miei studi, Profilo.
@@ -178,6 +181,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final sessioneId = state.pathParameters['sessioneId']!;
           return RecapSessionScreen(sessioneId: sessioneId);
+        },
+      ),
+
+      // Quaderno nodo — fuori dalla shell, fullscreen.
+      GoRoute(
+        path: '${AppPaths.quaderno}/:nodoId',
+        builder: (context, state) {
+          final nodoId = state.pathParameters['nodoId']!;
+          final nodoNome =
+              state.uri.queryParameters['nome'] ?? 'Quaderno';
+          return NodoQuadernoScreen(
+            nodoId: nodoId,
+            nodoNome: nodoNome,
+          );
         },
       ),
 
