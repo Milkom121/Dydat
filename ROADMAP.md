@@ -139,7 +139,7 @@
 - **Gate di uscita**: 3 tab funzionanti, Studio si apre come fullscreen modale, tab spariscono in sessione, navigazione Home->Studio->Home funziona, flutter analyze 0, flutter test verdi
 
 ### Blocco B31 — Home Calda con Ritorno Intelligente
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S28)
 - **Complessita'**: media
 - **Descrizione**: Arricchire la Home creata in B30. (1) Mini-percorso visivo: posizione attuale nel percorso (nodo corrente, prossimo). (2) Invito contestuale: "Eravamo rimasti a [nome nodo]" usando dati sessione precedente. (3) Sezione ripasso FSRS (migrata da home_view_widget, migliorata graficamente). (4) Streak e ultimo risultato. (5) Ritorno dopo assenza: se ultima sessione > 7 giorni, messaggio gentile + lista nodi da ripassare. (6) Tono caldo, nessun senso di colpa.
 - **File da toccare**: home_screen.dart (arricchire), eventuale home_widgets/ per sotto-widget
