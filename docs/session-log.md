@@ -98,3 +98,8 @@
 - **Status**: CONTINUE
 - **Summary**: B32 completato (S29). Modello ibrido: FullscreenActionOverlay con slide-up+fade, CompactActionRecord nel feed, coda azioni in StudioScreen, ChatViewWidget ripulito dai widget inline. 22 nuovi test (296 totale). Flutter analyze 0.
 ---
+
+## 2026-04-06 04:11:26 — Blocco F6BB30
+- **Status**: CONTINUE
+- **Summary**: B32 completato (S29). Modello ibrido implementato: esercizi/formule/backtrack escono dal feed in FullscreenActionOverlay (slide-up + fade). Record compatti nel feed post-azione. Coda fullscreen in StudioScreen. 22 nuovi test, 296 totale, analyze 0.
+---
