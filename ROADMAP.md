@@ -233,6 +233,24 @@
 - **NON fare**: non toccare UX-01 (primo turno caldo, B33.5 candidato) ne UX-02 (quaderno enciclopedico, B35.5 candidato). Registrati in `.claude/ideas.md`.
 - **Note**: BUG-01: SingleChildScrollView orizzontale in MiniPercorsoWidget. BUG-02: testo bottone condizionale "Inizia/Riprendi a studiare". BUG-03: "Accedi a Dydat" testo neutro in LoginScreen. BUG-04: riscrittura LinearPathMap con cerchi 56px centrati, nome sotto, connettore gradient. BUG-05: nomi nodi su 2 righe (maxLines:2, width: size*2.8). BUG-06: activePathNodeIds + currentNodeId con glow per percorso attivo. BUG-07: boundaryMargin 200, minScale 0.3, maxScale 2.5. 11 nuovi test (459 totale frontend), analyze 0.
 
+### Blocco B35.5 — Quaderno Enciclopedico (UX-02)
+- [ ] **Stato**: da fare
+- **Complessita'**: alta (backend + frontend + LaTeX + editing note)
+- **Descrizione**: Trasformare NodoQuadernoScreen da log dell'attivita personale a manuale didattico + log personale, usando i dati intrinseci gia presenti nella tabella `nodi` del DB. Decisione strategica concordata con Villa: il quaderno deve essere fruibile anche per nodi mai studiati.
+- **Backend**: estendere `GET /quaderno/{nodo_id}` con scheda intrinseca (definizione_testo, formule, esempi, errori_comuni, parole_chiave) + nota utente. Nuovo endpoint `PUT /quaderno/{nodo_id}/nota` per salvare la nota personale.
+- **Frontend**: riscrittura schermata con 10 sezioni: header, breadcrumb, chip parole chiave, "Cosa imparerai" (collapsible), "Formule chiave" (LaTeX), "Esempi", "Attenzione a..." (card errori comuni), "Le mie note" (editor con autosave debounced), separator, log personale (esercizi+formule+spiegazioni). Nuovi widget: CollapsibleText, FormulaCurriculumCard, ErroreComuneCard, NotaUtenteEditor.
+- **File da toccare**: backend/app/api/quaderno.py, frontend/lib/models/quaderno_nodo.dart, frontend/lib/providers/quaderno_provider.dart, frontend/lib/presentation/quaderno_screen/nodo_quaderno_screen.dart + nuovi widget
+- **Gate di uscita**: backend endpoint esteso + PUT nota + 6 pytest, frontend schermata riscritta + 8 widget test, analyze 0, ruff pulito
+- **NON fare**: note multiple (solo una per nodo), entry point dal Studio, navigazione dettagli esercizio, refactoring bonus
+
+### Blocco B35.6 — Polish empty states (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Audit + fix degli stati vuoti e dei messaggi di benvenuto nelle varie schermate dell'app. Bonus block dopo B35.5 per ripulire incongruenze emerse dal test manuale (e altre potenziali non scoperte).
+- **Schermate da rivedere**: Profilo (utente nuovo senza sessioni), Sezione Ripasso in Home (lista vuota), I miei studi (search senza match), Recap sessione con 0 esercizi, Storico sessioni vuoto. Login gia fixato in B38.5, onboarding rimandato a B39.
+- **Gate di uscita**: empty states verificati e fixati, 2-4 widget test nuovi, analyze 0
+- **NON fare**: riscrivere schermate intere, toccare backend, toccare onboarding
+
 ---
 
 ## Fase 10 — UX Redesign: Onboarding + Audio (Fase A.5, B39-B40)

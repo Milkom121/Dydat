@@ -193,3 +193,13 @@
 - **Status**: READY
 - **Summary**: Test manuale eseguito da Villa su emulatore con utente creato da zero via onboarding reale. 7 scenari testati su 10 (4-5 sospesi per issue strategiche UX-01 "primo turno caldo" e UX-02 "quaderno enciclopedico"). Raccolti 7 bug UI cosmetici in .claude/test-findings.md. Handoff predisposto per B38.5 — fix chirurgico dei 7 bug prima di avanzare a Fase 10.
 ---
+
+## 2026-04-07 00:56:11 — Blocco F9BB38.5
+- **Status**: CONTINUE
+- **Summary**: Fix chirurgico di 7 bug UI cosmetici emersi dal test manuale Fasi 7-9. Tutti i bug risolti, 11 nuovi test, 459 totale frontend verdi, analyze 0.
+---
+
+## 2026-04-07 — Predisposizione nottata: B35.5 + B35.6
+- **Status**: READY
+- **Summary**: Discussione strategica con Villa post test manuale. Decisi due blocchi consecutivi: B35.5 Quaderno Enciclopedico (riscrittura schermata con scheda intrinseca + log personale + note utente editabili) e B35.6 Polish empty states (bonus). Spec concordata con Villa, handoff dettagliato pronto. Issue UX-01 (primo turno caldo del tutor) rimandata a sessione futura.
+---

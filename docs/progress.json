@@ -1,8 +1,8 @@
 {
-  "current_phase": "10",
-  "current_block": "B39",
-  "total_blocks_run": 61,
+  "current_phase": "9",
+  "current_block": "B35.5",
+  "total_blocks_run": 62,
   "status": "CONTINUE",
-  "last_run": "2026-04-07T10:00:00Z",
-  "last_summary": "B38.5 completato: 7 bug UI cosmetici fixati (overflow, testi, LinearPathMap ridisegnata, GraphOverview con percorso evidenziato). 459 test frontend verdi, analyze 0. Prossimo: B39 Onboarding Wow."
+  "last_run": "2026-04-07T00:56:11Z",
+  "last_summary": "B38.5 chiuso. Predisposti due blocchi consecutivi per la nottata: B35.5 Quaderno Enciclopedico (principale) + B35.6 Polish empty states (bonus). Spec concordata con Villa nella sessione di discussione strategica."
 }
