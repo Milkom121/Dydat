@@ -57,7 +57,8 @@ send_telegram_report() {
     local status="$1" bid="$2" blocks_run="$3" elapsed="$4" summary="$5" next="$6"
     local icon
     case "$status" in
-        CONTINUE) return 0;;  # nessuna notifica su CONTINUE — il runner prosegue da solo
+        CONTINUE) return 0;;  # nessuna notifica su CONTINUE generico — usa BLOCCO_OK
+        BLOCCO_OK) icon="✔️";;  # blocco completato con successo, runner prosegue
         CHECKPOINT) icon="⏸️";;
         PHASE_COMPLETE) icon="✅";;
         ERROR) icon="❌";;
@@ -239,7 +240,8 @@ main() {
         append_session_log "$bid" "$s" "$sm"; update_progress "$cp" "$cb" "$s" "$sm"
         local el_now; el_now="$(( ($(date +%s) - st) / 60 ))"
         case "$s" in
-            CONTINUE) log "${GREEN}Continuo${NC}"; hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false";;
+            CONTINUE) log "${GREEN}Continuo${NC}"; hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false"
+                send_telegram_report "BLOCCO_OK" "$bid" "$br" "$el_now" "$sm" "$sn";;
             CHECKPOINT) log "${YELLOW}CHECKPOINT — decisione umana${NC}"; send_notification "Metodo Villa" "Checkpoint $bid"
                 send_telegram_report "CHECKPOINT" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
             PHASE_COMPLETE) log "${GREEN}FASE $cp COMPLETATA${NC}"; send_notification "Metodo Villa" "Fase $cp completata!"
