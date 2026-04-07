@@ -204,6 +204,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     }
 
+    // Utente nuovo: tutte le stats a 0
+    final isNewUser = (stats?.sessioniCompletate ?? 0) == 0;
+
     return _buildCardShell(
       theme,
       child: Column(
@@ -211,59 +214,71 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           Text('Statistiche', style: theme.textTheme.titleMedium),
           SizedBox(height: 1.5.h),
-          Row(
-            children: [
-              _buildStatItem(
-                theme,
-                icon: 'local_fire_department',
-                value: '${stats?.streak ?? 0}',
-                label: 'Streak',
+          if (isNewUser) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 1.5.h),
+              child: Text(
+                'Completa la tua prima sessione per iniziare a vedere le tue statistiche qui.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              _buildStatItem(
-                theme,
-                icon: 'check_circle',
-                value: '${stats?.nodiCompletati ?? 0}',
-                label: 'Nodi',
-              ),
-              _buildStatItem(
-                theme,
-                icon: 'school',
-                value: '${stats?.sessioniCompletate ?? 0}',
-                label: 'Sessioni',
-              ),
-            ],
-          ),
-          SizedBox(height: 1.5.h),
-          Divider(
-            color: theme.colorScheme.outline.withValues(alpha: 0.2),
-          ),
-          SizedBox(height: 1.h),
-          Text(
-            'Questa settimana',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
             ),
-          ),
-          SizedBox(height: 1.h),
-          Row(
-            children: [
-              _buildMiniStat(
-                theme,
-                '${stats?.settimana.minutiStudio ?? 0} min',
-                'Studio',
+          ] else ...[
+            Row(
+              children: [
+                _buildStatItem(
+                  theme,
+                  icon: 'local_fire_department',
+                  value: '${stats?.streak ?? 0}',
+                  label: 'Streak',
+                ),
+                _buildStatItem(
+                  theme,
+                  icon: 'check_circle',
+                  value: '${stats?.nodiCompletati ?? 0}',
+                  label: 'Nodi',
+                ),
+                _buildStatItem(
+                  theme,
+                  icon: 'school',
+                  value: '${stats?.sessioniCompletate ?? 0}',
+                  label: 'Sessioni',
+                ),
+              ],
+            ),
+            SizedBox(height: 1.5.h),
+            Divider(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            ),
+            SizedBox(height: 1.h),
+            Text(
+              'Questa settimana',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              _buildMiniStat(
-                theme,
-                '${stats?.settimana.eserciziSvolti ?? 0}',
-                'Esercizi',
-              ),
-              _buildMiniStat(
-                theme,
-                '${stats?.settimana.giorniAttivi ?? 0}',
-                'Giorni',
-              ),
-            ],
-          ),
+            ),
+            SizedBox(height: 1.h),
+            Row(
+              children: [
+                _buildMiniStat(
+                  theme,
+                  '${stats?.settimana.minutiStudio ?? 0} min',
+                  'Studio',
+                ),
+                _buildMiniStat(
+                  theme,
+                  '${stats?.settimana.eserciziSvolti ?? 0}',
+                  'Esercizi',
+                ),
+                _buildMiniStat(
+                  theme,
+                  '${stats?.settimana.giorniAttivi ?? 0}',
+                  'Giorni',
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -355,13 +370,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               achievementState.next.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 2.h),
-              child: Center(
-                child: Text(
-                  'Nessun achievement ancora',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    size: 32,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   ),
-                ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    'I tuoi traguardi appariranno qui man mano che studi.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
 

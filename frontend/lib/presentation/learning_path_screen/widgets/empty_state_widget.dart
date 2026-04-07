@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
+import '../../../widgets/custom_icon_widget.dart';
 
-import '../../../core/app_export.dart';
-
-/// Empty state widget for when no learning path exists
+/// Empty state widget per quando non esiste ancora un percorso di apprendimento.
 class EmptyStateWidget extends StatelessWidget {
   final VoidCallback onStartLearning;
 
@@ -19,57 +18,47 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CustomImageWidget(
-              imageUrl:
-                  'https://images.unsplash.com/photo-1516534775068-ba3e7458af70?w=400&h=400&fit=crop',
-              width: 50.w,
-              height: 50.w,
-              fit: BoxFit.contain,
-              semanticLabel:
-                  'Illustration of an open book with colorful pages floating upward, representing the beginning of a learning journey',
+            // Icona nativa al posto dell'immagine esterna
+            Container(
+              width: 24.w,
+              height: 24.w,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.map_outlined,
+                size: 12.w,
+                color: theme.colorScheme.primary,
+              ),
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: 3.h),
             Text(
-              'Inizia il Tuo Percorso',
-              style: theme.textTheme.headlineMedium?.copyWith(
+              'Il tuo percorso ti aspetta',
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 1.5.h),
             Text(
-              'Non hai ancora iniziato nessun percorso di apprendimento. Inizia una sessione di studio per creare il tuo percorso personalizzato.',
+              'Inizia una sessione di studio e costruiremo insieme il tuo percorso personalizzato, passo dopo passo.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 4.h),
-            ElevatedButton(
+            FilledButton.icon(
               onPressed: onStartLearning,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              icon: CustomIconWidget(
+                iconName: 'school',
+                color: theme.colorScheme.onPrimary,
+                size: 20,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CustomIconWidget(
-                    iconName: 'school',
-                    color: theme.colorScheme.onPrimary,
-                    size: 5.w,
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    'Inizia a Studiare',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              label: const Text('Inizia a studiare'),
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.5.h),
               ),
             ),
           ],
