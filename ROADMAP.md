@@ -281,6 +281,48 @@
 - **Gate di uscita**: empty states verificati e fixati, 2-4 widget test nuovi, analyze 0
 - **NON fare**: riscrivere schermate intere, toccare backend, toccare onboarding
 
+### Blocco B35.7 — Pull-to-refresh sulle liste principali (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: RefreshIndicator con pull-to-refresh su Home, I miei studi, Profilo, Storico sessioni. Riusa metodi provider gia esistenti.
+- **Gate di uscita**: 3-4 schermate con pull-to-refresh, 2+ widget test, analyze 0
+
+### Blocco B35.8 — Snackbar errori user-friendly (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Audit + fix dei messaggi errore mostrati all'utente. Helper centralizzato `error_messages.dart` con `userFriendlyError(error)`. Sostituisce messaggi tecnici (DioException, 404, FormatException) con stringhe italiane gentili.
+- **Gate di uscita**: helper creato, 5-6 punti aggiornati, 3+ unit test, analyze 0
+
+### Blocco B35.9 — Loading skeleton al posto degli spinner (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa-media
+- **Descrizione**: Nuovo widget riutilizzabile `SkeletonLoader` con `SkeletonBox`, `SkeletonText`, `SkeletonCard`. Sostituisce `CircularProgressIndicator` nelle schermate principali (Home, I miei studi, Quaderno, Recap).
+- **Gate di uscita**: widget riutilizzabili creati, 3-4 schermate aggiornate, 3+ widget test, analyze 0
+
+### Blocco B35.10 — Search mappa percorso con parole_chiave (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Estende la ricerca in LearningPathScreen per cercare anche nelle parole_chiave del nodo (oltre al nome). Sfrutta i dati esposti da B35.5.1.
+- **Gate di uscita**: search estesa, 2+ widget test, analyze 0
+
+### Blocco B35.11 — Coerenza tono di voce italiana (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Audit dei testi UI italiani. Verifica uso del "tu" coerente, traduce inglesismi residui (Login, Loading, Submit), uniforma terminologia. Crea `docs/tone-of-voice.md`.
+- **Gate di uscita**: audit completato, fix applicati, file tone-of-voice creato, analyze 0
+
+### Blocco B35.12 — Audit dev-shortcuts.md priorita alta (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Apre `docs/dev-shortcuts.md` e risolve almeno 2-3 voci marcate come priorita alta (credenziali hardcoded, CORS aperto, mock, TODO/FIXME). Aggiorna il file marcando come risolto.
+- **Gate di uscita**: 2-3 voci risolte, file aggiornato, tutti i test continuano a passare, analyze 0
+
+### Blocco B35.13 — Audit accessibilita base (Semantics) (bonus)
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Aggiunge `Semantics` labels su widget interattivi delle schermate principali. Rimuove TextScaler.linear(1.0) bloccato. Audit contrasto colori dei testi principali.
+- **Gate di uscita**: 5+ schermate con Semantics labels base, TextScaler ripristinato, 2-3 fix contrasto, analyze 0
+
 ---
 
 ## Fase 10 — UX Redesign: Onboarding + Audio (Fase A.5, B39-B40)

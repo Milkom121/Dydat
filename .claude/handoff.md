@@ -1,7 +1,7 @@
 STATUS: CONTINUE
 PHASE: 9
 BLOCK: B35.5.1
-SUMMARY: B38.5 chiuso (459 test, 7 bug UI fixati). Ricalibrazione granularita applicata: B35.5 Quaderno Enciclopedico spezzato in 5 sub-blocchi piccoli (B35.5.1-B35.5.5). Aggiunto B35.6 Polish empty states come 6° blocco. Runner ora usa --model opus. Obiettivo: ogni sub-blocco fattibile in una sessione 10-25 min usando max meta del context.
+SUMMARY: B38.5 chiuso (459 test, 7 bug UI fixati). Ricalibrazione granularita applicata. Sequenza notturna di 13 sub-blocchi piccoli: 5 sub-blocchi di B35.5 (Quaderno) + B35.6 (Polish empty states) + 7 sub-blocchi extra di polish/UX (B35.7-B35.13). Runner usa --model opus. Ogni blocco fattibile in 10-30 min usando max meta del context.
 NEXT: B35.5.2 — Backend PUT nota utente
 DECISIONS_NEEDED: nessuna — Villa ha approvato la ricalibrazione. Lavorare in autonomia.
 FILES_MODIFIED: nessuno in questa preparazione
@@ -29,7 +29,14 @@ Stiamo facendo SEI sub-blocchi consecutivi in una sola nottata. Per evitare loop
 | 3 | **B35.5.3** | Frontend modelli + provider | B35.5.4 |
 | 4 | **B35.5.4** | Frontend widget riutilizzabili | B35.5.5 |
 | 5 | **B35.5.5** | Frontend integrazione schermata | B35.6 |
-| 6 | **B35.6** | Polish empty states | (FERMATI, PHASE_COMPLETE) |
+| 6 | **B35.6** | Polish empty states | B35.7 |
+| 7 | **B35.7** | Pull-to-refresh sulle liste | B35.8 |
+| 8 | **B35.8** | Snackbar errori user-friendly | B35.9 |
+| 9 | **B35.9** | Loading skeleton al posto degli spinner | B35.10 |
+| 10 | **B35.10** | Search mappa percorso con parole_chiave | B35.11 |
+| 11 | **B35.11** | Coerenza tono di voce italiana | B35.12 |
+| 12 | **B35.12** | Audit dev-shortcuts.md priorita alta | B35.13 |
+| 13 | **B35.13** | Audit accessibilita base (Semantics) | (FERMATI, PHASE_COMPLETE) |
 
 ## FILOSOFIA RICALIBRATA
 
@@ -301,6 +308,266 @@ Bonus block: audit + fix degli empty states e messaggi di benvenuto nelle varie 
 - Non riscrivere schermate intere
 - Non toccare backend
 - Non toccare onboarding (sara B39)
+- Non avanzare a B39 senza decisione di Villa
+
+---
+
+# BLOCCO 7 — B35.7 Pull-to-refresh sulle liste principali
+
+## Obiettivo
+Aggiungere `RefreshIndicator` con pull-to-refresh sulle liste principali dell'app per consentire all'utente di aggiornare i dati con un gesto naturale.
+
+## Schermate target
+- **Home**: refresh ricarica streak, ripasso, mini-percorso, sessioni recenti
+- **I miei studi (LearningPathScreen)**: refresh ricarica percorso e mappa
+- **Profilo**: refresh ricarica statistiche e achievement
+- **Storico sessioni** (se accessibile come schermata separata): refresh ricarica lista
+
+## Cosa fare
+1. Per ogni schermata target, individuare il widget radice scrollabile (di solito `ListView`, `SingleChildScrollView` o simile).
+2. Wrappare in `RefreshIndicator` con `onRefresh: () async => await _reloadData()`.
+3. Implementare `_reloadData()` che richiama i metodi del provider gia esistenti (es. `loadPaths`, `loadStats`, `carica`).
+4. Se il widget radice e `SingleChildScrollView`, assicurarsi che `physics: AlwaysScrollableScrollPhysics()` sia impostato (altrimenti il pull non funziona quando il contenuto e corto).
+5. Theme.of(context) per il colore dell'indicatore.
+
+## Test (almeno 2)
+1. Pull-to-refresh in Home triggera reload providers
+2. Pull-to-refresh in I miei studi triggera reload mappa percorso
+
+## Gate di uscita B35.7
+- 3-4 schermate con pull-to-refresh funzionante
+- 2+ test widget verdi
+- `flutter analyze` 0
+- Tutti i test esistenti passano
+- Commit "B35.7 — Pull-to-refresh sulle liste principali"
+
+## NON fare in B35.7
+- Non aggiungere refresh dove non ha senso (schermate di dettaglio, form)
+- Non implementare cache invalidation complessa, basta richiamare i provider esistenti
+- Non toccare backend
+
+---
+
+# BLOCCO 8 — B35.8 Snackbar errori user-friendly
+
+## Obiettivo
+Audit di tutti i punti dell'app dove vengono mostrati errori all'utente, e sostituire i messaggi tecnici (es. "DioException", "404 Not Found", "FormatException", stack trace) con messaggi italiani gentili e contestuali.
+
+## Cosa fare
+1. Cercare nel codebase frontend pattern tipo: `SnackBar`, `showSnackBar`, `error.toString()`, `e.toString()`, `state.error`, `Text(error)`.
+2. Per ogni occorrenza, valutare se il messaggio mostrato e tecnico o user-friendly.
+3. Sostituire i messaggi tecnici con stringhe italiane comprensibili. Esempi:
+   - `"DioException [bad response]: 401"` → `"Sessione scaduta. Effettua di nuovo l'accesso."`
+   - `"DioException [connection error]"` → `"Connessione assente. Controlla la rete e riprova."`
+   - `"FormatException"` → `"Si e verificato un errore inatteso. Riprova."`
+   - `"404"` → `"Risorsa non trovata."`
+   - `"500"` → `"Problema sul server, riprova tra qualche istante."`
+4. Creare un helper centralizzato `frontend/lib/utils/error_messages.dart` con funzione `String userFriendlyError(Object error)` che mappa eccezioni comuni a stringhe italiane. Usarlo in tutte le snackbar.
+5. Per gli errori imprevisti, fallback gentile: "Qualcosa e andato storto. Se il problema persiste, contattaci."
+
+## Test (almeno 3)
+1. `userFriendlyError(DioException(...))` → stringa italiana corretta per ogni statusCode comune
+2. `userFriendlyError(FormatException)` → stringa generica
+3. `userFriendlyError(unknown)` → fallback gentile
+
+## Gate di uscita B35.8
+- Helper centralizzato creato
+- Snackbar/messaggi errore aggiornati nelle schermate principali (almeno 5-6 punti di uso)
+- 3+ unit test verdi
+- `flutter analyze` 0
+- Commit "B35.8 — Snackbar errori user-friendly"
+
+## NON fare in B35.8
+- Non riscrivere la logica di fetch/error handling, solo i messaggi
+- Non toccare backend
+- Non aggiungere telemetria/Sentry
+
+---
+
+# BLOCCO 9 — B35.9 Loading skeleton al posto degli spinner
+
+## Obiettivo
+Sostituire i `CircularProgressIndicator` generici nelle schermate principali con skeleton (placeholder grigi animati che imitano la forma del contenuto). Migliora la percezione di velocita.
+
+## Cosa fare
+1. Creare nuovo widget `frontend/lib/widgets/skeleton_loader.dart` con:
+   - `SkeletonBox({width, height, borderRadius})` — rettangolo grigio animato (shimmer o pulse)
+   - `SkeletonText({lines, lineHeight})` — multiple righe di testo placeholder
+   - `SkeletonCard({height})` — placeholder card grande
+   - Animazione `AnimationController` con `AnimatedBuilder` per pulse leggero (opacity 0.4-0.8 ciclo 1.2s)
+2. Sostituire `CircularProgressIndicator` nelle schermate principali con skeleton appropriati:
+   - **Home**: durante caricamento, mostra skeleton di mini-percorso, streak card, sezione ripasso
+   - **I miei studi**: durante caricamento, mostra skeleton di lista nodi (5-6 placeholder)
+   - **Quaderno**: durante caricamento, skeleton delle sezioni
+   - **Recap sessione**: durante caricamento, skeleton del recap
+3. Theme.of(context) per il colore base (es. `colorScheme.surfaceContainerHighest`).
+
+## Test (almeno 3)
+1. SkeletonBox renderizza con dimensioni corrette
+2. SkeletonText renderizza N righe
+3. Una schermata in stato loading mostra skeleton invece di spinner
+
+## Gate di uscita B35.9
+- Widget skeleton riutilizzabili creati
+- Almeno 3-4 schermate aggiornate
+- 3+ widget test verdi
+- `flutter analyze` 0
+- Commit "B35.9 — Loading skeleton al posto degli spinner"
+
+## NON fare in B35.9
+- Non sostituire TUTTI gli spinner (solo schermate principali, non dialog modali brevi)
+- Non aggiungere dipendenze (no `shimmer` package, fai a mano con AnimationController)
+- Non toccare backend
+
+---
+
+# BLOCCO 10 — B35.10 Search mappa percorso con parole_chiave
+
+## Obiettivo
+Estendere la ricerca in "I miei studi" (LearningPathScreen) per cercare anche nelle `parole_chiave` del nodo, oltre che nel nome. Sfrutta i dati gia esposti dal backend (B35.5.1).
+
+## File da modificare
+- `frontend/lib/presentation/learning_path_screen/learning_path_screen.dart` (logica search)
+- Test esistente o nuovo
+
+## Cosa fare
+1. Verificare che il modello `Tema`/`NodoMappa` (frontend) abbia accesso alle parole_chiave del nodo. Se non ce l'ha, esporlo dal modello.
+2. Modificare la logica di filtro della search:
+   - Attualmente filtra per `nodo.nome.toLowerCase().contains(query)`
+   - Estenderla a: `nodo.nome.toLowerCase().contains(query) || nodo.paroleChiave.any((kw) => kw.toLowerCase().contains(query))`
+3. Mantenere la logica di highlight/opacity gia presente.
+4. Considerare normalizzazione: rimuovere accenti, ignore case (gia fatto).
+
+## Test (almeno 2)
+1. Search per "potenza" trova nodi con "potenza" nel nome
+2. Search per una parola_chiave (es. "esponente pari") trova il nodo "Potenza di un numero relativo" anche se la query non e nel nome
+
+## Gate di uscita B35.10
+- Search estesa funzionante
+- 2+ widget test verdi
+- `flutter analyze` 0
+- Commit "B35.10 — Search mappa percorso con parole_chiave"
+
+## NON fare in B35.10
+- Non implementare search server-side (resta client-side sui dati gia caricati)
+- Non aggiungere fuzzy search complessa
+- Non toccare backend
+
+---
+
+# BLOCCO 11 — B35.11 Coerenza tono di voce italiana
+
+## Obiettivo
+Audit di tutti i testi UI italiani dell'app, verifica che diano del "tu" all'utente in modo coerente, niente "voi/lei" misti, niente termini tecnici inglesi non tradotti.
+
+## Cosa fare
+1. Cercare nel codebase frontend tutte le stringhe testuali italiane (`Text('...')`, `'...'` in widget).
+2. Per ogni stringa, verificare:
+   - **Persona**: usa "tu" (es. "Inizia il tuo percorso", "Hai completato"), NON "voi" o "lei"
+   - **Inglesismi**: termini come "login", "loading", "submit", "error" devono essere tradotti
+   - **Tono**: caldo e gentile, niente esclamazioni eccessive ("!!!")
+   - **Coerenza**: stesso termine usato sempre allo stesso modo (es. "esercizio" vs "quiz", scegli uno)
+3. Fix delle incongruenze trovate.
+4. Documentare le scelte in `docs/tone-of-voice.md` (nuovo file): tabella terminologia preferita, esempi di tono, do/don't.
+
+## Esempi di fix possibili
+- "Login" → "Accedi"
+- "Loading..." → "Caricamento..."
+- "Submit" → "Invia"
+- "Tap qui" → "Tocca qui"
+- "Reset" → "Ripristina" (o "Azzera")
+- Inconsistenze di "tu/voi" tra schermate
+
+## Test
+- Non strettamente necessari (sono fix testuali). Eventuale test che verifica la presenza di certe traduzioni chiave.
+
+## Gate di uscita B35.11
+- Audit completato, fix applicati
+- File `docs/tone-of-voice.md` creato
+- `flutter analyze` 0
+- Tutti i test esistenti passano (i widget test che verificano testi specifici vanno aggiornati)
+- Commit "B35.11 — Coerenza tono di voce italiana"
+
+## NON fare in B35.11
+- Non riscrivere schermate intere, solo testi
+- Non aggiungere i18n/localization (resta tutto in italiano hardcoded per ora)
+- Non toccare backend
+
+---
+
+# BLOCCO 12 — B35.12 Audit dev-shortcuts.md priorita alta
+
+## Obiettivo
+Aprire `docs/dev-shortcuts.md` (file dove sono registrate scorciatoie di sviluppo prese durante i blocchi precedenti) e risolvere quelle marcate come priorita alta.
+
+## Cosa fare
+1. Leggere `docs/dev-shortcuts.md`.
+2. Identificare le voci con `priorita: alta` (o equivalente).
+3. Per ognuna, valutare se e fattibile risolverla in maniera chirurgica senza rompere niente:
+   - Credenziali hardcoded → spostare in env var (se backend) o config (se frontend)
+   - CORS aperto a `*` → limitare ai domini noti
+   - Mock al posto di chiamate reali → ripristinare se l'API e pronta
+   - TODO/FIXME marcati alta priorita → completarli
+4. Se una voce e troppo grossa per questo blocco (richiederebbe refactoring significativo), lasciarla e annotarla per blocco futuro.
+5. Aggiornare `docs/dev-shortcuts.md` rimuovendo o marcando come "risolto" le voci sistemate.
+
+## Test
+- I test esistenti devono continuare a passare DOPO ogni fix
+- Eventuali test nuovi se introduci cambiamenti significativi
+
+## Gate di uscita B35.12
+- Almeno 2-3 voci priorita alta risolte
+- `docs/dev-shortcuts.md` aggiornato
+- TUTTI i test esistenti continuano a passare (`flutter test` e `pytest -x -q`)
+- `flutter analyze` 0
+- Commit "B35.12 — Audit dev-shortcuts priorita alta"
+
+## NON fare in B35.12
+- Non risolvere voci priorita media/bassa (resta scope alto)
+- Non rompere test esistenti — se un fix rompe qualcosa, lascia stare e annotalo
+- Non rifattorare aree non correlate
+
+---
+
+# BLOCCO 13 — B35.13 Audit accessibilita base (Semantics)
+
+## Obiettivo
+Aggiungere `Semantics` labels sui widget interattivi principali per migliorare il supporto agli screen reader. Verifica che `TextScaler` non sia bloccato a 1.0 (scorciatoia notata in test manuale precedenti). Audit contrasto colori dei testi principali.
+
+## Cosa fare
+
+### Semantics labels
+1. Per ogni schermata principale (Home, Studio, Miei studi, Profilo, Quaderno, Recap), individuare i widget interattivi (bottoni, card cliccabili, icone tappabili).
+2. Aggiungere `Semantics(label: '...', button: true, child: ...)` sui widget che non sono gia automaticamente accessibili.
+3. Per le card grandi (es. nodi del percorso), label descrittivo tipo "Nodo Potenza di un numero relativo, stato: in corso, tocca per aprire".
+
+### TextScaler
+1. Cercare in `main.dart` o in `MaterialApp` se c'e un `TextScaler.linear(1.0)` che blocca lo scaling.
+2. Se presente, RIMUOVERLO (era una scorciatoia di sviluppo).
+3. Se questo causa overflow visibili, aggiungere `FittedBox` o `LayoutBuilder` chirurgici dove serve, NON ripristinare il blocco.
+
+### Contrasto colori
+1. Verificare che testi su sfondo scuro abbiano contrasto sufficiente (WCAG AA almeno).
+2. Particolare attenzione a colori `withOpacity(0.5)` o inferiore su testi.
+3. Fix dove il contrasto e palesemente basso.
+
+## Test
+- `flutter test` esistenti devono passare
+- Eventuali test che verificano la presenza di Semantics labels chiave
+
+## Gate di uscita B35.13
+- 5+ schermate con Semantics labels base
+- TextScaler ripristinato (o annotato come scorciatoia da fixare se rompe layout)
+- 2-3 fix di contrasto colori
+- `flutter analyze` 0
+- Tutti i test esistenti passano
+- Commit "B35.13 — Audit accessibilita base"
+- Aggiorna handoff con `STATUS: PHASE_COMPLETE` e FERMATI definitivamente
+
+## NON fare in B35.13
+- Non implementare voiceover completo (basta Semantics base)
+- Non riscrivere schermate per accessibilita (solo aggiunte chirurgiche)
+- Non toccare backend
 - Non avanzare a B39 senza decisione di Villa
 
 ---

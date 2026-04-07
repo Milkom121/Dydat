@@ -208,3 +208,8 @@
 - **Status**: READY
 - **Summary**: Cambio metodologico chiesto da Villa. B35.5 monolitico spezzato in 5 sub-blocchi piccoli (B35.5.1-B35.5.5) per consentire al runner di lavorare con context ridotto (max meta del modello). Aggiunto --model opus al runner. Nottata pianificata per 6 blocchi consecutivi (5 sub + B35.6). Notifiche Telegram attive su ogni blocco completato.
 ---
+
+## 2026-04-07 — Espansione nottata: 13 blocchi totali
+- **Status**: READY
+- **Summary**: Villa ha chiesto di riempire meglio la nottata. Aggiunti 7 sub-blocchi extra di polish/UX a basso rischio: B35.7 pull-to-refresh, B35.8 snackbar errori user-friendly, B35.9 loading skeleton, B35.10 search mappa con parole_chiave, B35.11 coerenza tono di voce italiana, B35.12 audit dev-shortcuts priorita alta, B35.13 audit accessibilita base. Totale 13 blocchi consecutivi per la nottata, ~5-7 ore di lavoro stimate.
+---
