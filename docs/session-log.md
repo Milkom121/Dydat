@@ -203,3 +203,8 @@
 - **Status**: READY
 - **Summary**: Discussione strategica con Villa post test manuale. Decisi due blocchi consecutivi: B35.5 Quaderno Enciclopedico (riscrittura schermata con scheda intrinseca + log personale + note utente editabili) e B35.6 Polish empty states (bonus). Spec concordata con Villa, handoff dettagliato pronto. Issue UX-01 (primo turno caldo del tutor) rimandata a sessione futura.
 ---
+
+## 2026-04-07 — Ricalibrazione granularita: B35.5 spezzato in 5 sub-blocchi
+- **Status**: READY
+- **Summary**: Cambio metodologico chiesto da Villa. B35.5 monolitico spezzato in 5 sub-blocchi piccoli (B35.5.1-B35.5.5) per consentire al runner di lavorare con context ridotto (max meta del modello). Aggiunto --model opus al runner. Nottata pianificata per 6 blocchi consecutivi (5 sub + B35.6). Notifiche Telegram attive su ogni blocco completato.
+---

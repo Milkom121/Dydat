@@ -200,7 +200,7 @@ run_claude_session() {
     if $DRY_RUN; then log "${YELLOW}[DRY RUN] Prompt: ${#prompt} char${NC}"; mkdir -p "$PROJECT_DIR/.claude"
         echo -e "STATUS: CONTINUE\nPHASE: 0\nBLOCK: 0\nSUMMARY: [DRY RUN]\nNEXT: [DRY RUN]\nTESTS: SKIPPED" > "$PROJECT_DIR/$HANDOFF_FILE"; return 0; fi
     local pf; pf="$(mktemp)"; echo "$prompt" > "$pf"; local ec=0
-    timeout "${TIMEOUT_SECONDS}" claude -p --dangerously-skip-permissions < "$pf" >> "$PROJECT_DIR/$RUNNER_LOG" 2>&1 || ec=$?
+    timeout "${TIMEOUT_SECONDS}" claude -p --dangerously-skip-permissions --model opus < "$pf" >> "$PROJECT_DIR/$RUNNER_LOG" 2>&1 || ec=$?
     rm -f "$pf"
     [[ $ec -eq 124 ]] && { log "${RED}Timeout ($TIMEOUT_MINUTES min)${NC}"; return 1; }
     [[ $ec -ne 0 ]] && { log "${RED}Errore (exit: $ec)${NC}"; return 1; }

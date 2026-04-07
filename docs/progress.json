@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.5",
+  "current_block": "B35.5.1",
   "total_blocks_run": 62,
   "status": "CONTINUE",
   "last_run": "2026-04-07T00:56:11Z",
-  "last_summary": "B38.5 chiuso. Predisposti due blocchi consecutivi per la nottata: B35.5 Quaderno Enciclopedico (principale) + B35.6 Polish empty states (bonus). Spec concordata con Villa nella sessione di discussione strategica."
+  "last_summary": "Ricalibrazione granularita applicata. B35.5 spezzato in 5 sub-blocchi (B35.5.1-B35.5.5) + B35.6 polish. Runner ora usa --model opus. Sequenza notturna pronta."
 }
