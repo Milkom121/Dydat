@@ -10,6 +10,7 @@ import 'providers/quaderno_provider.dart';
 import 'providers/ripasso_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/stats_provider.dart';
+import 'providers/font_scale_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
 import 'routes/app_router.dart';
@@ -112,13 +113,26 @@ class DydatApp extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
     final router = ref.watch(routerProvider);
 
+    final fontScale = ref.watch(fontScaleProvider).factor;
+
     return MaterialApp.router(
       title: 'Dydat',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
-      // TextScaler rimosso: rispetta le impostazioni di accessibilita del sistema
+      builder: (context, child) {
+        // Moltiplica lo scaler di sistema per il fattore Dydat in-app.
+        // Non sostituisce: l'effetto si combina con l'accessibilita di sistema.
+        final mq = MediaQuery.of(context);
+        final newScaler = TextScaler.linear(
+          mq.textScaler.scale(1.0) * fontScale,
+        );
+        return MediaQuery(
+          data: mq.copyWith(textScaler: newScaler),
+          child: child!,
+        );
+      },
       debugShowCheckedModeBanner: false,
     );
   }

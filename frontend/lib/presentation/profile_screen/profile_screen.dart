@@ -9,6 +9,7 @@ import '../../providers/achievement_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/stats_provider.dart';
 import '../../utils/error_messages.dart';
+import '../../providers/font_scale_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -114,6 +115,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildStatsCard(theme, statsState),
                   SizedBox(height: 2.h),
                   _buildAchievementSection(theme, achievementState),
+                  SizedBox(height: 2.h),
+                  _buildFontScaleCard(theme),
                   SizedBox(height: 2.h),
                   _buildThemeCard(theme, themeMode),
                   SizedBox(height: 2.h),
@@ -496,6 +499,82 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       default:
         return 'emoji_events';
     }
+  }
+
+  Widget _buildFontScaleCard(ThemeData theme) {
+    final currentOption = ref.watch(fontScaleProvider);
+
+    return _buildCardShell(
+      theme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CustomIconWidget(
+                iconName: 'text_fields',
+                color: theme.colorScheme.primary,
+                size: 22,
+              ),
+              SizedBox(width: 3.w),
+              Text('Aspetto', style: theme.textTheme.titleMedium),
+            ],
+          ),
+          SizedBox(height: 1.5.h),
+          Text(
+            'Dimensione testo',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 1.h),
+          // 4 chip orizzontali
+          Wrap(
+            spacing: 2.w,
+            runSpacing: 1.h,
+            children: FontScaleOption.values.map((option) {
+              final isSelected = option == currentOption;
+              return ChoiceChip(
+                label: Text(option.label),
+                selected: isSelected,
+                onSelected: (_) {
+                  HapticFeedback.lightImpact();
+                  ref.read(fontScaleProvider.notifier).setOption(option);
+                },
+                selectedColor: theme.colorScheme.primaryContainer,
+                labelStyle: theme.textTheme.bodySmall?.copyWith(
+                  color: isSelected
+                      ? theme.colorScheme.onPrimaryContainer
+                      : theme.colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              );
+            }).toList(),
+          ),
+          SizedBox(height: 1.5.h),
+          // Anteprima live
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(3.w),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Anteprima: il tutor ti accoglie con calore e ti spiega i concetti passo passo.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          SizedBox(height: 1.h),
+          Text(
+            "L'impostazione si combina con la dimensione testo del sistema operativo.",
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildThemeCard(ThemeData theme, ThemeMode themeMode) {

@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dydat/models/quaderno.dart';
 import 'package:dydat/presentation/quaderno_screen/widgets/collapsible_text.dart';
@@ -11,9 +12,11 @@ import 'package:dydat/presentation/quaderno_screen/widgets/formula_curriculum_ca
 import 'package:dydat/presentation/quaderno_screen/widgets/errore_comune_card.dart';
 import 'package:dydat/presentation/quaderno_screen/widgets/nota_utente_editor.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: child)),
-      theme: ThemeData.dark(),
+Widget _wrap(Widget child) => ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(body: SingleChildScrollView(child: child)),
+        theme: ThemeData.dark(),
+      ),
     );
 
 void main() {

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/sizer_extensions.dart';
 import '../../../models/quaderno.dart';
+import '../../../utils/latex_font_size.dart';
 
 /// Card per formula curricolare (da KB del nodo) con rendering LaTeX.
-class FormulaCurriculumCard extends StatelessWidget {
+class FormulaCurriculumCard extends ConsumerWidget {
   final FormulaCurriculum formula;
 
   const FormulaCurriculumCard({super.key, required this.formula});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Container(
@@ -49,7 +51,7 @@ class FormulaCurriculumCard extends StatelessWidget {
               child: Math.tex(
                 formula.latex,
                 textStyle: TextStyle(
-                  fontSize: 18.0,
+                  fontSize: scaledLatexFontSize(ref, 18.0),
                   color: theme.colorScheme.onSurface,
                 ),
                 onErrorFallback: (err) => Text(

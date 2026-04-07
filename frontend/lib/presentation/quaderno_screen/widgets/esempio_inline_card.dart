@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/sizer_extensions.dart';
+import '../../../utils/latex_font_size.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Card per un singolo esempio del quaderno.
 /// Se l'esempio contiene marcatori LaTeX, tenta il rendering con Math.tex;
 /// altrimenti mostra testo plain.
-class EsempioInlineCard extends StatelessWidget {
+class EsempioInlineCard extends ConsumerWidget {
   final String esempio;
 
   const EsempioInlineCard({super.key, required this.esempio});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Container(
@@ -34,7 +36,7 @@ class EsempioInlineCard extends StatelessWidget {
           ),
           SizedBox(width: 1.5.w),
           Expanded(
-            child: _buildContent(theme),
+            child: _buildContent(theme, ref),
           ),
         ],
       ),
@@ -46,7 +48,7 @@ class EsempioInlineCard extends StatelessWidget {
   /// Quando presente, separiamo formula e commento per renderizzarli
   /// in modi diversi: la formula con Math.tex (o Text plain) a font
   /// leggibile, il commento come Text plain piccolo sotto.
-  Widget _buildContent(ThemeData theme) {
+  Widget _buildContent(ThemeData theme, WidgetRef ref) {
     final parts = _splitFormulaAndComment(esempio);
     final corpoFormula = parts.formula;
     final commento = parts.commento;
@@ -63,7 +65,7 @@ class EsempioInlineCard extends StatelessWidget {
             child: Math.tex(
               corpoFormula,
               textStyle: TextStyle(
-                fontSize: baseFontSize,
+                fontSize: scaledLatexFontSize(ref, baseFontSize),
                 color: theme.colorScheme.onSurface,
               ),
               onErrorFallback: (err) => Text(

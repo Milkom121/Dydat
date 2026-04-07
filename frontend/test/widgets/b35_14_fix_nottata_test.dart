@@ -16,9 +16,11 @@ import 'package:dydat/presentation/learning_path_screen/widgets/linear_path_map.
 import 'package:dydat/presentation/home_screen/widgets/mini_percorso_widget.dart';
 import 'package:dydat/utils/pluralize.dart' as pl;
 
-Widget _wrap(Widget child) => MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: child)),
-      theme: ThemeData.dark(),
+Widget _wrap(Widget child) => ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(body: SingleChildScrollView(child: child)),
+        theme: ThemeData.dark(),
+      ),
     );
 
 /// Fake notifier per i test del quaderno.

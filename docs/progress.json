@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
   "current_block": "B36",
-  "total_blocks_run": 86,
-  "status": "CONTINUE",
-  "last_run": "2026-04-08T00:00:00Z",
-  "last_summary": "Predisposto B36 (Impostazione dimensione font in-app) su branch wip/B36-font-scale. Brief UX-01 salvato in docs/discussions/ per discussione strategica in Cowork."
+  "total_blocks_run": 87,
+  "status": "PHASE_COMPLETE",
+  "last_run": "2026-04-08T12:00:00Z",
+  "last_summary": "B36 completato: impostazione dimensione font in-app. Provider Riverpod + SharedPreferences, 4 opzioni discrete, MediaQuery wrapper, helper LaTeX, sezione Aspetto in Profilo. 588 test verdi, analyze 0."
 }
