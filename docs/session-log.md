@@ -303,3 +303,13 @@
 - **Status**: CONTINUE
 - **Summary**: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
 ---
+
+## 2026-04-07 03:54:58 — Blocco F9BB35.13
+- **Status**: CONTINUE (limite 13 blocchi raggiunto)
+- **Summary**: B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0) da main.dart, aggiunto Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 — NOTTATA COMPLETATA
+- **Status**: SUCCESS
+- **Summary**: Tutti i 13 blocchi pianificati eseguiti in 92 minuti totali. B35.5.1-B35.5.5 (Quaderno enciclopedico) + B35.6 (polish empty states) + B35.7-B35.13 (polish UX vari). Frontend: 459 → 564 test verdi (+105). Backend: 341 → 363 test verdi (+22). flutter analyze 0. Tutti i commit su branch wip/notte-quaderno-polish-2026-04-07. Pronti per review e merge su develop.
+---

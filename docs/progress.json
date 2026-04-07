@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
   "current_block": "B35.13",
-  "total_blocks_run": 83,
+  "total_blocks_run": 84,
   "status": "CONTINUE",
-  "last_run": "2026-04-07T03:00:00Z",
-  "last_summary": "B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0), Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0."
+  "last_run": "2026-04-07T01:54:58Z",
+  "last_summary": "B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0) da main.dart, aggiunto Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0."
 }
