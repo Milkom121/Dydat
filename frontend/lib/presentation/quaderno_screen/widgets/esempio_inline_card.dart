@@ -58,7 +58,7 @@ class EsempioInlineCard extends StatelessWidget {
             child: Math.tex(
               corpoFormula,
               textStyle: TextStyle(
-                fontSize: 18.sp,
+                fontSize: 14.sp,
                 color: theme.colorScheme.onSurface,
               ),
               onErrorFallback: (err) => Text(
