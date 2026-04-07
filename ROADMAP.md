@@ -277,12 +277,13 @@
 - **Note**: Riscritta NodoQuadernoScreen con 10 sezioni: StatoHeader, breadcrumb (tema>nodo), chip parole chiave, Cosa imparerai (CollapsibleText), Formule chiave (FormulaCurriculumCard), Esempi, Attenzione a... (ErroreComuneCard), Le mie note (NotaUtenteEditor), separator "Il tuo percorso", log personale (FormuleSection+EserciziSection+SpiegazioniSection). Fix lint B35.5.4 (underscore variabile locale). 11 nuovi test integrazione. 500 frontend verdi, analyze 0.
 
 ### Blocco B35.6 — Polish empty states (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S41)
 - **Complessita'**: bassa
 - **Descrizione**: Audit + fix degli stati vuoti e dei messaggi di benvenuto nelle varie schermate dell'app. Bonus block dopo B35.5 per ripulire incongruenze emerse dal test manuale (e altre potenziali non scoperte).
 - **Schermate da rivedere**: Profilo (utente nuovo senza sessioni), Sezione Ripasso in Home (lista vuota), I miei studi (search senza match), Recap sessione con 0 esercizi, Storico sessioni vuoto. Login gia fixato in B38.5, onboarding rimandato a B39.
 - **Gate di uscita**: empty states verificati e fixati, 2-4 widget test nuovi, analyze 0
 - **NON fare**: riscrivere schermate intere, toccare backend, toccare onboarding
+- **Note**: 4 fix applicati: EmptyStateWidget (rimosso URL Unsplash, icona nativa + testo caldo), SessionHistoryWidget (messaggio per storico vuoto), ProfileScreen achievement (messaggio motivazionale con icona), ProfileScreen stats (messaggio guida utente nuovo). Sezione ripasso Home e search I miei studi gia gestiti correttamente. Recap con 0 esercizi gestito dalla narrativa. 6 nuovi test. 506 frontend verdi, analyze 0.
 
 ### Blocco B35.7 — Pull-to-refresh sulle liste principali (bonus)
 - [ ] **Stato**: da fare

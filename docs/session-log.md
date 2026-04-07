@@ -228,3 +228,23 @@
 - **Status**: CONTINUE
 - **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente(). QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
 ---
+
+## 2026-04-07 02:39:27 — Blocco F9BB35.5.3
+- **Status**: CONTINUE
+- **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 02:46:11 — Blocco F9BB35.5.4
+- **Status**: CONTINUE
+- **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 02:53:42 — Blocco F9BB35.5.4
+- **Status**: CONTINUE
+- **Summary**: B35.5.5 completato. Riscrittura NodoQuadernoScreen con layout 10 sezioni integrando widget B35.5.3/4. Fix lint B35.5.4. 11 nuovi test integrazione. 500 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:15:00 — Blocco F9BB35.6
+- **Status**: CONTINUE
+- **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
+---
