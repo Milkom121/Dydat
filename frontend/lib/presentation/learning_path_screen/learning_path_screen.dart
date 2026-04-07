@@ -9,6 +9,7 @@ import '../../models/tema.dart';
 import '../../providers/path_provider.dart';
 import '../../providers/ripasso_provider.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/skeleton_loader.dart';
 import './widgets/empty_state_widget.dart';
 import './widgets/graph_overview.dart';
 import './widgets/linear_path_map.dart';
@@ -224,11 +225,7 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   ) {
     // Caricamento iniziale
     if (isLoading && nodi.isEmpty) {
-      return Center(
-        child: CircularProgressIndicator(
-          color: theme.colorScheme.primary,
-        ),
-      );
+      return const LearningPathSkeleton();
     }
 
     // Errore senza dati

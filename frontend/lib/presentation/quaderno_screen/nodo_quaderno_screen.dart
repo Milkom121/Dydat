@@ -6,6 +6,7 @@ import '../../models/quaderno.dart';
 import '../../providers/quaderno_provider.dart';
 import '../../utils/error_messages.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/skeleton_loader.dart';
 import 'widgets/collapsible_text.dart';
 import 'widgets/errore_comune_card.dart';
 import 'widgets/esercizi_section.dart';
@@ -63,7 +64,7 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
 
   Widget _buildBody(ThemeData theme, QuadernoState state) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const QuadernoSkeleton();
     }
 
     if (state.error != null) {
@@ -100,7 +101,7 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
 
     final quaderno = state.quaderno;
     if (quaderno == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const QuadernoSkeleton();
     }
 
     return RefreshIndicator(

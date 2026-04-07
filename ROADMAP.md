@@ -300,10 +300,11 @@
 - **Note**: Creato `utils/error_messages.dart` con `userFriendlyError()` (pattern matching su timeout, rete, HTTP 4xx/5xx, exception Dart). Applicato in 7 punti: studio_screen (2 snackbar), nodo_quaderno_screen, profile_screen, session_provider (stream + ErroreEvent), onboarding_provider (stream + ErroreEvent). Fix sse_client.dart (rimosso leak `$e` in 2 catch). Riscritto custom_error_widget.dart in italiano con Theme.of(context). 20 nuovi test (18 unit + 2 widget). 530 frontend verdi, analyze 0.
 
 ### Blocco B35.9 — Loading skeleton al posto degli spinner (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S44)
 - **Complessita'**: bassa-media
 - **Descrizione**: Nuovo widget riutilizzabile `SkeletonLoader` con `SkeletonBox`, `SkeletonText`, `SkeletonCard`. Sostituisce `CircularProgressIndicator` nelle schermate principali (Home, I miei studi, Quaderno, Recap).
 - **Gate di uscita**: widget riutilizzabili creati, 3-4 schermate aggiornate, 3+ widget test, analyze 0
+- **Note**: Creato skeleton_loader.dart con ShimmerGroup (AnimationController condiviso via InheritedWidget), SkeletonBox (shimmer gradient animato), SkeletonLine, SkeletonCard. 4 layout pre-composti: LearningPathSkeleton, QuadernoSkeleton, RecapSkeleton, ProfileSkeleton. Sostituiti CircularProgressIndicator in 4 schermate (learning_path_screen, nodo_quaderno_screen, recap_session_screen, profile_screen). Aggiornato test b35_quaderno_screen_test. 11 nuovi test. 541 frontend verdi, analyze 0.
 
 ### Blocco B35.10 — Search mappa percorso con parole_chiave (bonus)
 - [ ] **Stato**: da fare

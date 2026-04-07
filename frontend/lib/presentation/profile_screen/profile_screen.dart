@@ -13,6 +13,7 @@ import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/skeleton_loader.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -99,7 +100,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: Container(
         decoration: DydatSurface.backgroundGradient(context),
         child: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const ProfileSkeleton()
           : RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
