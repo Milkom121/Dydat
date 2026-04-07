@@ -248,3 +248,28 @@
 - **Status**: CONTINUE
 - **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
 ---
+
+## 2026-04-07 03:00:57 — Blocco F9BB35.5.5
+- **Status**: CONTINUE
+- **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:07:44 — Blocco F9BB35.6
+- **Status**: CONTINUE
+- **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:16:40 — Blocco F9BB35.6
+- **Status**: CONTINUE
+- **Summary**: B35.8 completato. Helper centralizzato userFriendlyError() per convertire errori tecnici in messaggi italiani user-friendly. Applicato in 7 punti (widget + provider). Fix leak in SSE client. Riscritto custom_error_widget.dart in italiano. 20 nuovi test. 530 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:24:32 — Blocco F9BB35.8
+- **Status**: CONTINUE
+- **Summary**: B35.8 completato. Helper centralizzato userFriendlyError() per convertire errori tecnici in messaggi italiani user-friendly. Applicato in 7 punti (widget + provider). Fix leak in SSE client. Riscritto custom_error_widget.dart in italiano. 20 nuovi test. 530 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 — Blocco F9BB35.10
+- **Status**: CONTINUE
+- **Summary**: B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto parole_chiave a GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa. 11 nuovi test. 552 frontend verdi, analyze 0.
+---

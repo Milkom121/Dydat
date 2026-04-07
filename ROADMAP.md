@@ -307,10 +307,11 @@
 - **Note**: Creato skeleton_loader.dart con ShimmerGroup (AnimationController condiviso via InheritedWidget), SkeletonBox (shimmer gradient animato), SkeletonLine, SkeletonCard. 4 layout pre-composti: LearningPathSkeleton, QuadernoSkeleton, RecapSkeleton, ProfileSkeleton. Sostituiti CircularProgressIndicator in 4 schermate (learning_path_screen, nodo_quaderno_screen, recap_session_screen, profile_screen). Aggiornato test b35_quaderno_screen_test. 11 nuovi test. 541 frontend verdi, analyze 0.
 
 ### Blocco B35.10 — Search mappa percorso con parole_chiave (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S45)
 - **Complessita'**: bassa
 - **Descrizione**: Estende la ricerca in LearningPathScreen per cercare anche nelle parole_chiave del nodo (oltre al nome). Sfrutta i dati esposti da B35.5.1.
 - **Gate di uscita**: search estesa, 2+ widget test, analyze 0
+- **Note**: Backend: aggiunto parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword. 11 nuovi test (ricerca keyword + deserializzazione). 552 frontend verdi, analyze 0.
 
 ### Blocco B35.11 — Coerenza tono di voce italiana (bonus)
 - [ ] **Stato**: da fare
