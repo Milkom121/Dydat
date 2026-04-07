@@ -12,13 +12,13 @@ VERIFICATION: baseline verde, modello opus configurato.
 
 ## ⚠️ ISTRUZIONI CRITICHE PER IL RUNNER
 
-Stiamo facendo SEI sub-blocchi consecutivi in una sola nottata. Per evitare loop e mantenere ordine, segui ESATTAMENTE questo flusso:
+Stiamo facendo TREDICI sub-blocchi consecutivi in una sola nottata. Per evitare loop e mantenere ordine, segui ESATTAMENTE questo flusso:
 
 1. Esegui il blocco corrente (vedi sotto la sequenza).
-2. Quando hai finito un blocco, aggiorna `.claude/handoff.md` settando `BLOCK:` al PROSSIMO blocco della sequenza (vedi sotto), e `STATUS: CONTINUE`.
+2. Quando hai finito un blocco, aggiorna `.claude/handoff.md` settando `BLOCK:` al PROSSIMO blocco della sequenza (vedi tabella sotto), e `STATUS: CONTINUE`.
 3. Aggiorna `ROADMAP.md` marcando come `[x] completato (Sxx)` il blocco appena finito, lasciando i successivi come `[ ] da fare`.
 4. Continua col prossimo.
-5. Quando hai finito **B35.6** (ultimo della sequenza), setta `STATUS: PHASE_COMPLETE` e **FERMATI**. Non avanzare a B39 senza nuova decisione di Villa.
+5. Quando hai finito **B35.13** (ultimo della sequenza), setta `STATUS: PHASE_COMPLETE` e **FERMATI**. Non avanzare a B39 senza nuova decisione di Villa.
 
 ## SEQUENZA BLOCCHI
 
@@ -302,13 +302,13 @@ Bonus block: audit + fix degli empty states e messaggi di benvenuto nelle varie 
 - TUTTI i test esistenti passano
 - `flutter analyze` 0
 - Commit "B35.6 — Polish empty states"
-- Aggiorna handoff con `STATUS: PHASE_COMPLETE` e FERMATI
+- Aggiorna handoff con `BLOCK: B35.7` e `STATUS: CONTINUE`, poi prosegui
 
 ## NON fare in B35.6
 - Non riscrivere schermate intere
 - Non toccare backend
 - Non toccare onboarding (sara B39)
-- Non avanzare a B39 senza decisione di Villa
+- Non fermarti dopo B35.6 — la sequenza continua fino a B35.13
 
 ---
 

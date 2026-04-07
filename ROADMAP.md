@@ -272,8 +272,6 @@
 - **Gate**: 3+ test integrazione, tutti i test esistenti continuano a passare, analyze 0
 
 ### Blocco B35.6 — Polish empty states (bonus)
-
-### Blocco B35.6 — Polish empty states (bonus)
 - [ ] **Stato**: da fare
 - **Complessita'**: bassa
 - **Descrizione**: Audit + fix degli stati vuoti e dei messaggi di benvenuto nelle varie schermate dell'app. Bonus block dopo B35.5 per ripulire incongruenze emerse dal test manuale (e altre potenziali non scoperte).
