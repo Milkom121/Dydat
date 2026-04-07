@@ -314,10 +314,11 @@
 - **Note**: Backend: aggiunto parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword. 11 nuovi test (ricerca keyword + deserializzazione). 552 frontend verdi, analyze 0.
 
 ### Blocco B35.11 — Coerenza tono di voce italiana (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S46)
 - **Complessita'**: bassa
 - **Descrizione**: Audit dei testi UI italiani. Verifica uso del "tu" coerente, traduce inglesismi residui (Login, Loading, Submit), uniforma terminologia. Crea `docs/tone-of-voice.md`.
 - **Gate di uscita**: audit completato, fix applicati, file tone-of-voice creato, analyze 0
+- **Note**: Audit completo su 119 file Dart. 3 fix applicati: 'Streak' → 'Serie' (profilo + recap), 'Achievement' → 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard, regole tono, parole inglesi accettate. App gia 95% italiana — uso coerente del "tu", errori gia in italiano (userFriendlyError), empty states ok. 552 frontend verdi, analyze 0.
 
 ### Blocco B35.12 — Audit dev-shortcuts.md priorita alta (bonus)
 - [ ] **Stato**: da fare

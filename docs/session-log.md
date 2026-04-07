@@ -273,3 +273,13 @@
 - **Status**: CONTINUE
 - **Summary**: B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto parole_chiave a GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa. 11 nuovi test. 552 frontend verdi, analyze 0.
 ---
+
+## 2026-04-07 03:31:22 — Blocco F9BB35.8
+- **Status**: CONTINUE
+- **Summary**: B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto campo parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword in LearningPathScreen. 11 nuovi test. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 04:00:00 — Blocco B35.11
+- **Status**: CONTINUE
+- **Summary**: B35.11 completato. Audit testi UI italiani. 3 fix: Streak>Serie (profilo+recap), Achievement>Traguardi. Creato docs/tone-of-voice.md. 552 frontend verdi, analyze 0.
+---

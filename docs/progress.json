@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.10",
-  "total_blocks_run": 77,
+  "current_block": "B35.11",
+  "total_blocks_run": 79,
   "status": "CONTINUE",
   "last_run": "2026-04-07T02:00:00Z",
-  "last_summary": "B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto campo parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword. 11 nuovi test. 552 frontend verdi, analyze 0."
+  "last_summary": "B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix: Streak>Serie (profilo+recap), Achievement>Traguardi (profilo). Creato docs/tone-of-voice.md. 552 frontend verdi, analyze 0."
 }
