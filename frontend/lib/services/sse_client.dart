@@ -123,9 +123,9 @@ class SseClient {
         return;
       } catch (e) {
         if (attempt < _maxRetries) continue;
-        yield ErroreEvent(
+        yield const ErroreEvent(
           codice: 'connection_error',
-          messaggio: 'Errore di connessione: $e',
+          messaggio: 'Errore di connessione. Controlla la rete e riprova.',
         );
         return;
       }
@@ -173,9 +173,9 @@ class SseClient {
         return;
       } catch (e) {
         if (attempt < _maxRetries) continue;
-        yield ErroreEvent(
+        yield const ErroreEvent(
           codice: 'stream_error',
-          messaggio: 'Connessione persa: $e',
+          messaggio: 'Connessione persa. Riprova tra poco.',
         );
         return;
       }

@@ -7,6 +7,7 @@ import 'package:dydat/models/onboarding.dart';
 import 'package:dydat/models/sse_events.dart';
 import 'package:dydat/services/onboarding_service.dart';
 import 'package:dydat/services/storage_service.dart';
+import 'package:dydat/utils/error_messages.dart';
 
 class OnboardingScreenState {
   final String? sessioneId;
@@ -145,7 +146,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
         state = state.copyWith(
           isLoading: false,
           isStreaming: false,
-          error: 'Errore stream: $error',
+          error: userFriendlyError('$error'),
         );
       },
       onDone: () {
@@ -186,7 +187,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
         state = state.copyWith(
           isLoading: false,
           isStreaming: false,
-          error: event.messaggio,
+          error: userFriendlyError(event.messaggio),
         );
 
       case AzioneEvent():

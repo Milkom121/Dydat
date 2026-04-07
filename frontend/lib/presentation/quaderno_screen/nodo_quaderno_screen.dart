@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/sizer_extensions.dart';
 import '../../models/quaderno.dart';
 import '../../providers/quaderno_provider.dart';
+import '../../utils/error_messages.dart';
 import '../../widgets/custom_icon_widget.dart';
 import 'widgets/collapsible_text.dart';
 import 'widgets/errore_comune_card.dart';
@@ -79,7 +80,7 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
               ),
               SizedBox(height: 2.h),
               Text(
-                state.error!,
+                userFriendlyError(state.error),
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.error,
                 ),

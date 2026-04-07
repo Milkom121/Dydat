@@ -8,6 +8,7 @@ import '../../theme/surface_decorations.dart';
 import '../../providers/achievement_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/stats_provider.dart';
+import '../../utils/error_messages.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -196,7 +197,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return _buildCardShell(
         theme,
         child: Text(
-          statsState.error!,
+          userFriendlyError(statsState.error),
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.error,
           ),
