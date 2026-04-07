@@ -431,7 +431,7 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
               Expanded(
                 child: _MiniStat(
                   value: '${stats.streak}',
-                  label: 'Streak',
+                  label: 'Serie',
                   icon: 'local_fire_department',
                   theme: theme,
                 ),

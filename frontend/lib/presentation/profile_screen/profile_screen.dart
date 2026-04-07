@@ -233,7 +233,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   theme,
                   icon: 'local_fire_department',
                   value: '${stats?.streak ?? 0}',
-                  label: 'Streak',
+                  label: 'Serie',
                 ),
                 _buildStatItem(
                   theme,
@@ -365,7 +365,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Achievement', style: theme.textTheme.titleMedium),
+          Text('Traguardi', style: theme.textTheme.titleMedium),
           SizedBox(height: 1.5.h),
 
           if (achievementState.unlocked.isEmpty &&

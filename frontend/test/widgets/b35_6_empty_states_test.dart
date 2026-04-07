@@ -192,8 +192,8 @@ void main() {
         findsOneWidget,
       );
 
-      // Non mostra la riga "Streak / Nodi / Sessioni"
-      expect(find.text('Streak'), findsNothing);
+      // Non mostra la riga "Serie / Nodi / Sessioni"
+      expect(find.text('Serie'), findsNothing);
     });
 
     testWidgets('utente con sessioni vede stats numeriche', (tester) async {
@@ -212,7 +212,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Mostra numeri (streak=3 appare anche in giorniAttivi=3)
-      expect(find.text('Streak'), findsOneWidget);
+      expect(find.text('Serie'), findsOneWidget);
       expect(find.text('Sessioni'), findsOneWidget);
       expect(find.text('Questa settimana'), findsOneWidget);
 
