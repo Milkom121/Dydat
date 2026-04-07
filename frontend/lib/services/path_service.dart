@@ -52,4 +52,13 @@ class PathService {
     final response = await _client.dio.get(ApiConfig.quaderno(nodoId));
     return QuadernoNodo.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Salva (crea o aggiorna) la nota personale dell'utente su un nodo.
+  Future<NotaUtente> saveNotaUtente(String nodoId, String testo) async {
+    final response = await _client.dio.put(
+      ApiConfig.quadernoNota(nodoId),
+      data: {'testo': testo},
+    );
+    return NotaUtente.fromJson(response.data as Map<String, dynamic>);
+  }
 }

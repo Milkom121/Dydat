@@ -138,4 +138,185 @@ void main() {
       expect(spiegazione.sessioneId, 'sess_abc');
     });
   });
+
+  group('FormulaCurriculum', () {
+    test('fromJson con tutti i campi', () {
+      final json = {
+        'latex': r'a^2 + b^2 = c^2',
+        'descrizione': 'Teorema di Pitagora',
+      };
+      final f = FormulaCurriculum.fromJson(json);
+      expect(f.latex, r'a^2 + b^2 = c^2');
+      expect(f.descrizione, 'Teorema di Pitagora');
+    });
+
+    test('fromJson senza descrizione usa default', () {
+      final json = {'latex': 'x = 1', 'descrizione': ''};
+      final f = FormulaCurriculum.fromJson(json);
+      expect(f.latex, 'x = 1');
+      expect(f.descrizione, '');
+    });
+
+    test('toJson round-trip', () {
+      const f = FormulaCurriculum(latex: 'E=mc^2', descrizione: 'Einstein');
+      final json = f.toJson();
+      final f2 = FormulaCurriculum.fromJson(json);
+      expect(f2.latex, f.latex);
+      expect(f2.descrizione, f.descrizione);
+    });
+  });
+
+  group('ErroreComune', () {
+    test('fromJson con tutti i campi', () {
+      final json = {
+        'tipo': 'concettuale',
+        'descrizione': 'Credere che 5-8 dia zero',
+        'esempio_sbagliato': '5 - 8 = 0',
+        'correzione': '5 - 8 = -3',
+        'suggerimento': 'Pensa a debiti',
+      };
+      final e = ErroreComune.fromJson(json);
+      expect(e.tipo, 'concettuale');
+      expect(e.descrizione, 'Credere che 5-8 dia zero');
+      expect(e.esempioSbagliato, '5 - 8 = 0');
+      expect(e.correzione, '5 - 8 = -3');
+      expect(e.suggerimento, 'Pensa a debiti');
+    });
+
+    test('fromJson con campi opzionali null', () {
+      final json = {
+        'tipo': 'procedurale',
+        'descrizione': 'Errore nel calcolo',
+      };
+      final e = ErroreComune.fromJson(json);
+      expect(e.tipo, 'procedurale');
+      expect(e.esempioSbagliato, isNull);
+      expect(e.correzione, isNull);
+      expect(e.suggerimento, isNull);
+    });
+  });
+
+  group('SchedaNodo', () {
+    test('fromJson completa', () {
+      final json = {
+        'definizione_testo': 'I numeri interi estendono i naturali',
+        'formule': [
+          {'latex': 'a - b', 'descrizione': 'Sottrazione'},
+        ],
+        'esempi': ['5 - 8 = -3', '0 - 1 = -1'],
+        'errori_comuni': [
+          {
+            'tipo': 'concettuale',
+            'descrizione': 'Confondere segno',
+          },
+        ],
+        'parole_chiave': ['interi', 'negativi', 'sottrazione'],
+      };
+      final scheda = SchedaNodo.fromJson(json);
+      expect(scheda.definizioneTesto, 'I numeri interi estendono i naturali');
+      expect(scheda.formule.length, 1);
+      expect(scheda.formule.first.latex, 'a - b');
+      expect(scheda.esempi.length, 2);
+      expect(scheda.erroriComuni.length, 1);
+      expect(scheda.erroriComuni.first.tipo, 'concettuale');
+      expect(scheda.paroleChiave, ['interi', 'negativi', 'sottrazione']);
+    });
+
+    test('fromJson vuota con default', () {
+      final json = <String, dynamic>{};
+      final scheda = SchedaNodo.fromJson(json);
+      expect(scheda.definizioneTesto, isNull);
+      expect(scheda.formule, isEmpty);
+      expect(scheda.esempi, isEmpty);
+      expect(scheda.erroriComuni, isEmpty);
+      expect(scheda.paroleChiave, isEmpty);
+    });
+  });
+
+  group('NotaUtente', () {
+    test('fromJson con tutti i campi', () {
+      final json = {
+        'testo': 'Ricordare la regola dei segni',
+        'updated_at': '2026-04-07T10:00:00Z',
+      };
+      final nota = NotaUtente.fromJson(json);
+      expect(nota.testo, 'Ricordare la regola dei segni');
+      expect(nota.updatedAt, '2026-04-07T10:00:00Z');
+    });
+
+    test('fromJson senza updated_at', () {
+      final json = {'testo': 'Appunto veloce'};
+      final nota = NotaUtente.fromJson(json);
+      expect(nota.testo, 'Appunto veloce');
+      expect(nota.updatedAt, isNull);
+    });
+  });
+
+  group('QuadernoNodo con scheda e notaUtente', () {
+    test('fromJson parsing con scheda e nota', () {
+      final json = {
+        'nodo_id': 'nodo_1',
+        'nodo_nome': 'Numeri interi',
+        'tema_nome': 'Algebra',
+        'stato': {
+          'livello': 'operativo',
+          'presunto': false,
+          'spiegazione_data': true,
+          'esercizi_completati': 3,
+        },
+        'sessioni_count': 2,
+        'esercizi': <dynamic>[],
+        'formule': <dynamic>[],
+        'spiegazioni': <dynamic>[],
+        'scheda': {
+          'definizione_testo': 'Testo def',
+          'formule': [
+            {'latex': 'x^2', 'descrizione': 'Quadrato'},
+          ],
+          'esempi': ['Esempio 1'],
+          'errori_comuni': <dynamic>[],
+          'parole_chiave': ['algebra'],
+        },
+        'nota_utente': {
+          'testo': 'Le mie note',
+          'updated_at': '2026-04-07T10:00:00Z',
+        },
+      };
+      final q = QuadernoNodo.fromJson(json);
+      expect(q.scheda, isNotNull);
+      expect(q.scheda!.definizioneTesto, 'Testo def');
+      expect(q.scheda!.formule.length, 1);
+      expect(q.scheda!.paroleChiave, ['algebra']);
+      expect(q.notaUtente, isNotNull);
+      expect(q.notaUtente!.testo, 'Le mie note');
+    });
+
+    test('fromJson senza scheda e nota (null)', () {
+      final json = {
+        'nodo_id': 'nodo_2',
+        'nodo_nome': 'Test',
+        'stato': {'livello': 'non_iniziato'},
+        'sessioni_count': 0,
+      };
+      final q = QuadernoNodo.fromJson(json);
+      expect(q.scheda, isNull);
+      expect(q.notaUtente, isNull);
+    });
+
+    test('copyWith aggiorna notaUtente', () {
+      final q = QuadernoNodo(
+        nodoId: 'n1',
+        nodoNome: 'Test',
+        stato: const StatoNodoQuaderno(),
+      );
+      expect(q.notaUtente, isNull);
+      final updated =
+          q.copyWith(notaUtente: const NotaUtente(testo: 'Nuova nota'));
+      expect(updated.notaUtente, isNotNull);
+      expect(updated.notaUtente!.testo, 'Nuova nota');
+      // I campi originali restano invariati
+      expect(updated.nodoId, 'n1');
+      expect(updated.nodoNome, 'Test');
+    });
+  });
 }

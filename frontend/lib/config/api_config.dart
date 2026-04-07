@@ -48,6 +48,7 @@ class ApiConfig {
 
   // Quaderno
   static String quaderno(String nodoId) => '/quaderno/$nodoId';
+  static String quadernoNota(String nodoId) => '/quaderno/$nodoId/nota';
 
   // Health
   static const String health = '/health';

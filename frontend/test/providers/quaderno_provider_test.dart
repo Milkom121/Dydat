@@ -53,5 +53,26 @@ void main() {
       expect(s2.quaderno, isNotNull);
       expect(s2.isLoading, false);
     });
+
+    test('isSaving default false', () {
+      const s = QuadernoState();
+      expect(s.isSaving, false);
+    });
+
+    test('copyWith isSaving', () {
+      const s = QuadernoState();
+      final s2 = s.copyWith(isSaving: true);
+      expect(s2.isSaving, true);
+      final s3 = s2.copyWith(isSaving: false);
+      expect(s3.isSaving, false);
+    });
+
+    test('copyWith isSaving mantiene altri campi', () {
+      final s = QuadernoState(quaderno: _quaderno(), isLoading: true);
+      final s2 = s.copyWith(isSaving: true);
+      expect(s2.quaderno, isNotNull);
+      expect(s2.isLoading, true);
+      expect(s2.isSaving, true);
+    });
   });
 }

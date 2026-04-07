@@ -99,7 +99,88 @@ class SpiegazioneQuaderno {
   Map<String, dynamic> toJson() => _$SpiegazioneQuadernoToJson(this);
 }
 
-/// Quaderno aggregato per un nodo — raccoglie tutto: stato, esercizi, formule, spiegazioni.
+/// Formula curricolare dal nodo (KB), diversa da FormulaQuaderno (mostrata dal tutor).
+@JsonSerializable()
+class FormulaCurriculum {
+  final String latex;
+  final String descrizione;
+
+  const FormulaCurriculum({
+    required this.latex,
+    this.descrizione = '',
+  });
+
+  factory FormulaCurriculum.fromJson(Map<String, dynamic> json) =>
+      _$FormulaCurriculumFromJson(json);
+  Map<String, dynamic> toJson() => _$FormulaCurriculumToJson(this);
+}
+
+/// Errore comune associato a un nodo (da KB).
+@JsonSerializable()
+class ErroreComune {
+  final String tipo;
+  final String descrizione;
+  @JsonKey(name: 'esempio_sbagliato')
+  final String? esempioSbagliato;
+  final String? correzione;
+  final String? suggerimento;
+
+  const ErroreComune({
+    required this.tipo,
+    required this.descrizione,
+    this.esempioSbagliato,
+    this.correzione,
+    this.suggerimento,
+  });
+
+  factory ErroreComune.fromJson(Map<String, dynamic> json) =>
+      _$ErroreComuneFromJson(json);
+  Map<String, dynamic> toJson() => _$ErroreComuneToJson(this);
+}
+
+/// Scheda intrinseca del nodo: dati curricolari dalla Knowledge Base.
+@JsonSerializable()
+class SchedaNodo {
+  @JsonKey(name: 'definizione_testo')
+  final String? definizioneTesto;
+  final List<FormulaCurriculum> formule;
+  final List<String> esempi;
+  @JsonKey(name: 'errori_comuni')
+  final List<ErroreComune> erroriComuni;
+  @JsonKey(name: 'parole_chiave')
+  final List<String> paroleChiave;
+
+  const SchedaNodo({
+    this.definizioneTesto,
+    this.formule = const [],
+    this.esempi = const [],
+    this.erroriComuni = const [],
+    this.paroleChiave = const [],
+  });
+
+  factory SchedaNodo.fromJson(Map<String, dynamic> json) =>
+      _$SchedaNodoFromJson(json);
+  Map<String, dynamic> toJson() => _$SchedaNodoToJson(this);
+}
+
+/// Nota personale dell'utente su un nodo.
+@JsonSerializable()
+class NotaUtente {
+  final String testo;
+  @JsonKey(name: 'updated_at')
+  final String? updatedAt;
+
+  const NotaUtente({
+    required this.testo,
+    this.updatedAt,
+  });
+
+  factory NotaUtente.fromJson(Map<String, dynamic> json) =>
+      _$NotaUtenteFromJson(json);
+  Map<String, dynamic> toJson() => _$NotaUtenteToJson(this);
+}
+
+/// Quaderno aggregato per un nodo — raccoglie tutto: stato, esercizi, formule, spiegazioni, scheda, nota.
 @JsonSerializable()
 class QuadernoNodo {
   @JsonKey(name: 'nodo_id')
@@ -114,6 +195,9 @@ class QuadernoNodo {
   final List<EsercizioQuaderno> esercizi;
   final List<FormulaQuaderno> formule;
   final List<SpiegazioneQuaderno> spiegazioni;
+  final SchedaNodo? scheda;
+  @JsonKey(name: 'nota_utente')
+  final NotaUtente? notaUtente;
 
   const QuadernoNodo({
     required this.nodoId,
@@ -124,11 +208,30 @@ class QuadernoNodo {
     this.esercizi = const [],
     this.formule = const [],
     this.spiegazioni = const [],
+    this.scheda,
+    this.notaUtente,
   });
 
   factory QuadernoNodo.fromJson(Map<String, dynamic> json) =>
       _$QuadernoNodoFromJson(json);
   Map<String, dynamic> toJson() => _$QuadernoNodoToJson(this);
+
+  QuadernoNodo copyWith({
+    NotaUtente? notaUtente,
+  }) {
+    return QuadernoNodo(
+      nodoId: nodoId,
+      nodoNome: nodoNome,
+      temaNome: temaNome,
+      stato: stato,
+      sessioniCount: sessioniCount,
+      esercizi: esercizi,
+      formule: formule,
+      spiegazioni: spiegazioni,
+      scheda: scheda,
+      notaUtente: notaUtente ?? this.notaUtente,
+    );
+  }
 
   /// Conteggio esercizi corretti.
   int get eserciziCorretti =>
