@@ -1,11 +1,17 @@
-"""Test B35 — Endpoint GET /quaderno/{nodo_id}.
+"""Test B35 — Endpoint quaderno: GET e PUT nota utente.
 
-Testa:
+Testa GET /quaderno/{nodo_id}:
 - Nodo inesistente ritorna 404
 - Quaderno vuoto per nodo senza interazioni
 - Quaderno con esercizi, formule, spiegazioni aggregati
 - Formule deduplicate per titolo
 - Spiegazioni filtrate per lunghezza (> 50 char)
+
+Testa PUT /quaderno/{nodo_id}/nota (B35.5.2):
+- Creazione nuova nota
+- Aggiornamento nota esistente
+- Nodo inesistente ritorna 404
+- Validazione payload (testo vuoto, testo troppo lungo)
 """
 
 from __future__ import annotations
@@ -520,3 +526,122 @@ class TestGetQuadernoScheda:
         assert risposta["scheda"]["esempi"] == []
         assert risposta["scheda"]["errori_comuni"] == []
         assert risposta["scheda"]["parole_chiave"] == []
+
+
+class TestPutNotaUtente:
+    """Test B35.5.2 — PUT /quaderno/{nodo_id}/nota (upsert nota personale)."""
+
+    @pytest.mark.asyncio
+    async def test_crea_nuova_nota(self):
+        """PUT su nodo senza nota esistente: crea la nota e ritorna dati."""
+        from app.api.quaderno import NotaUtenteRequest, put_nota_utente
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+        nodo = _mock_nodo()
+        now = datetime.now(timezone.utc)
+
+        # Dopo commit+refresh, la nota avra contenuto e updated_at
+        nota_creata = _mock_nota_utente(contenuto="La mia prima nota", updated_at=now)
+
+        db = AsyncMock()
+        # 1. Nodo esiste
+        result_nodo = MagicMock()
+        result_nodo.scalar_one_or_none = MagicMock(return_value=nodo)
+        # 2. Nota non esiste
+        result_nota = MagicMock()
+        result_nota.scalar_one_or_none = MagicMock(return_value=None)
+
+        db.execute = AsyncMock(side_effect=[result_nodo, result_nota])
+        db.add = MagicMock()
+        db.commit = AsyncMock()
+
+        # refresh aggiorna i campi della nota
+        async def mock_refresh(obj):
+            obj.contenuto = "La mia prima nota"
+            obj.updated_at = now
+
+        db.refresh = AsyncMock(side_effect=mock_refresh)
+
+        payload = NotaUtenteRequest(testo="La mia prima nota")
+        risposta = await put_nota_utente(nodo_id="nodo_1", payload=payload, utente=utente, db=db)
+
+        assert risposta["nodo_id"] == "nodo_1"
+        assert risposta["testo"] == "La mia prima nota"
+        assert risposta["updated_at"] is not None
+        # Verifica che db.add sia stato chiamato (creazione)
+        db.add.assert_called_once()
+        db.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_aggiorna_nota_esistente(self):
+        """PUT su nodo con nota esistente: aggiorna contenuto."""
+        from app.api.quaderno import NotaUtenteRequest, put_nota_utente
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+        nodo = _mock_nodo()
+        now = datetime.now(timezone.utc)
+
+        nota_esistente = _mock_nota_utente(contenuto="Vecchio testo", updated_at=now - timedelta(days=1))
+
+        db = AsyncMock()
+        result_nodo = MagicMock()
+        result_nodo.scalar_one_or_none = MagicMock(return_value=nodo)
+        result_nota = MagicMock()
+        result_nota.scalar_one_or_none = MagicMock(return_value=nota_esistente)
+
+        db.execute = AsyncMock(side_effect=[result_nodo, result_nota])
+        db.commit = AsyncMock()
+
+        async def mock_refresh(obj):
+            obj.updated_at = now
+
+        db.refresh = AsyncMock(side_effect=mock_refresh)
+
+        payload = NotaUtenteRequest(testo="Testo aggiornato")
+        risposta = await put_nota_utente(nodo_id="nodo_1", payload=payload, utente=utente, db=db)
+
+        assert risposta["testo"] == "Testo aggiornato"
+        assert risposta["updated_at"] == now.isoformat()
+        # Verifica che il contenuto della nota mock sia stato aggiornato
+        assert nota_esistente.contenuto == "Testo aggiornato"
+        # db.add NON chiamato (aggiornamento, non creazione)
+        db.add.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_nodo_inesistente_ritorna_404(self):
+        """PUT su nodo inesistente: ritorna 404."""
+        from app.api.quaderno import NotaUtenteRequest, put_nota_utente
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+
+        db = AsyncMock()
+        result_nodo = MagicMock()
+        result_nodo.scalar_one_or_none = MagicMock(return_value=None)
+        db.execute = AsyncMock(return_value=result_nodo)
+
+        payload = NotaUtenteRequest(testo="Nota su nodo che non esiste")
+        with pytest.raises(HTTPException) as exc_info:
+            await put_nota_utente(nodo_id="nodo_fantasma", payload=payload, utente=utente, db=db)
+
+        assert exc_info.value.status_code == 404
+
+    def test_validazione_testo_vuoto(self):
+        """Payload con testo vuoto non passa la validazione Pydantic."""
+        from pydantic import ValidationError
+
+        from app.api.quaderno import NotaUtenteRequest
+
+        with pytest.raises(ValidationError):
+            NotaUtenteRequest(testo="")
+
+    def test_validazione_testo_troppo_lungo(self):
+        """Payload con testo oltre 10000 char non passa la validazione."""
+        from pydantic import ValidationError
+
+        from app.api.quaderno import NotaUtenteRequest
+
+        with pytest.raises(ValidationError):
+            NotaUtenteRequest(testo="x" * 10001)
