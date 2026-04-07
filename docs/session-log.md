@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-07 — Sessione S48 — B35.13 Audit accessibilita base (Semantics)
+- **Status**: CONTINUE
+- **Summary**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics labels su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7→0.87). dev-shortcuts aggiornato. 12 nuovi test, 564 totale frontend, analyze 0.
+---
+
 ## 2026-04-06 — Sessione S35 — B38 Mascotte CustomPainter
 - **Status**: PHASE_COMPLETE
 - **Summary**: Mascotte evoluta da cerchio ambra a blob organico CustomPainter (Bezier 8 punti). Occhi espressivi con apertura, pupilla e riflesso. MascotteVisuals con lerp() per transizioni 500ms. EntrancePortalPainter (ingresso sessione). PromotionBurstPainter (celebrazione promozione). 28 nuovi test, 448 totale frontend, analyze 0. Fase 9 COMPLETATA (B36-B38).
@@ -290,6 +295,11 @@
 ---
 
 ## 2026-04-07 03:37:28 — Blocco F9BB35.10
+- **Status**: CONTINUE
+- **Summary**: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:45:00 — Blocco F9BB35.11
 - **Status**: CONTINUE
 - **Summary**: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
 ---

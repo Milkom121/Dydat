@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.12",
-  "total_blocks_run": 81,
+  "current_block": "B35.13",
+  "total_blocks_run": 83,
   "status": "CONTINUE",
-  "last_run": "2026-04-07T02:00:00Z",
-  "last_summary": "B35.12 completato. Risolte 3 voci alta priorita in dev-shortcuts.md: validate_secrets_for_startup() per JWT_SECRET e ANTHROPIC_API_KEY (warning in DEBUG, errore in prod), credenziali PostgreSQL spostate da docker-compose.yml a interpolazione .env, creato .env.example. 7 nuovi test backend. 363 backend, 552 frontend verdi, analyze 0."
+  "last_run": "2026-04-07T03:00:00Z",
+  "last_summary": "B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0), Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0."
 }

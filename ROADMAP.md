@@ -328,10 +328,11 @@
 - **Note**: 3 voci alta priorita risolte: (1) JWT_SECRET + (2) ANTHROPIC_API_KEY — validate_secrets_for_startup() in config.py, warning in DEBUG, errore in produzione, chiamata dalla lifespan di main.py. (3) Credenziali PostgreSQL — interpolazione ${VAR:-default} in docker-compose.yml, variabili in .env (gitignored), creato .env.example con segnaposto. model_config extra="ignore" per tollerare variabili POSTGRES_*. 7 nuovi test backend. 363 backend (10 skipped), 552 frontend verdi, analyze 0.
 
 ### Blocco B35.13 — Audit accessibilita base (Semantics) (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S48)
 - **Complessita'**: media
 - **Descrizione**: Aggiunge `Semantics` labels su widget interattivi delle schermate principali. Rimuove TextScaler.linear(1.0) bloccato. Audit contrasto colori dei testi principali.
 - **Gate di uscita**: 5+ schermate con Semantics labels base, TextScaler ripristinato, 2-3 fix contrasto, analyze 0
+- **Note**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7>0.87). dev-shortcuts aggiornato. 12 nuovi test. 564 frontend verdi, analyze 0.
 
 ---
 

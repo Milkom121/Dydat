@@ -1,44 +1,39 @@
 STATUS: CONTINUE
 PHASE: 9
-BLOCK: B35.11
-SUMMARY: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
-NEXT: B35.12 - Audit dev-shortcuts.md priorita alta (bonus)
+BLOCK: B35.13
+SUMMARY: B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0) da main.dart, aggiunto Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0.
+NEXT: B39 - Onboarding con Momento Wow (Fase 10)
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: frontend/lib/presentation/profile_screen/profile_screen.dart, frontend/lib/presentation/studio_screen/recap_session_screen.dart, frontend/test/widgets/b35_6_empty_states_test.dart, docs/tone-of-voice.md
-TESTS: PASS (356 backend, 552 frontend, flutter analyze 0)
-VERIFICATION: 552 passed, analyze 0, build OK
+FILES_MODIFIED: frontend/lib/main.dart, linear_path_map.dart, graph_overview.dart, tools_tray_widget.dart, mascotte_widget.dart, exercise_card_widget.dart, formula_card_widget.dart, backtrack_card_widget.dart, tutor_panel_widget.dart, collapsible_text.dart, celebration_overlay.dart, docs/dev-shortcuts.md, b35_13_accessibility_test.dart
+TESTS: PASS (363 backend, 564 frontend, flutter analyze 0)
+VERIFICATION: 564 passed, analyze 0, build OK
 
 ---
 
 ## Contesto dettagliato
 
 ### Cosa e stato fatto
-- **Audit completo** su tutti i file Dart in lib/presentation/ per inglesismi, uso del tu, terminologia incoerente, gergo tecnico esposto
-- **profile_screen.dart**: Streak > Serie (label stats), Achievement > Traguardi (titolo sezione)
-- **recap_session_screen.dart**: Streak > Serie (label stats sezione recap)
-- **b35_6_empty_states_test.dart**: aggiornati 2 expect per riflettere Serie al posto di Streak
-- **docs/tone-of-voice.md**: creato con terminologia standard, parole inglesi accettate (Email, Password, Home, Tutor), regole messaggi errore, bottoni, empty states
-
-### Verifiche positive (nessun fix necessario)
-- Uso coerente del tu in tutta la app
-- Messaggi errore gia in italiano tramite userFriendlyError()
-- Empty states gia gestiti (B35.6)
-- Terminologia nodi/sessioni/percorsi coerente
-- Bottom bar: Home, I miei studi, Profilo - ok
-- Form labels: Email, Password - universali, ok
-- StreakCard nella Home gia usa giorni come label
+- main.dart: rimosso TextScaler.linear(1.0) dal builder di MaterialApp
+- LinearPathMap: Semantics label su nodi percorso
+- GraphOverview: Semantics label su nodi grafo
+- ToolsTrayWidget: Semantics label su tool buttons + tooltip chiudi
+- MascotteWidget: Semantics label su mascotte
+- TutorPanelWidget: Semantics label su mode cards + tooltip chiudi
+- ExerciseCardWidget, FormulaCardWidget, BacktrackCardWidget: tooltip chiudi
+- CollapsibleText: Semantics label su expand/collapse
+- celebration_overlay.dart: fix contrasto alpha 0.7 -> 0.87
+- dev-shortcuts.md: voce TextScaler marcata come risolta
 
 ### Stato del progetto
-- Backend: 356 test verdi, 10 skipped (non toccato)
-- Frontend: 552 test verdi, analyze 0
+- Backend: 363 test verdi, 10 skipped (non toccato)
+- Frontend: 564 test verdi, analyze 0
 
 ### Prossimo passo concreto
-- B35.12: Aprire docs/dev-shortcuts.md e risolvere almeno 2-3 voci marcate come priorita alta
-- Aggiornare il file marcando come risolto
+- B39: Onboarding con Momento Wow (Fase 10)
+- Cambio fase: servira STOP per conferma Villa
 
 ### File da leggere per la prossima sessione
 1. CLAUDE.md
 2. PROJECT_CONFIG.md
 3. ROADMAP.md
 4. .claude/handoff.md
-5. docs/dev-shortcuts.md
