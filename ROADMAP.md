@@ -334,6 +334,14 @@
 - **Gate di uscita**: 5+ schermate con Semantics labels base, TextScaler ripristinato, 2-3 fix contrasto, analyze 0
 - **Note**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7>0.87). dev-shortcuts aggiornato. 12 nuovi test. 564 frontend verdi, analyze 0.
 
+### Blocco B35.14 — Fix post-test manuale nottata (consolidamento)
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Blocco di fix chirurgico dopo test manuale Villa sulla nottata B35.5.1-B35.13. 7 bug raccolti in `.claude/test-findings-nottata.md`. Branch: `wip/notte-quaderno-polish-2026-04-07`.
+- **Bug**: NB-01 formule LaTeX troppo grandi, NB-02 LaTeX esempi non renderizzato, NB-03 singolare/plurale italiano (helper centralizzato), NB-04 log personale nascosto invece di empty state, NB-05 errore quaderno offline non usa helper user-friendly, NB-06 lucchetto su nodi 'da iniziare' (regressione B38.5), NB-07 overflow MiniPercorso con TextScaler aumentato.
+- **File da toccare**: formula_curriculum_card.dart, nodo_quaderno_screen.dart, linear_path_map.dart, mini_percorso_widget.dart, nuovi pluralize.dart e esempio_inline_card.dart
+- **Gate di uscita**: 7 bug fixati, 6+ widget test, analyze 0, tutti i test esistenti passano, commit atomico
+
 ---
 
 ## Fase 10 — UX Redesign: Onboarding + Audio (Fase A.5, B39-B40)

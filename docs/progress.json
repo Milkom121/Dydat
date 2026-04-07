@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.13",
+  "current_block": "B35.14",
   "total_blocks_run": 84,
   "status": "CONTINUE",
   "last_run": "2026-04-07T01:54:58Z",
-  "last_summary": "B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0) da main.dart, aggiunto Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0."
+  "last_summary": "Test manuale nottata completato, 7 bug raccolti. Predisposto B35.14 come blocco di fix chirurgico unico sul branch wip/notte-quaderno-polish-2026-04-07. Dopo B35.14 verificato, merge manuale wip→develop."
 }
