@@ -63,7 +63,7 @@ async def mappa_nodi(
 
     # Carica tutti i nodi operativi con il loro tema
     result_nodi = await db.execute(
-        select(Nodo.id, Nodo.nome, Nodo.tipo, Nodo.tipo_nodo, NodoTema.tema_id)
+        select(Nodo.id, Nodo.nome, Nodo.tipo, Nodo.tipo_nodo, NodoTema.tema_id, Nodo.parole_chiave)
         .outerjoin(NodoTema, NodoTema.nodo_id == Nodo.id)
         .where(Nodo.tipo_nodo != "contesto")
     )
@@ -82,7 +82,7 @@ async def mappa_nodi(
     stati = {row.nodo_id: row for row in result_stati.all()}
 
     nodi_mappa = []
-    for nodo_id, nome, tipo, tipo_nodo, tema_id in nodi_db:
+    for nodo_id, nome, tipo, tipo_nodo, tema_id, parole_chiave in nodi_db:
         stato = stati.get(nodo_id)
         nodi_mappa.append({
             "id": nodo_id,
@@ -93,6 +93,7 @@ async def mappa_nodi(
             "presunto": stato.presunto if stato else False,
             "spiegazione_data": stato.spiegazione_data if stato else False,
             "esercizi_completati": stato.esercizi_completati if stato else 0,
+            "parole_chiave": parole_chiave if parole_chiave else [],
         })
 
     return {

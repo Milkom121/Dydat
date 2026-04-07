@@ -75,12 +75,15 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
     );
   }
 
-  /// IDs dei nodi che matchano la ricerca (vuoto = mostra tutti)
+  /// IDs dei nodi che matchano la ricerca (vuoto = mostra tutti).
+  /// Cerca nel nome del nodo e nelle parole chiave.
   Set<String> _getHighlightedNodeIds(List<NodoMappa> nodi) {
     if (_searchQuery.isEmpty) return {};
     final query = _searchQuery.toLowerCase();
     return nodi
-        .where((n) => n.nome.toLowerCase().contains(query))
+        .where((n) =>
+            n.nome.toLowerCase().contains(query) ||
+            n.paroleChiave.any((k) => k.toLowerCase().contains(query)))
         .map((n) => n.id)
         .toSet();
   }

@@ -53,6 +53,10 @@ NodoMappa _$NodoMappaFromJson(Map<String, dynamic> json) => NodoMappa(
   presunto: json['presunto'] as bool? ?? false,
   spiegazioneData: json['spiegazione_data'] as bool? ?? false,
   eserciziCompletati: (json['esercizi_completati'] as num?)?.toInt() ?? 0,
+  paroleChiave: (json['parole_chiave'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      <String>[],
 );
 
 Map<String, dynamic> _$NodoMappaToJson(NodoMappa instance) => <String, dynamic>{
@@ -64,4 +68,5 @@ Map<String, dynamic> _$NodoMappaToJson(NodoMappa instance) => <String, dynamic>{
   'presunto': instance.presunto,
   'spiegazione_data': instance.spiegazioneData,
   'esercizi_completati': instance.eserciziCompletati,
+  'parole_chiave': instance.paroleChiave,
 };

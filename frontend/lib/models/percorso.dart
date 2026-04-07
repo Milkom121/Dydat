@@ -63,6 +63,8 @@ class NodoMappa {
   final bool spiegazioneData;
   @JsonKey(name: 'esercizi_completati')
   final int eserciziCompletati;
+  @JsonKey(name: 'parole_chiave', defaultValue: <String>[])
+  final List<String> paroleChiave;
 
   const NodoMappa({
     required this.id,
@@ -73,6 +75,7 @@ class NodoMappa {
     this.presunto = false,
     this.spiegazioneData = false,
     this.eserciziCompletati = 0,
+    this.paroleChiave = const [],
   });
 
   factory NodoMappa.fromJson(Map<String, dynamic> json) =>
