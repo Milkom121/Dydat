@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.5.3",
-  "total_blocks_run": 64,
+  "current_block": "B35.5.4",
+  "total_blocks_run": 66,
   "status": "CONTINUE",
-  "last_run": "2026-04-07T00:45:00Z",
-  "last_summary": "B35.5.2 completato. PUT /quaderno/{nodo_id}/nota con upsert. Validazione Pydantic (min 1, max 10000 char). 5 nuovi test. 356 backend verdi."
+  "last_run": "2026-04-07T01:00:00Z",
+  "last_summary": "B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente(). QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0."
 }

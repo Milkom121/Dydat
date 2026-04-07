@@ -253,11 +253,12 @@
 - **Note**: NotaUtenteRequest Pydantic (min 1, max 10000 char). Upsert: SELECT + UPDATE o INSERT. 5 nuovi test (create, update, 404, validazione vuoto, validazione lungo). 356 backend verdi (10 skipped).
 
 #### Blocco B35.5.3 — Frontend modelli + provider
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S38)
 - **Complessita'**: bassa
 - **Descrizione**: Nuovi modelli Dart `SchedaNodo`, `FormulaCurriculum`, `ErroreComune`, `NotaUtente`. Provider esteso con `saveNota`.
 - **File da toccare**: frontend/lib/models/quaderno_nodo.dart, frontend/lib/providers/quaderno_provider.dart, test relativi
 - **Gate**: 3+ unit test, analyze 0
+- **Note**: 4 nuovi modelli Dart in quaderno.dart + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). ApiConfig.quadernoNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
 
 #### Blocco B35.5.4 — Frontend widget riutilizzabili
 - [ ] **Stato**: da fare

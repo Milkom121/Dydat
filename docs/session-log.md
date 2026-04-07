@@ -213,3 +213,18 @@
 - **Status**: READY
 - **Summary**: Villa ha chiesto di riempire meglio la nottata. Aggiunti 7 sub-blocchi extra di polish/UX a basso rischio: B35.7 pull-to-refresh, B35.8 snackbar errori user-friendly, B35.9 loading skeleton, B35.10 search mappa con parole_chiave, B35.11 coerenza tono di voce italiana, B35.12 audit dev-shortcuts priorita alta, B35.13 audit accessibilita base. Totale 13 blocchi consecutivi per la nottata, ~5-7 ore di lavoro stimate.
 ---
+
+## 2026-04-07 02:27:27 — Blocco F9BB35.5.1
+- **Status**: CONTINUE
+- **Summary**: B35.5.1 completato. GET /quaderno/{nodo_id} esteso con scheda intrinseca (definizione_testo, formule, esempi, errori_comuni, parole_chiave da JSONB nodi) + nota_utente (testo + updated_at da tabella note_utente). 3 nuovi test, 7 aggiornati.
+---
+
+## 2026-04-07 02:31:27 — Blocco F9BB35.5.2
+- **Status**: CONTINUE
+- **Summary**: B35.5.2 completato. Nuovo endpoint PUT /quaderno/{nodo_id}/nota con upsert (SELECT + UPDATE/INSERT). Validazione Pydantic NotaUtenteRequest (min 1, max 10000 char). 5 nuovi test. 356 backend verdi, 10 skipped, ruff pulito.
+---
+
+## 2026-04-07 03:00:00 — Blocco F9BB35.5.3
+- **Status**: CONTINUE
+- **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente(). QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
+---
