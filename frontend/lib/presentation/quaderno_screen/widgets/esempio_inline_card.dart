@@ -51,6 +51,11 @@ class EsempioInlineCard extends StatelessWidget {
     final corpoFormula = parts.formula;
     final commento = parts.commento;
 
+    // Per uniformita visiva, sia il corpo plain Text sia il Math.tex usano
+    // la stessa dimensione di base (theme.bodyMedium). Cosi il quinto esempio
+    // con LaTeX appare proporzionato agli altri 4 esempi plain.
+    final baseFontSize = theme.textTheme.bodyMedium?.fontSize ?? 14.0;
+
     final corpo = _looksLikeLaTeX(corpoFormula)
         ? FittedBox(
             fit: BoxFit.scaleDown,
@@ -58,7 +63,7 @@ class EsempioInlineCard extends StatelessWidget {
             child: Math.tex(
               corpoFormula,
               textStyle: TextStyle(
-                fontSize: 14.sp,
+                fontSize: baseFontSize,
                 color: theme.colorScheme.onSurface,
               ),
               onErrorFallback: (err) => Text(

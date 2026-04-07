@@ -33,6 +33,11 @@ class FormulaCurriculumCard extends StatelessWidget {
           // scroll view orizzontale ha larghezza infinita, quindi FittedBox
           // non saprebbe quanto rimpicciolire. FittedBox deve ricevere
           // direttamente i constraint del Container (width double.infinity).
+          //
+          // Font 18.sp scelto per uniformita visiva: la maggior parte
+          // delle formule del curriculum ci sta comoda a 18.sp, quindi
+          // FittedBox NON le rimpicciolisce e tutte appaiono allo stesso
+          // font. Solo le formule davvero lunghe vengono scalate giu.
           Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -40,7 +45,7 @@ class FormulaCurriculumCard extends StatelessWidget {
               child: Math.tex(
                 formula.latex,
                 textStyle: TextStyle(
-                  fontSize: 22.sp,
+                  fontSize: 18.sp,
                   color: theme.colorScheme.onSurface,
                 ),
                 onErrorFallback: (err) => Text(
