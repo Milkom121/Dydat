@@ -198,7 +198,10 @@ class _MascotteWidgetState extends State<MascotteWidget>
 
     return Opacity(
       opacity: _widgetOpacity,
-      child: GestureDetector(
+      child: Semantics(
+        label: 'Mascotte tutor, tocca per aprire gli strumenti',
+        button: true,
+        child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
           widget.onTap();
@@ -272,6 +275,7 @@ class _MascotteWidgetState extends State<MascotteWidget>
             },
           ),
         ),
+      ),
       ),
     );
   }

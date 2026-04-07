@@ -47,12 +47,13 @@ Registro delle scorciatoie prese durante lo sviluppo da risolvere prima della pr
 - **Dettaglio**: Due blocchi `except Exception: pass` su aggiornamento statistiche e verifica achievement. Se qualcosa va storto, l'errore viene ingoiato senza log — impossibile diagnosticare problemi in produzione.
 - **Priorità di risoluzione**: media (funzionalita)
 
-## 2026-04-05 - TextScaler disabilitato nel frontend
+## ~~2026-04-05 - TextScaler disabilitato nel frontend~~ RISOLTO (2026-04-07, B35.13)
 - **File**: frontend/lib/main.dart
 - **Riga**: ~116
 - **Tipo**: altro
 - **Dettaglio**: `TextScaler.linear(1.0)` impedisce agli utenti di ingrandire il testo tramite impostazioni di sistema. Viola WCAG AA (accessibilita). Potrebbe essere segnalato in review App Store.
-- **Priorità di risoluzione**: bassa (pulizia)
+- **Priorità di risoluzione**: ~~bassa (pulizia)~~ risolto
+- **Risoluzione**: Rimosso `TextScaler.linear(1.0)` dal builder di MaterialApp. L'app ora rispetta le impostazioni di accessibilità del sistema.
 
 ## 2026-04-05 - Dipendenze inutilizzate nel frontend
 - **File**: frontend/pubspec.yaml

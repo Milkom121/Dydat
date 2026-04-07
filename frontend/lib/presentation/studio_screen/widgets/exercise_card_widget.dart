@@ -99,6 +99,7 @@ class _ExerciseCardWidgetState extends State<ExerciseCardWidget> {
                   color: theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
+                tooltip: 'Chiudi esercizio',
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   widget.onDismiss();

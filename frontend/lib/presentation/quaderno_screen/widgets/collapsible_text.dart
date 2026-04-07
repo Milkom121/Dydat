@@ -42,15 +42,19 @@ class _CollapsibleTextState extends State<CollapsibleText> {
           shrinkWrap: true,
         ),
         if (isLong)
-          GestureDetector(
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _expanded ? 'Mostra meno' : 'Mostra tutto',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+          Semantics(
+            label: _expanded ? 'Mostra meno testo' : 'Mostra tutto il testo',
+            button: true,
+            child: GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _expanded ? 'Mostra meno' : 'Mostra tutto',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
