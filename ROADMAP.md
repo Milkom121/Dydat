@@ -245,11 +245,12 @@
 - **Gate**: 3+ pytest, ruff pulito, schema Pydantic aggiornato
 
 #### Blocco B35.5.2 — Backend PUT nota utente
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S37)
 - **Complessita'**: bassa
 - **Descrizione**: Nuovo endpoint `PUT /quaderno/{nodo_id}/nota` upsert su `note_utente`.
-- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_quaderno.py
+- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_b35_quaderno.py
 - **Gate**: 3+ pytest (create, update, unauthorized), ruff pulito
+- **Note**: NotaUtenteRequest Pydantic (min 1, max 10000 char). Upsert: SELECT + UPDATE o INSERT. 5 nuovi test (create, update, 404, validazione vuoto, validazione lungo). 356 backend verdi (10 skipped).
 
 #### Blocco B35.5.3 — Frontend modelli + provider
 - [ ] **Stato**: da fare
