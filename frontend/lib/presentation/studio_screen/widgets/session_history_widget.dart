@@ -111,7 +111,26 @@ class SessionHistoryWidget extends StatelessWidget {
     }
 
     if (sessions.isEmpty) {
-      return const SizedBox.shrink();
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 2.h),
+        child: Column(
+          children: [
+            Icon(
+              Icons.auto_stories_outlined,
+              size: 10.w,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+            ),
+            SizedBox(height: 1.h),
+            Text(
+              'Le tue sessioni appariranno qui',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
     }
 
     return Column(

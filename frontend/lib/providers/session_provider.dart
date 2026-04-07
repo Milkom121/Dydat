@@ -7,6 +7,7 @@ import 'package:dydat/models/sessione.dart'
     hide SessioneCreataEvent, TextDeltaEvent, AzioneEvent, TurnoCompletoEvent;
 import 'package:dydat/models/sse_events.dart';
 import 'package:dydat/services/session_service.dart';
+import 'package:dydat/utils/error_messages.dart';
 
 class SessionScreenState {
   final Sessione? activeSession;
@@ -169,7 +170,7 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
           isLoading: false,
           isStreaming: false,
           isReconnecting: false,
-          error: 'Errore stream: $error',
+          error: userFriendlyError('$error'),
         );
       },
       onDone: () {
@@ -263,7 +264,7 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
           isLoading: false,
           isStreaming: false,
           isReconnecting: false,
-          error: event.messaggio,
+          error: userFriendlyError(event.messaggio),
         );
 
       case OnboardingIniziatoEvent():

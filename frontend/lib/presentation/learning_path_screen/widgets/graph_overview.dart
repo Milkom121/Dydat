@@ -211,7 +211,10 @@ class _GraphNode extends StatelessWidget {
     final state = _getNodeState(nodo.livello);
     final borderColor = _borderColor(theme, state);
 
-    return GestureDetector(
+    return Semantics(
+      label: '${nodo.nome}, ${_getNodeState(nodo.livello).name}${needsReview ? ', da ripassare' : ''}${isCurrent ? ', nodo corrente' : ''}',
+      button: true,
+      child: GestureDetector(
       onTap: onTap,
       child: Opacity(
         opacity: isHighlighted ? 1.0 : 0.3,
@@ -292,6 +295,7 @@ class _GraphNode extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

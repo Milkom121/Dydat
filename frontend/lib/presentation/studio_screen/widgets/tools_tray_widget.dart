@@ -77,6 +77,7 @@ class ToolsTrayWidget extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                       size: 24,
                     ),
+                    tooltip: 'Chiudi strumenti',
                     onPressed: () {
                       HapticFeedback.lightImpact();
                       onClose();
@@ -166,7 +167,10 @@ class ToolsTrayWidget extends StatelessWidget {
     required String icon,
     required String label,
   }) {
-    return GestureDetector(
+    return Semantics(
+      label: label,
+      button: true,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         onToolSelected(id);
@@ -207,6 +211,7 @@ class ToolsTrayWidget extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

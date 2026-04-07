@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-07
-- **Data ultima sessione**: 2026-04-07 (S36 — B38.5, Fix UI post test manuale)
-- **Prossima sessione**: S37 — B39 (Fase 10, Onboarding con Momento Wow)
+- **Data ultima sessione**: 2026-04-07 (S49 — B35.14, Fix post-test manuale nottata)
+- **Prossima sessione**: S50 — B39 (Fase 10, Onboarding con Momento Wow)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

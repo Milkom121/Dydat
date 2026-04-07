@@ -60,6 +60,7 @@ class FormulaCardWidget extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
+                tooltip: 'Chiudi formula',
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   onDismiss();

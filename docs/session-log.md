@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-07 — Sessione S48 — B35.13 Audit accessibilita base (Semantics)
+- **Status**: CONTINUE
+- **Summary**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics labels su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7→0.87). dev-shortcuts aggiornato. 12 nuovi test, 564 totale frontend, analyze 0.
+---
+
 ## 2026-04-06 — Sessione S35 — B38 Mascotte CustomPainter
 - **Status**: PHASE_COMPLETE
 - **Summary**: Mascotte evoluta da cerchio ambra a blob organico CustomPainter (Bezier 8 punti). Occhi espressivi con apertura, pupilla e riflesso. MascotteVisuals con lerp() per transizioni 500ms. EntrancePortalPainter (ingresso sessione). PromotionBurstPainter (celebrazione promozione). 28 nuovi test, 448 totale frontend, analyze 0. Fase 9 COMPLETATA (B36-B38).
@@ -212,4 +217,104 @@
 ## 2026-04-07 — Espansione nottata: 13 blocchi totali
 - **Status**: READY
 - **Summary**: Villa ha chiesto di riempire meglio la nottata. Aggiunti 7 sub-blocchi extra di polish/UX a basso rischio: B35.7 pull-to-refresh, B35.8 snackbar errori user-friendly, B35.9 loading skeleton, B35.10 search mappa con parole_chiave, B35.11 coerenza tono di voce italiana, B35.12 audit dev-shortcuts priorita alta, B35.13 audit accessibilita base. Totale 13 blocchi consecutivi per la nottata, ~5-7 ore di lavoro stimate.
+---
+
+## 2026-04-07 02:27:27 — Blocco F9BB35.5.1
+- **Status**: CONTINUE
+- **Summary**: B35.5.1 completato. GET /quaderno/{nodo_id} esteso con scheda intrinseca (definizione_testo, formule, esempi, errori_comuni, parole_chiave da JSONB nodi) + nota_utente (testo + updated_at da tabella note_utente). 3 nuovi test, 7 aggiornati.
+---
+
+## 2026-04-07 02:31:27 — Blocco F9BB35.5.2
+- **Status**: CONTINUE
+- **Summary**: B35.5.2 completato. Nuovo endpoint PUT /quaderno/{nodo_id}/nota con upsert (SELECT + UPDATE/INSERT). Validazione Pydantic NotaUtenteRequest (min 1, max 10000 char). 5 nuovi test. 356 backend verdi, 10 skipped, ruff pulito.
+---
+
+## 2026-04-07 03:00:00 — Blocco F9BB35.5.3
+- **Status**: CONTINUE
+- **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente(). QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 02:39:27 — Blocco F9BB35.5.3
+- **Status**: CONTINUE
+- **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 02:46:11 — Blocco F9BB35.5.4
+- **Status**: CONTINUE
+- **Summary**: B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 02:53:42 — Blocco F9BB35.5.4
+- **Status**: CONTINUE
+- **Summary**: B35.5.5 completato. Riscrittura NodoQuadernoScreen con layout 10 sezioni integrando widget B35.5.3/4. Fix lint B35.5.4. 11 nuovi test integrazione. 500 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:15:00 — Blocco F9BB35.6
+- **Status**: CONTINUE
+- **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:00:57 — Blocco F9BB35.5.5
+- **Status**: CONTINUE
+- **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:07:44 — Blocco F9BB35.6
+- **Status**: CONTINUE
+- **Summary**: B35.6 completato. Audit + fix empty states in 4 schermate: EmptyStateWidget (rimosso URL Unsplash), SessionHistoryWidget (messaggio storico vuoto), ProfileScreen (achievement + stats utente nuovo). 6 nuovi widget test. 506 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:16:40 — Blocco F9BB35.6
+- **Status**: CONTINUE
+- **Summary**: B35.8 completato. Helper centralizzato userFriendlyError() per convertire errori tecnici in messaggi italiani user-friendly. Applicato in 7 punti (widget + provider). Fix leak in SSE client. Riscritto custom_error_widget.dart in italiano. 20 nuovi test. 530 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:24:32 — Blocco F9BB35.8
+- **Status**: CONTINUE
+- **Summary**: B35.8 completato. Helper centralizzato userFriendlyError() per convertire errori tecnici in messaggi italiani user-friendly. Applicato in 7 punti (widget + provider). Fix leak in SSE client. Riscritto custom_error_widget.dart in italiano. 20 nuovi test. 530 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 — Blocco F9BB35.10
+- **Status**: CONTINUE
+- **Summary**: B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto parole_chiave a GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa. 11 nuovi test. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:31:22 — Blocco F9BB35.8
+- **Status**: CONTINUE
+- **Summary**: B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto campo parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword in LearningPathScreen. 11 nuovi test. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 05:00:00 — Blocco B35.12
+- **Status**: CONTINUE
+- **Summary**: B35.12 completato. Risolte 3 voci alta priorita dev-shortcuts: validate_secrets_for_startup() per JWT_SECRET e ANTHROPIC_API_KEY, credenziali PostgreSQL spostate a .env, creato .env.example. 7 nuovi test backend. 363 backend, 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 04:00:00 — Blocco B35.11
+- **Status**: CONTINUE
+- **Summary**: B35.11 completato. Audit testi UI italiani. 3 fix: Streak>Serie (profilo+recap), Achievement>Traguardi. Creato docs/tone-of-voice.md. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:37:28 — Blocco F9BB35.10
+- **Status**: CONTINUE
+- **Summary**: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:45:00 — Blocco F9BB35.11
+- **Status**: CONTINUE
+- **Summary**: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:54:58 — Blocco F9BB35.13
+- **Status**: CONTINUE (limite 13 blocchi raggiunto)
+- **Summary**: B35.13 completato. Audit accessibilita base: rimosso TextScaler.linear(1.0) da main.dart, aggiunto Semantics labels su 7 widget interattivi, tooltip su 5 IconButton chiudi, fix contrasto celebration_overlay. 12 nuovi test. 564 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 — NOTTATA COMPLETATA
+- **Status**: SUCCESS
+- **Summary**: Tutti i 13 blocchi pianificati eseguiti in 92 minuti totali. B35.5.1-B35.5.5 (Quaderno enciclopedico) + B35.6 (polish empty states) + B35.7-B35.13 (polish UX vari). Frontend: 459 → 564 test verdi (+105). Backend: 341 → 363 test verdi (+22). flutter analyze 0. Tutti i commit su branch wip/notte-quaderno-polish-2026-04-07. Pronti per review e merge su develop.
+---
+
+## 2026-04-07 22:34:44 — Blocco F9BB35.14
+- **Status**: PHASE_COMPLETE
+- **Summary**: Fix chirurgico 7 bug UI post test manuale nottata. NB-01: FittedBox su FormulaCurriculumCard (formule LaTeX non sbordano piu). NB-02: nuovo EsempioInlineCard con rendering LaTeX intelligente (Math.tex + fallback Text). NB-03: nuovo pluralize.dart con 5 funzioni singolare/plurale, applicato in stato_header e welcome_header. NB-04: separator log personale sempre visibile + empty state gentile quando nessun log. NB-05: verificato che userFriendlyError era gia presente (nessun fix necessario). NB-06: icona nodi non iniziati da lock_outline a circle_outlined. NB-07: rimosso SizedBox(height:80) fisso in MiniPercorsoWidget + FittedBox su nomi nodo per TextScaler aumentato.
 ---

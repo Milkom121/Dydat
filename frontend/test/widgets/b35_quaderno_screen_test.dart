@@ -14,6 +14,7 @@ import 'package:dydat/presentation/quaderno_screen/widgets/stato_header.dart';
 import 'package:dydat/presentation/quaderno_screen/widgets/formule_section.dart';
 import 'package:dydat/presentation/quaderno_screen/widgets/esercizi_section.dart';
 import 'package:dydat/presentation/quaderno_screen/widgets/spiegazioni_section.dart';
+import 'package:dydat/widgets/skeleton_loader.dart';
 
 /// Fake notifier che non chiama il service — permette di impostare lo stato direttamente.
 class FakeQuadernoNotifier extends StateNotifier<QuadernoState>
@@ -75,7 +76,7 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(QuadernoSkeleton), findsOneWidget);
     });
 
     testWidgets('mostra errore con bottone riprova', (tester) async {
@@ -96,8 +97,9 @@ void main() {
       ));
       await tester.pump();
 
+      // NB-04: mostra il log empty state con messaggio invitante
       expect(
-        find.textContaining('si riempirà man mano'),
+        find.text('Non hai ancora fatto sessioni su questo nodo.'),
         findsOneWidget,
       );
     });

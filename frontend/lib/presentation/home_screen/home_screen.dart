@@ -46,6 +46,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  /// Ricarica tutti i dati della Home (per pull-to-refresh).
+  Future<void> _handleRefresh() async {
+    await Future.wait([
+      ref.read(sessionProvider.notifier).loadSessionHistory(),
+      ref.read(ripassoProvider.notifier).carica(),
+      ref.read(statsProvider.notifier).load(),
+      _loadPercorso(),
+    ]);
+  }
+
   /// Carica i percorsi e la mappa del primo percorso attivo.
   Future<void> _loadPercorso() async {
     final pathNotifier = ref.read(pathProvider.notifier);
@@ -115,9 +125,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           body: Container(
             decoration: DydatSurface.backgroundGradient(context),
             child: SafeArea(
-              child: Padding(
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                color: theme.colorScheme.primary,
+                child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w),
                 child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -170,6 +184,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                 ),
+              ),
               ),
             ),
           ),

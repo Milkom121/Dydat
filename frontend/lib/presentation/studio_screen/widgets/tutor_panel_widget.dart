@@ -102,6 +102,7 @@ class _TutorPanelWidgetState extends State<TutorPanelWidget>
                         color: widget.theme.colorScheme.onSurfaceVariant,
                         size: 24,
                       ),
+                      tooltip: 'Chiudi pannello tutor',
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         widget.onClose();
@@ -188,7 +189,10 @@ class _TutorPanelWidgetState extends State<TutorPanelWidget>
     required String title,
     required String description,
   }) {
-    return GestureDetector(
+    return Semantics(
+      label: '$title: $description',
+      button: true,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -251,6 +255,7 @@ class _TutorPanelWidgetState extends State<TutorPanelWidget>
           ],
         ),
       ),
+    ),
     );
   }
 }

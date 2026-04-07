@@ -1,11 +1,17 @@
-"""Test B35 — Endpoint GET /quaderno/{nodo_id}.
+"""Test B35 — Endpoint quaderno: GET e PUT nota utente.
 
-Testa:
+Testa GET /quaderno/{nodo_id}:
 - Nodo inesistente ritorna 404
 - Quaderno vuoto per nodo senza interazioni
 - Quaderno con esercizi, formule, spiegazioni aggregati
 - Formule deduplicate per titolo
 - Spiegazioni filtrate per lunghezza (> 50 char)
+
+Testa PUT /quaderno/{nodo_id}/nota (B35.5.2):
+- Creazione nuova nota
+- Aggiornamento nota esistente
+- Nodo inesistente ritorna 404
+- Validazione payload (testo vuoto, testo troppo lungo)
 """
 
 from __future__ import annotations
@@ -18,11 +24,24 @@ import pytest
 from fastapi import HTTPException
 
 
-def _mock_nodo(nodo_id="nodo_1", nome="Equazioni lineari"):
+def _mock_nodo(
+    nodo_id="nodo_1",
+    nome="Equazioni lineari",
+    definizioni_formali=None,
+    formule_proprieta=None,
+    errori_comuni=None,
+    esempi_applicazione=None,
+    parole_chiave=None,
+):
     """Helper: crea un mock Nodo."""
     nodo = MagicMock()
     nodo.id = nodo_id
     nodo.nome = nome
+    nodo.definizioni_formali = definizioni_formali
+    nodo.formule_proprieta = formule_proprieta
+    nodo.errori_comuni = errori_comuni
+    nodo.esempi_applicazione = esempi_applicazione
+    nodo.parole_chiave = parole_chiave
     return nodo
 
 
@@ -74,6 +93,14 @@ def _mock_formula_row(azioni, created_at=None):
     row.azioni = azioni
     row.created_at = created_at or datetime.now(timezone.utc)
     return row
+
+
+def _mock_nota_utente(contenuto="La mia nota", updated_at=None):
+    """Helper: crea un mock NotaUtente."""
+    nota = MagicMock()
+    nota.contenuto = contenuto
+    nota.updated_at = updated_at or datetime.now(timezone.utc)
+    return nota
 
 
 def _mock_spiegazione_row(contenuto, sessione_id=None, created_at=None):
@@ -144,6 +171,8 @@ class TestGetQuadernoNodo:
             lambda r: setattr(r, 'all', MagicMock(return_value=[])),
             # 7. Conteggio sessioni: 0
             lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            # 8. Nota utente: nessuna
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
         ])
 
         risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
@@ -157,6 +186,10 @@ class TestGetQuadernoNodo:
         assert risposta["formule"] == []
         assert risposta["spiegazioni"] == []
         assert risposta["sessioni_count"] == 0
+        # B35.5.1: scheda e nota presenti nel payload
+        assert "scheda" in risposta
+        assert "nota_utente" in risposta
+        assert risposta["nota_utente"] is None
 
     @pytest.mark.asyncio
     async def test_quaderno_con_dati_completi(self):
@@ -207,6 +240,8 @@ class TestGetQuadernoNodo:
             lambda r: setattr(r, 'all', MagicMock(return_value=formule_rows)),
             lambda r: setattr(r, 'all', MagicMock(return_value=spiegazioni)),
             lambda r: setattr(r, 'scalar_one', MagicMock(return_value=3)),
+            # 8. Nota utente: nessuna
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
         ])
 
         risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
@@ -259,6 +294,7 @@ class TestGetQuadernoNodo:
             lambda r: setattr(r, 'all', MagicMock(return_value=formule_rows)),
             lambda r: setattr(r, 'all', MagicMock(return_value=[])),
             lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
         ])
 
         risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
@@ -292,6 +328,7 @@ class TestGetQuadernoNodo:
             lambda r: setattr(r, 'all', MagicMock(return_value=formule_rows)),
             lambda r: setattr(r, 'all', MagicMock(return_value=[])),
             lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
         ])
 
         risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
@@ -324,6 +361,8 @@ class TestGetQuadernoNodo:
             lambda r: setattr(r, 'all', MagicMock(return_value=[])),
             lambda r: setattr(r, 'all', MagicMock(return_value=[])),
             lambda r: setattr(r, 'scalar_one', MagicMock(return_value=1)),
+            # 8. Nota utente: nessuna
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
         ])
 
         risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
@@ -353,7 +392,256 @@ class TestGetQuadernoNodo:
             lambda r: setattr(r, 'all', MagicMock(return_value=formule_rows)),
             lambda r: setattr(r, 'all', MagicMock(return_value=[])),
             lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            # 8. Nota utente: nessuna
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
         ])
 
         risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
         assert risposta["formule"] == []
+
+
+class TestGetQuadernoScheda:
+    """Test B35.5.1 — Scheda intrinseca e nota utente nel quaderno."""
+
+    @pytest.mark.asyncio
+    async def test_scheda_completa_tutti_i_campi(self):
+        """GET con nodo che ha tutti i JSONB popolati: scheda completa nel payload."""
+        from app.api.quaderno import get_quaderno_nodo
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+
+        nodo = _mock_nodo(
+            definizioni_formali={"testo": "Un'equazione lineare e un'uguaglianza di primo grado."},
+            formule_proprieta=[
+                {"latex": "ax + b = 0", "descrizione": "Forma standard"},
+                {"latex": "x = -b/a", "descrizione": "Soluzione"},
+            ],
+            esempi_applicazione=["2x + 3 = 7 → x = 2", "5x = 15 → x = 3"],
+            errori_comuni=[
+                {
+                    "tipo": "procedurale",
+                    "descrizione": "Dimenticare di cambiare segno",
+                    "esempio_sbagliato": "2x = -4 → x = 4",
+                    "correzione": "x = -2",
+                    "suggerimento": "Ricorda: dividendo per positivo il segno resta.",
+                }
+            ],
+            parole_chiave=["equazione", "primo grado", "incognita"],
+        )
+
+        db = _make_db_with_sequence([
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=nodo)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value="Algebra")),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            # 8. Nota utente: nessuna
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+        ])
+
+        risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
+
+        scheda = risposta["scheda"]
+        assert scheda["definizione_testo"] == "Un'equazione lineare e un'uguaglianza di primo grado."
+        assert len(scheda["formule"]) == 2
+        assert scheda["formule"][0]["latex"] == "ax + b = 0"
+        assert scheda["formule"][1]["descrizione"] == "Soluzione"
+        assert len(scheda["esempi"]) == 2
+        assert "2x + 3 = 7" in scheda["esempi"][0]
+        assert len(scheda["errori_comuni"]) == 1
+        assert scheda["errori_comuni"][0]["tipo"] == "procedurale"
+        assert scheda["errori_comuni"][0]["esempio_sbagliato"] == "2x = -4 → x = 4"
+        assert len(scheda["parole_chiave"]) == 3
+        assert "incognita" in scheda["parole_chiave"]
+        # Nota utente assente
+        assert risposta["nota_utente"] is None
+
+    @pytest.mark.asyncio
+    async def test_scheda_parziale_jsonb_nulli(self):
+        """GET con nodo che ha alcuni JSONB null/vuoti: fallback a [] o null."""
+        from app.api.quaderno import get_quaderno_nodo
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+
+        # Nodo con solo definizione e parole_chiave, resto None
+        nodo = _mock_nodo(
+            definizioni_formali={"testo": "Definizione parziale."},
+            formule_proprieta=None,
+            esempi_applicazione=None,
+            errori_comuni=None,
+            parole_chiave=["algebra"],
+        )
+
+        db = _make_db_with_sequence([
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=nodo)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value="Algebra")),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+        ])
+
+        risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
+
+        scheda = risposta["scheda"]
+        assert scheda["definizione_testo"] == "Definizione parziale."
+        assert scheda["formule"] == []
+        assert scheda["esempi"] == []
+        assert scheda["errori_comuni"] == []
+        assert scheda["parole_chiave"] == ["algebra"]
+
+    @pytest.mark.asyncio
+    async def test_nota_utente_assente(self):
+        """GET con nota utente assente: nota_utente == None."""
+        from app.api.quaderno import get_quaderno_nodo
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+        nodo = _mock_nodo()
+
+        db = _make_db_with_sequence([
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=nodo)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'all', MagicMock(return_value=[])),
+            lambda r: setattr(r, 'scalar_one', MagicMock(return_value=0)),
+            # Nota utente: nessuna
+            lambda r: setattr(r, 'scalar_one_or_none', MagicMock(return_value=None)),
+        ])
+
+        risposta = await get_quaderno_nodo(nodo_id="nodo_1", utente=utente, db=db)
+
+        assert risposta["nota_utente"] is None
+        # Scheda con tutti i JSONB None → fallback
+        assert risposta["scheda"]["definizione_testo"] is None
+        assert risposta["scheda"]["formule"] == []
+        assert risposta["scheda"]["esempi"] == []
+        assert risposta["scheda"]["errori_comuni"] == []
+        assert risposta["scheda"]["parole_chiave"] == []
+
+
+class TestPutNotaUtente:
+    """Test B35.5.2 — PUT /quaderno/{nodo_id}/nota (upsert nota personale)."""
+
+    @pytest.mark.asyncio
+    async def test_crea_nuova_nota(self):
+        """PUT su nodo senza nota esistente: crea la nota e ritorna dati."""
+        from app.api.quaderno import NotaUtenteRequest, put_nota_utente
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+        nodo = _mock_nodo()
+        now = datetime.now(timezone.utc)
+
+        # Dopo commit+refresh, la nota avra contenuto e updated_at
+        nota_creata = _mock_nota_utente(contenuto="La mia prima nota", updated_at=now)
+
+        db = AsyncMock()
+        # 1. Nodo esiste
+        result_nodo = MagicMock()
+        result_nodo.scalar_one_or_none = MagicMock(return_value=nodo)
+        # 2. Nota non esiste
+        result_nota = MagicMock()
+        result_nota.scalar_one_or_none = MagicMock(return_value=None)
+
+        db.execute = AsyncMock(side_effect=[result_nodo, result_nota])
+        db.add = MagicMock()
+        db.commit = AsyncMock()
+
+        # refresh aggiorna i campi della nota
+        async def mock_refresh(obj):
+            obj.contenuto = "La mia prima nota"
+            obj.updated_at = now
+
+        db.refresh = AsyncMock(side_effect=mock_refresh)
+
+        payload = NotaUtenteRequest(testo="La mia prima nota")
+        risposta = await put_nota_utente(nodo_id="nodo_1", payload=payload, utente=utente, db=db)
+
+        assert risposta["nodo_id"] == "nodo_1"
+        assert risposta["testo"] == "La mia prima nota"
+        assert risposta["updated_at"] is not None
+        # Verifica che db.add sia stato chiamato (creazione)
+        db.add.assert_called_once()
+        db.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_aggiorna_nota_esistente(self):
+        """PUT su nodo con nota esistente: aggiorna contenuto."""
+        from app.api.quaderno import NotaUtenteRequest, put_nota_utente
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+        nodo = _mock_nodo()
+        now = datetime.now(timezone.utc)
+
+        nota_esistente = _mock_nota_utente(contenuto="Vecchio testo", updated_at=now - timedelta(days=1))
+
+        db = AsyncMock()
+        result_nodo = MagicMock()
+        result_nodo.scalar_one_or_none = MagicMock(return_value=nodo)
+        result_nota = MagicMock()
+        result_nota.scalar_one_or_none = MagicMock(return_value=nota_esistente)
+
+        db.execute = AsyncMock(side_effect=[result_nodo, result_nota])
+        db.commit = AsyncMock()
+
+        async def mock_refresh(obj):
+            obj.updated_at = now
+
+        db.refresh = AsyncMock(side_effect=mock_refresh)
+
+        payload = NotaUtenteRequest(testo="Testo aggiornato")
+        risposta = await put_nota_utente(nodo_id="nodo_1", payload=payload, utente=utente, db=db)
+
+        assert risposta["testo"] == "Testo aggiornato"
+        assert risposta["updated_at"] == now.isoformat()
+        # Verifica che il contenuto della nota mock sia stato aggiornato
+        assert nota_esistente.contenuto == "Testo aggiornato"
+        # db.add NON chiamato (aggiornamento, non creazione)
+        db.add.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_nodo_inesistente_ritorna_404(self):
+        """PUT su nodo inesistente: ritorna 404."""
+        from app.api.quaderno import NotaUtenteRequest, put_nota_utente
+
+        utente = MagicMock()
+        utente.id = uuid.uuid4()
+
+        db = AsyncMock()
+        result_nodo = MagicMock()
+        result_nodo.scalar_one_or_none = MagicMock(return_value=None)
+        db.execute = AsyncMock(return_value=result_nodo)
+
+        payload = NotaUtenteRequest(testo="Nota su nodo che non esiste")
+        with pytest.raises(HTTPException) as exc_info:
+            await put_nota_utente(nodo_id="nodo_fantasma", payload=payload, utente=utente, db=db)
+
+        assert exc_info.value.status_code == 404
+
+    def test_validazione_testo_vuoto(self):
+        """Payload con testo vuoto non passa la validazione Pydantic."""
+        from pydantic import ValidationError
+
+        from app.api.quaderno import NotaUtenteRequest
+
+        with pytest.raises(ValidationError):
+            NotaUtenteRequest(testo="")
+
+    def test_validazione_testo_troppo_lungo(self):
+        """Payload con testo oltre 10000 char non passa la validazione."""
+        from pydantic import ValidationError
+
+        from app.api.quaderno import NotaUtenteRequest
+
+        with pytest.raises(ValidationError):
+            NotaUtenteRequest(testo="x" * 10001)

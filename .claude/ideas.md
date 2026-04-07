@@ -3,6 +3,16 @@
 Idee e intuizioni emerse durante le sessioni di sviluppo che non fanno parte del blocco corrente.
 Ogni voce ha data e contesto. Verranno riprese in fase di pianificazione.
 
+## 2026-04-07 - Impostazione dimensione font in-app
+- **Contesto**: Discussione post-test manuale B35.14 con Villa. L'app ora rispetta il TextScaler di sistema (B35.13), ma molti utenti non sanno che esiste o vorrebbero scalare solo Dydat indipendentemente dal sistema.
+- **Proposta blocco**: **B36 - Impostazione dimensione font in-app** (~30-45 min runner)
+- **Cosa serve**:
+  1. Provider Riverpod `fontScaleProvider` con persistenza in SharedPreferences
+  2. Wrapper sopra MaterialApp che applica `MediaQuery.copyWith(textScaler: TextScaler.linear(scale))`
+  3. Sezione "Aspetto" nelle impostazioni del Profilo con 4 opzioni (Piccolo / Normale / Grande / Molto grande) o slider 0.85-1.4
+  4. Helper per LaTeX (`flutter_math_fork` non rispetta TextScaler, usa CustomPainter): moltiplicare il `fontSize` di `Math.tex` per il fattore scelto, applicato a `FormulaCurriculumCard` ed `EsempioInlineCard`
+- **Note**: Da fare DOPO chiusura e merge di B35.14 su develop. Bonus: complementare al TextScaler di sistema (l'utente puo scegliere quale usare).
+
 ## 2026-04-06 - Quaderno enciclopedico (UX strategica)
 - **Contesto**: Test manuale post-Fase 9. Villa osserva che il quaderno per nodo (B35) dovrebbe essere "fruibile anche senza averlo studiato" — una scheda enciclopedica + log personale, non solo log.
 - **Stato DB**: la tabella `nodi` contiene gia tutti i dati intrinseci (definizioni_formali, formule_proprieta, errori_comuni, esempi_applicazione, parole_chiave) come JSONB, importati da data/Algebra1 + Algebra2. L'endpoint B35 li ignora.

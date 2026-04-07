@@ -307,7 +307,7 @@ class _PromotionAnimationState extends State<_PromotionAnimation>
                         Text(
                           '${widget.nodiSbloccati} ${widget.nodiSbloccati == 1 ? 'nuovo concetto sbloccato' : 'nuovi concetti sbloccati'}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: Colors.white.withValues(alpha: 0.87),
                           ),
                         ),
                       ],

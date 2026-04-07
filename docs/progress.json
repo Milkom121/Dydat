@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.5.1",
-  "total_blocks_run": 62,
-  "status": "CONTINUE",
-  "last_run": "2026-04-07T00:56:11Z",
-  "last_summary": "Ricalibrazione granularita applicata. B35.5 spezzato in 5 sub-blocchi (B35.5.1-B35.5.5) + B35.6 polish. Runner ora usa --model opus. Sequenza notturna pronta."
+  "current_block": "B35.14",
+  "total_blocks_run": 85,
+  "status": "PHASE_COMPLETE",
+  "last_run": "2026-04-07T20:34:44Z",
+  "last_summary": "Fix chirurgico 7 bug UI post test manuale nottata. NB-01: FittedBox su FormulaCurriculumCard (formule LaTeX non sbordano piu). NB-02: nuovo EsempioInlineCard con rendering LaTeX intelligente (Math.tex + fallback Text). NB-03: nuovo pluralize.dart con 5 funzioni singolare/plurale, applicato in stato_header e welcome_header. NB-04: separator log personale sempre visibile + empty state gentile quando nessun log. NB-05: verificato che userFriendlyError era gia presente (nessun fix necessario). NB-06: icona nodi non iniziati da lock_outline a circle_outlined. NB-07: rimosso SizedBox(height:80) fisso in MiniPercorsoWidget + FittedBox su nomi nodo per TextScaler aumentato."
 }

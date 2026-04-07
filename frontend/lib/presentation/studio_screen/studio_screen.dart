@@ -10,6 +10,7 @@ import '../../providers/beat_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../models/sse_events.dart';
 import '../../routes/app_router.dart';
+import '../../utils/error_messages.dart';
 import '../../widgets/custom_app_bar.dart';
 import './widgets/chat_view_widget.dart';
 import './widgets/beat_overlay_widget.dart';
@@ -264,7 +265,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       _stopTimer();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(err),
+          content: Text(userFriendlyError(err)),
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -465,7 +466,7 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(error),
+            content: Text(userFriendlyError(error)),
             backgroundColor: theme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 5),

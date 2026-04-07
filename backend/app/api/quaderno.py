@@ -1,16 +1,24 @@
 """API quaderno — raccoglie appunti, esercizi, formule per nodo (B35)."""
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_utente_corrente
 from app.db.engine import get_db
+from app.db.models.gamification import NotaUtente
 from app.db.models.grafo import Esercizio, Nodo, NodoTema, Tema
 from app.db.models.stato_utente import StatoNodoUtente, StoricoEsercizi
 from app.db.models.utenti import Sessione, TurnoConversazione, Utente
 
 router = APIRouter(prefix="/quaderno", tags=["quaderno"])
+
+
+class NotaUtenteRequest(BaseModel):
+    """Payload per creare/aggiornare la nota personale su un nodo."""
+
+    testo: str = Field(..., min_length=1, max_length=10000)
 
 
 @router.get("/{nodo_id}")
@@ -141,6 +149,27 @@ async def get_quaderno_nodo(
     )
     sessioni_count = sessioni_count_result.scalar_one()
 
+    # Nota personale dell'utente per questo nodo
+    nota_result = await db.execute(
+        select(NotaUtente).where(
+            NotaUtente.utente_id == utente.id,
+            NotaUtente.nodo_id == nodo_id,
+        )
+    )
+    nota = nota_result.scalar_one_or_none()
+
+    # Scheda intrinseca: dati curricolari dal nodo stesso (JSONB)
+    definizioni = nodo.definizioni_formali
+    scheda = {
+        "definizione_testo": (
+            definizioni.get("testo") if isinstance(definizioni, dict) else None
+        ),
+        "formule": nodo.formule_proprieta if nodo.formule_proprieta else [],
+        "esempi": nodo.esempi_applicazione if nodo.esempi_applicazione else [],
+        "errori_comuni": nodo.errori_comuni if nodo.errori_comuni else [],
+        "parole_chiave": nodo.parole_chiave if nodo.parole_chiave else [],
+    }
+
     return {
         "nodo_id": nodo_id,
         "nodo_nome": nodo.nome,
@@ -184,4 +213,63 @@ async def get_quaderno_nodo(
             }
             for row in spiegazioni_rows
         ],
+        "scheda": scheda,
+        "nota_utente": (
+            {
+                "testo": nota.contenuto,
+                "updated_at": nota.updated_at.isoformat() if nota.updated_at else None,
+            }
+            if nota
+            else None
+        ),
+    }
+
+
+@router.put("/{nodo_id}/nota")
+async def put_nota_utente(
+    nodo_id: str,
+    payload: NotaUtenteRequest,
+    utente: Utente = Depends(get_utente_corrente),
+    db: AsyncSession = Depends(get_db),
+):
+    """Crea o aggiorna la nota personale dell'utente su un nodo.
+
+    Upsert: se la nota esiste, aggiorna contenuto e updated_at.
+    Se non esiste, la crea.
+    """
+    # Verifica che il nodo esista
+    nodo_result = await db.execute(select(Nodo).where(Nodo.id == nodo_id))
+    nodo = nodo_result.scalar_one_or_none()
+    if nodo is None:
+        raise HTTPException(status_code=404, detail="Nodo non trovato")
+
+    # Cerca nota esistente per (utente_id, nodo_id)
+    nota_result = await db.execute(
+        select(NotaUtente).where(
+            NotaUtente.utente_id == utente.id,
+            NotaUtente.nodo_id == nodo_id,
+        )
+    )
+    nota = nota_result.scalar_one_or_none()
+
+    if nota is not None:
+        # Aggiorna nota esistente
+        nota.contenuto = payload.testo
+        nota.updated_at = func.now()
+    else:
+        # Crea nuova nota
+        nota = NotaUtente(
+            utente_id=utente.id,
+            nodo_id=nodo_id,
+            contenuto=payload.testo,
+        )
+        db.add(nota)
+
+    await db.commit()
+    await db.refresh(nota)
+
+    return {
+        "nodo_id": nodo_id,
+        "testo": nota.contenuto,
+        "updated_at": nota.updated_at.isoformat() if nota.updated_at else None,
     }

@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Validazione secrets prima di qualsiasi operazione DB/LLM
+    from app.config import validate_secrets_for_startup
+    validate_secrets_for_startup()
+
     async with async_session() as db:
         await grafo_knowledge.carica(db)
         # Seed achievement definizioni (UPSERT idempotente)

@@ -67,7 +67,10 @@ class _CenteredNodeTile extends StatelessWidget {
     final nodeState = _getNodeState(nodo.livello);
     final opacity = isHighlighted ? 1.0 : 0.3;
 
-    return GestureDetector(
+    return Semantics(
+      label: '${nodo.nome}, ${_getNodeState(nodo.livello).name}${needsReview ? ', da ripassare' : ''}',
+      button: true,
+      child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Opacity(
@@ -101,6 +104,7 @@ class _CenteredNodeTile extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -280,7 +284,7 @@ class _CenteredNodeTile extends StatelessWidget {
   String _nodeIcon(_NodeState state) {
     switch (state) {
       case _NodeState.nonIniziato:
-        return 'lock_outline';
+        return 'circle_outlined';
       case _NodeState.inCorso:
         return 'play_arrow_rounded';
       case _NodeState.operativo:

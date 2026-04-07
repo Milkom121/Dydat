@@ -12,6 +12,7 @@ import '../../providers/session_provider.dart';
 import '../../providers/stats_provider.dart';
 import '../../routes/app_router.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/skeleton_loader.dart';
 
 class RecapSessionScreen extends ConsumerStatefulWidget {
   final String sessioneId;
@@ -106,7 +107,7 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const RecapSkeleton()
             : _error != null
                 ? _buildErrorState(theme)
                 : _buildContent(theme),
@@ -430,7 +431,7 @@ class _RecapSessionScreenState extends ConsumerState<RecapSessionScreen> {
               Expanded(
                 child: _MiniStat(
                   value: '${stats.streak}',
-                  label: 'Streak',
+                  label: 'Serie',
                   icon: 'local_fire_department',
                   theme: theme,
                 ),

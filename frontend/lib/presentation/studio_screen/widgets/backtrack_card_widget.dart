@@ -64,6 +64,7 @@ class BacktrackCardWidget extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
+                tooltip: 'Chiudi suggerimento',
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   onDismiss();

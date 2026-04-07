@@ -237,89 +237,111 @@
 > Spezzato in 5 sub-blocchi piccoli e granulari per consentire al runner di lavorare con context ridotto. Ogni sub-blocco fattibile in una singola sessione 10-25 min.
 
 #### Blocco B35.5.1 — Backend GET quaderno esteso
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S37)
 - **Complessita'**: bassa
 - **Descrizione**: Estendere `GET /quaderno/{nodo_id}` con campo `scheda` (definizione_testo, formule, esempi, errori_comuni, parole_chiave da JSONB nodi) + `nota_utente`.
-- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_quaderno.py
+- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_b35_quaderno.py
+- **Note**: Aggiunta query NotaUtente + costruzione scheda da JSONB nodo. 3 nuovi test, 7 aggiornati. 351 backend verdi (10 skipped).
 - **Gate**: 3+ pytest, ruff pulito, schema Pydantic aggiornato
 
 #### Blocco B35.5.2 — Backend PUT nota utente
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S37)
 - **Complessita'**: bassa
 - **Descrizione**: Nuovo endpoint `PUT /quaderno/{nodo_id}/nota` upsert su `note_utente`.
-- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_quaderno.py
+- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_b35_quaderno.py
 - **Gate**: 3+ pytest (create, update, unauthorized), ruff pulito
+- **Note**: NotaUtenteRequest Pydantic (min 1, max 10000 char). Upsert: SELECT + UPDATE o INSERT. 5 nuovi test (create, update, 404, validazione vuoto, validazione lungo). 356 backend verdi (10 skipped).
 
 #### Blocco B35.5.3 — Frontend modelli + provider
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S38)
 - **Complessita'**: bassa
 - **Descrizione**: Nuovi modelli Dart `SchedaNodo`, `FormulaCurriculum`, `ErroreComune`, `NotaUtente`. Provider esteso con `saveNota`.
 - **File da toccare**: frontend/lib/models/quaderno_nodo.dart, frontend/lib/providers/quaderno_provider.dart, test relativi
 - **Gate**: 3+ unit test, analyze 0
+- **Note**: 4 nuovi modelli Dart in quaderno.dart + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). ApiConfig.quadernoNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
 
 #### Blocco B35.5.4 — Frontend widget riutilizzabili
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S39)
 - **Complessita'**: media
 - **Descrizione**: 4 nuovi widget isolati: `CollapsibleText`, `FormulaCurriculumCard` (LaTeX), `ErroreComuneCard` (accent rosso), `NotaUtenteEditor` (autosave debounced).
 - **File da toccare**: frontend/lib/presentation/quaderno_screen/widgets/* (nuovi), test widget
 - **Gate**: 4+ widget test, analyze 0
+- **Note**: CollapsibleText (Markdown, maxChars configurabile, expand/collapse). FormulaCurriculumCard (Math.tex con fallback, descrizione opzionale). ErroreComuneCard (accent error, RichText labeled). NotaUtenteEditor (TextField multiline, debounce 1500ms, indicatore salvataggio). 15 nuovi test. 489 frontend verdi, analyze 0.
 
 #### Blocco B35.5.5 — Frontend integrazione schermata
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S40)
 - **Complessita'**: media
 - **Descrizione**: Riscrittura `NodoQuadernoScreen` integrando widget e modelli di B35.5.3/4. Layout 10 sezioni: header, breadcrumb, chip parole chiave, Cosa imparerai (collapsible), Formule chiave, Esempi, Attenzione a..., Le mie note, separator, log personale.
 - **File da toccare**: frontend/lib/presentation/quaderno_screen/nodo_quaderno_screen.dart
 - **Gate**: 3+ test integrazione, tutti i test esistenti continuano a passare, analyze 0
+- **Note**: Riscritta NodoQuadernoScreen con 10 sezioni: StatoHeader, breadcrumb (tema>nodo), chip parole chiave, Cosa imparerai (CollapsibleText), Formule chiave (FormulaCurriculumCard), Esempi, Attenzione a... (ErroreComuneCard), Le mie note (NotaUtenteEditor), separator "Il tuo percorso", log personale (FormuleSection+EserciziSection+SpiegazioniSection). Fix lint B35.5.4 (underscore variabile locale). 11 nuovi test integrazione. 500 frontend verdi, analyze 0.
 
 ### Blocco B35.6 — Polish empty states (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S41)
 - **Complessita'**: bassa
 - **Descrizione**: Audit + fix degli stati vuoti e dei messaggi di benvenuto nelle varie schermate dell'app. Bonus block dopo B35.5 per ripulire incongruenze emerse dal test manuale (e altre potenziali non scoperte).
 - **Schermate da rivedere**: Profilo (utente nuovo senza sessioni), Sezione Ripasso in Home (lista vuota), I miei studi (search senza match), Recap sessione con 0 esercizi, Storico sessioni vuoto. Login gia fixato in B38.5, onboarding rimandato a B39.
 - **Gate di uscita**: empty states verificati e fixati, 2-4 widget test nuovi, analyze 0
 - **NON fare**: riscrivere schermate intere, toccare backend, toccare onboarding
+- **Note**: 4 fix applicati: EmptyStateWidget (rimosso URL Unsplash, icona nativa + testo caldo), SessionHistoryWidget (messaggio per storico vuoto), ProfileScreen achievement (messaggio motivazionale con icona), ProfileScreen stats (messaggio guida utente nuovo). Sezione ripasso Home e search I miei studi gia gestiti correttamente. Recap con 0 esercizi gestito dalla narrativa. 6 nuovi test. 506 frontend verdi, analyze 0.
 
 ### Blocco B35.7 — Pull-to-refresh sulle liste principali (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S42)
 - **Complessita'**: bassa
 - **Descrizione**: RefreshIndicator con pull-to-refresh su Home, I miei studi, Profilo, Storico sessioni. Riusa metodi provider gia esistenti.
 - **Gate di uscita**: 3-4 schermate con pull-to-refresh, 2+ widget test, analyze 0
+- **Note**: HomeScreen: RefreshIndicator + AlwaysScrollableScrollPhysics + _handleRefresh (parallelo). LearningPathScreen: IconButton refresh in AppBar (GraphOverview non scrollabile per InteractiveViewer). ProfileScreen gia aveva RefreshIndicator. 4 nuovi test. 510 frontend verdi, analyze 0.
 
 ### Blocco B35.8 — Snackbar errori user-friendly (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S43)
 - **Complessita'**: bassa
 - **Descrizione**: Audit + fix dei messaggi errore mostrati all'utente. Helper centralizzato `error_messages.dart` con `userFriendlyError(error)`. Sostituisce messaggi tecnici (DioException, 404, FormatException) con stringhe italiane gentili.
 - **Gate di uscita**: helper creato, 5-6 punti aggiornati, 3+ unit test, analyze 0
+- **Note**: Creato `utils/error_messages.dart` con `userFriendlyError()` (pattern matching su timeout, rete, HTTP 4xx/5xx, exception Dart). Applicato in 7 punti: studio_screen (2 snackbar), nodo_quaderno_screen, profile_screen, session_provider (stream + ErroreEvent), onboarding_provider (stream + ErroreEvent). Fix sse_client.dart (rimosso leak `$e` in 2 catch). Riscritto custom_error_widget.dart in italiano con Theme.of(context). 20 nuovi test (18 unit + 2 widget). 530 frontend verdi, analyze 0.
 
 ### Blocco B35.9 — Loading skeleton al posto degli spinner (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S44)
 - **Complessita'**: bassa-media
 - **Descrizione**: Nuovo widget riutilizzabile `SkeletonLoader` con `SkeletonBox`, `SkeletonText`, `SkeletonCard`. Sostituisce `CircularProgressIndicator` nelle schermate principali (Home, I miei studi, Quaderno, Recap).
 - **Gate di uscita**: widget riutilizzabili creati, 3-4 schermate aggiornate, 3+ widget test, analyze 0
+- **Note**: Creato skeleton_loader.dart con ShimmerGroup (AnimationController condiviso via InheritedWidget), SkeletonBox (shimmer gradient animato), SkeletonLine, SkeletonCard. 4 layout pre-composti: LearningPathSkeleton, QuadernoSkeleton, RecapSkeleton, ProfileSkeleton. Sostituiti CircularProgressIndicator in 4 schermate (learning_path_screen, nodo_quaderno_screen, recap_session_screen, profile_screen). Aggiornato test b35_quaderno_screen_test. 11 nuovi test. 541 frontend verdi, analyze 0.
 
 ### Blocco B35.10 — Search mappa percorso con parole_chiave (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S45)
 - **Complessita'**: bassa
 - **Descrizione**: Estende la ricerca in LearningPathScreen per cercare anche nelle parole_chiave del nodo (oltre al nome). Sfrutta i dati esposti da B35.5.1.
 - **Gate di uscita**: search estesa, 2+ widget test, analyze 0
+- **Note**: Backend: aggiunto parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword. 11 nuovi test (ricerca keyword + deserializzazione). 552 frontend verdi, analyze 0.
 
 ### Blocco B35.11 — Coerenza tono di voce italiana (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S46)
 - **Complessita'**: bassa
 - **Descrizione**: Audit dei testi UI italiani. Verifica uso del "tu" coerente, traduce inglesismi residui (Login, Loading, Submit), uniforma terminologia. Crea `docs/tone-of-voice.md`.
 - **Gate di uscita**: audit completato, fix applicati, file tone-of-voice creato, analyze 0
+- **Note**: Audit completo su 119 file Dart. 3 fix applicati: 'Streak' → 'Serie' (profilo + recap), 'Achievement' → 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard, regole tono, parole inglesi accettate. App gia 95% italiana — uso coerente del "tu", errori gia in italiano (userFriendlyError), empty states ok. 552 frontend verdi, analyze 0.
 
 ### Blocco B35.12 — Audit dev-shortcuts.md priorita alta (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S47)
 - **Complessita'**: media
 - **Descrizione**: Apre `docs/dev-shortcuts.md` e risolve almeno 2-3 voci marcate come priorita alta (credenziali hardcoded, CORS aperto, mock, TODO/FIXME). Aggiorna il file marcando come risolto.
 - **Gate di uscita**: 2-3 voci risolte, file aggiornato, tutti i test continuano a passare, analyze 0
+- **Note**: 3 voci alta priorita risolte: (1) JWT_SECRET + (2) ANTHROPIC_API_KEY — validate_secrets_for_startup() in config.py, warning in DEBUG, errore in produzione, chiamata dalla lifespan di main.py. (3) Credenziali PostgreSQL — interpolazione ${VAR:-default} in docker-compose.yml, variabili in .env (gitignored), creato .env.example con segnaposto. model_config extra="ignore" per tollerare variabili POSTGRES_*. 7 nuovi test backend. 363 backend (10 skipped), 552 frontend verdi, analyze 0.
 
 ### Blocco B35.13 — Audit accessibilita base (Semantics) (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S48)
 - **Complessita'**: media
 - **Descrizione**: Aggiunge `Semantics` labels su widget interattivi delle schermate principali. Rimuove TextScaler.linear(1.0) bloccato. Audit contrasto colori dei testi principali.
 - **Gate di uscita**: 5+ schermate con Semantics labels base, TextScaler ripristinato, 2-3 fix contrasto, analyze 0
+- **Note**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7>0.87). dev-shortcuts aggiornato. 12 nuovi test. 564 frontend verdi, analyze 0.
+
+### Blocco B35.14 — Fix post-test manuale nottata (consolidamento)
+- [x] **Stato**: completato (S49)
+- **Complessita'**: media
+- **Descrizione**: Blocco di fix chirurgico dopo test manuale Villa sulla nottata B35.5.1-B35.13. 7 bug raccolti in `.claude/test-findings-nottata.md`. Branch: `wip/notte-quaderno-polish-2026-04-07`.
+- **Bug**: NB-01 formule LaTeX troppo grandi, NB-02 LaTeX esempi non renderizzato, NB-03 singolare/plurale italiano (helper centralizzato), NB-04 log personale nascosto invece di empty state, NB-05 errore quaderno offline non usa helper user-friendly, NB-06 lucchetto su nodi 'da iniziare' (regressione B38.5), NB-07 overflow MiniPercorso con TextScaler aumentato.
+- **File da toccare**: formula_curriculum_card.dart, nodo_quaderno_screen.dart, linear_path_map.dart, mini_percorso_widget.dart, nuovi pluralize.dart e esempio_inline_card.dart
+- **Gate di uscita**: 7 bug fixati, 6+ widget test, analyze 0, tutti i test esistenti passano, commit atomico
+- **Note**: NB-01: FittedBox + fontSize 20.sp su FormulaCurriculumCard. NB-02: nuovo EsempioInlineCard con _looksLikeLaTeX + Math.tex + onErrorFallback. NB-03: nuovo pluralize.dart (sessione/giorno/esercizio/nodo/ripasso), applicato in stato_header + welcome_header. NB-04: separator sempre visibile + _buildLogEmptyState con messaggio invitante. NB-05: gia corretto (userFriendlyError gia presente). NB-06: lock_outline -> circle_outlined per nodi nonIniziato. NB-07: rimosso SizedBox(height:80) fisso + FittedBox sui nomi nodo. 13 nuovi test, 2 test aggiornati. 577 frontend verdi, analyze 0.
 
 ---
 

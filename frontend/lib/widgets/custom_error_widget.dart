@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
-// custom_error_widget.dart
-
+/// Widget di errore globale, mostrato quando Flutter intercetta
+/// un errore non gestito nel rendering.
 class CustomErrorWidget extends StatelessWidget {
   final FlutterErrorDetails? errorDetails;
   final String? errorMessage;
@@ -14,7 +13,7 @@ class CustomErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -23,33 +22,26 @@ class CustomErrorWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SvgPicture.asset(
-                  'assets/images/sad_face.svg',
-                  height: 42,
-                  width: 42,
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Qualcosa è andato storto',
+                  style: theme.textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Something went wrong",
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF262626),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  child: const Text(
-                    'We encountered an unexpected error while processing your request.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF525252), // neutral-600
-                    ),
+                  'Si è verificato un errore imprevisto. Torna indietro e riprova.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: () {
                     if (Navigator.canPop(context)) {
                       Navigator.of(context).pop();
@@ -57,23 +49,8 @@ class CustomErrorWidget extends StatelessWidget {
                       context.go('/');
                     }
                   },
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                  label: const Text('Back'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: const Text('Torna indietro'),
                 ),
               ],
             ),
