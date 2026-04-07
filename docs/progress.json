@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
   "current_block": "B35.5.5",
-  "total_blocks_run": 68,
+  "total_blocks_run": 70,
   "status": "CONTINUE",
-  "last_run": "2026-04-07T01:15:00Z",
-  "last_summary": "B35.5.4 completato. 4 nuovi widget isolati: CollapsibleText, FormulaCurriculumCard, ErroreComuneCard, NotaUtenteEditor. 15 nuovi test. 489 frontend verdi, analyze 0."
+  "last_run": "2026-04-07T01:30:00Z",
+  "last_summary": "B35.5.5 completato. Riscrittura NodoQuadernoScreen con layout 10 sezioni integrando widget B35.5.3/4. Fix lint B35.5.4. 11 nuovi test integrazione. 500 frontend verdi, analyze 0."
 }

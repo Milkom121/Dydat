@@ -269,11 +269,12 @@
 - **Note**: CollapsibleText (Markdown, maxChars configurabile, expand/collapse). FormulaCurriculumCard (Math.tex con fallback, descrizione opzionale). ErroreComuneCard (accent error, RichText labeled). NotaUtenteEditor (TextField multiline, debounce 1500ms, indicatore salvataggio). 15 nuovi test. 489 frontend verdi, analyze 0.
 
 #### Blocco B35.5.5 — Frontend integrazione schermata
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S40)
 - **Complessita'**: media
 - **Descrizione**: Riscrittura `NodoQuadernoScreen` integrando widget e modelli di B35.5.3/4. Layout 10 sezioni: header, breadcrumb, chip parole chiave, Cosa imparerai (collapsible), Formule chiave, Esempi, Attenzione a..., Le mie note, separator, log personale.
 - **File da toccare**: frontend/lib/presentation/quaderno_screen/nodo_quaderno_screen.dart
 - **Gate**: 3+ test integrazione, tutti i test esistenti continuano a passare, analyze 0
+- **Note**: Riscritta NodoQuadernoScreen con 10 sezioni: StatoHeader, breadcrumb (tema>nodo), chip parole chiave, Cosa imparerai (CollapsibleText), Formule chiave (FormulaCurriculumCard), Esempi, Attenzione a... (ErroreComuneCard), Le mie note (NotaUtenteEditor), separator "Il tuo percorso", log personale (FormuleSection+EserciziSection+SpiegazioniSection). Fix lint B35.5.4 (underscore variabile locale). 11 nuovi test integrazione. 500 frontend verdi, analyze 0.
 
 ### Blocco B35.6 — Polish empty states (bonus)
 - [ ] **Stato**: da fare

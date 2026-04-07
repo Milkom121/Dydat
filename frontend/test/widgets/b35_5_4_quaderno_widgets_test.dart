@@ -128,23 +128,23 @@ void main() {
       await tester
           .pumpWidget(_wrap(const ErroreComuneCard(errore: errore)));
       // RichText con TextSpan — verifica che i 3 campi opzionali siano renderizzati
-      bool _richTextContains(RichText rt, String text) {
+      bool richTextContains(RichText rt, String text) {
         return rt.text.toPlainText().contains(text);
       }
 
       expect(
         find.byWidgetPredicate(
-            (w) => w is RichText && _richTextContains(w, '1/x con x=0')),
+            (w) => w is RichText && richTextContains(w, '1/x con x=0')),
         findsOneWidget,
       );
       expect(
         find.byWidgetPredicate(
-            (w) => w is RichText && _richTextContains(w, 'Verifica')),
+            (w) => w is RichText && richTextContains(w, 'Verifica')),
         findsOneWidget,
       );
       expect(
         find.byWidgetPredicate(
-            (w) => w is RichText && _richTextContains(w, 'Controlla sempre')),
+            (w) => w is RichText && richTextContains(w, 'Controlla sempre')),
         findsOneWidget,
       );
     });
