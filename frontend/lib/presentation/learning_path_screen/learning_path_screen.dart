@@ -143,6 +143,12 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
         ],
       ),
       actions: [
+        // Ricarica dati
+        IconButton(
+          icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
+          tooltip: 'Aggiorna',
+          onPressed: () => _handleRefresh(),
+        ),
         // Toggle vista lineare / grafo
         IconButton(
           icon: CustomIconWidget(
