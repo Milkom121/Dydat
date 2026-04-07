@@ -279,7 +279,17 @@
 - **Summary**: B35.10 completato. Search mappa percorso estesa alle parole_chiave dei nodi. Backend: aggiunto campo parole_chiave alla response GET /percorsi/{id}/mappa. Frontend: NodoMappa con paroleChiave, ricerca estesa nome+keyword in LearningPathScreen. 11 nuovi test. 552 frontend verdi, analyze 0.
 ---
 
+## 2026-04-07 05:00:00 — Blocco B35.12
+- **Status**: CONTINUE
+- **Summary**: B35.12 completato. Risolte 3 voci alta priorita dev-shortcuts: validate_secrets_for_startup() per JWT_SECRET e ANTHROPIC_API_KEY, credenziali PostgreSQL spostate a .env, creato .env.example. 7 nuovi test backend. 363 backend, 552 frontend verdi, analyze 0.
+---
+
 ## 2026-04-07 04:00:00 — Blocco B35.11
 - **Status**: CONTINUE
 - **Summary**: B35.11 completato. Audit testi UI italiani. 3 fix: Streak>Serie (profilo+recap), Achievement>Traguardi. Creato docs/tone-of-voice.md. 552 frontend verdi, analyze 0.
+---
+
+## 2026-04-07 03:37:28 — Blocco F9BB35.10
+- **Status**: CONTINUE
+- **Summary**: B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix applicati: 'Streak' > 'Serie' (profilo + recap), 'Achievement' > 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard e regole tono. 552 frontend verdi, analyze 0.
 ---

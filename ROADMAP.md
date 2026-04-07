@@ -321,10 +321,11 @@
 - **Note**: Audit completo su 119 file Dart. 3 fix applicati: 'Streak' → 'Serie' (profilo + recap), 'Achievement' → 'Traguardi' (profilo). Creato docs/tone-of-voice.md con terminologia standard, regole tono, parole inglesi accettate. App gia 95% italiana — uso coerente del "tu", errori gia in italiano (userFriendlyError), empty states ok. 552 frontend verdi, analyze 0.
 
 ### Blocco B35.12 — Audit dev-shortcuts.md priorita alta (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S47)
 - **Complessita'**: media
 - **Descrizione**: Apre `docs/dev-shortcuts.md` e risolve almeno 2-3 voci marcate come priorita alta (credenziali hardcoded, CORS aperto, mock, TODO/FIXME). Aggiorna il file marcando come risolto.
 - **Gate di uscita**: 2-3 voci risolte, file aggiornato, tutti i test continuano a passare, analyze 0
+- **Note**: 3 voci alta priorita risolte: (1) JWT_SECRET + (2) ANTHROPIC_API_KEY — validate_secrets_for_startup() in config.py, warning in DEBUG, errore in produzione, chiamata dalla lifespan di main.py. (3) Credenziali PostgreSQL — interpolazione ${VAR:-default} in docker-compose.yml, variabili in .env (gitignored), creato .env.example con segnaposto. model_config extra="ignore" per tollerare variabili POSTGRES_*. 7 nuovi test backend. 363 backend (10 skipped), 552 frontend verdi, analyze 0.
 
 ### Blocco B35.13 — Audit accessibilita base (Semantics) (bonus)
 - [ ] **Stato**: da fare

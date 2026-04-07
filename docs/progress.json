@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.11",
-  "total_blocks_run": 79,
+  "current_block": "B35.12",
+  "total_blocks_run": 81,
   "status": "CONTINUE",
   "last_run": "2026-04-07T02:00:00Z",
-  "last_summary": "B35.11 completato. Audit testi UI italiani su 119 file Dart. 3 fix: Streak>Serie (profilo+recap), Achievement>Traguardi (profilo). Creato docs/tone-of-voice.md. 552 frontend verdi, analyze 0."
+  "last_summary": "B35.12 completato. Risolte 3 voci alta priorita in dev-shortcuts.md: validate_secrets_for_startup() per JWT_SECRET e ANTHROPIC_API_KEY (warning in DEBUG, errore in prod), credenziali PostgreSQL spostate da docker-compose.yml a interpolazione .env, creato .env.example. 7 nuovi test backend. 363 backend, 552 frontend verdi, analyze 0."
 }
