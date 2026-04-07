@@ -131,6 +131,41 @@ void main() {
       // FittedBox presente per il rendering LaTeX
       expect(find.byType(FittedBox), findsOneWidget);
     });
+
+    testWidgets('separa formula LaTeX dal commento italiano finale',
+        (tester) async {
+      await tester.pumpWidget(_wrap(
+        const SizedBox(
+          width: 400,
+          child: EsempioInlineCard(
+            esempio:
+                r'(-2)^{-3} = \frac{1}{(-2)^3} = -\frac{1}{8} (esponente negativo con base negativa ed esponente dispari)',
+          ),
+        ),
+      ));
+      // Il commento italiano deve apparire come Text plain separato
+      expect(
+        find.text('esponente negativo con base negativa ed esponente dispari'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('esempio plain con parentesi finale: commento separato',
+        (tester) async {
+      await tester.pumpWidget(_wrap(
+        const SizedBox(
+          width: 400,
+          child: EsempioInlineCard(
+            esempio: '(-3)^4 = 81 (esponente pari, risultato positivo)',
+          ),
+        ),
+      ));
+      // Il commento deve essere separato dalla formula come Text
+      expect(
+        find.text('esponente pari, risultato positivo'),
+        findsOneWidget,
+      );
+    });
   });
 
   // -------------------------------------------------------------------------
