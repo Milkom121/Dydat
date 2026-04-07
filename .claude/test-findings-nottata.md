@@ -36,7 +36,7 @@
 
 ## Scenario 1 — Quaderno Enciclopedico
 
-### NB-01 — Formule LaTeX troppo grandi, sbordano lateralmente
+### NB-01 — Formule LaTeX troppo grandi, sbordano lateralmente — FIXATO in B35.14
 - **Severita**: ALTA (UX, l'utente non vede meta della formula)
 - **File**: `frontend/lib/presentation/quaderno_screen/widgets/formula_curriculum_card.dart`
 - **Sintomo**: Le formule renderizzate da `flutter_math_fork` (Math.tex) sono enormi (font size molto grande) e sbordano a destra dalla card. L'utente deve scrollare orizzontalmente per leggerle. Esempio: `a^n = a · a · a` viene tagliato a meta.
@@ -46,7 +46,7 @@
   2. Oppure imporre `textStyle: TextStyle(fontSize: 18)` o simili a Math.tex
   3. Oppure entrambi (FittedBox + textStyle ragionevole)
 
-### NB-02 — LaTeX negli esempi NON renderizzato (codice grezzo visibile)
+### NB-02 — LaTeX negli esempi NON renderizzato (codice grezzo visibile) — FIXATO in B35.14
 - **Severita**: ALTA (UX, esempi illeggibili)
 - **File**: `frontend/lib/presentation/quaderno_screen/nodo_quaderno_screen.dart` (sezione Esempi)
 - **Sintomo**: La sezione "Esempi" mostra gli `esempi_applicazione` come stringhe testuali plain. Quando un esempio contiene LaTeX inline (es. `(-2)^{-3} = \frac{1}{(-2)^3} = -\frac{1}{8}`), si vede il codice LaTeX grezzo, non la formula renderizzata.
@@ -56,7 +56,7 @@
   2. Soluzione migliore: parser semplice che divide l'esempio in segmenti testo + LaTeX e li renderizza con `RichText` + `Math.tex` come WidgetSpan. Pattern di delimitazione tipo `$...$` o intelligente.
   3. Soluzione minima: provare `Math.tex(esempio)` con `onErrorFallback: (e) => Text(esempio)` — se l'esempio e tutto LaTeX renderizza, altrimenti fallback a testo plain.
 
-### NB-03 — Singolare/plurale italiano sbagliato (ricorrente)
+### NB-03 — Singolare/plurale italiano sbagliato (ricorrente) — FIXATO in B35.14
 - **Severita**: BASSA (UX, ma ricorrente in piu schermate)
 - **File**: vari (almeno `nodo_quaderno_screen.dart`, `profile_screen.dart` o le sue widget)
 - **Sintomo**: Numerose stringhe non gestiscono il singolare. Esempi:
@@ -81,7 +81,7 @@
 - ✅ Sezione "Le mie note" con textfield placeholder
 - ✅ Salvataggio nota persiste (testato 1A)
 
-### NB-04 — Sezioni log personale nascoste se vuote (manca empty state)
+### NB-04 — Sezioni log personale nascoste se vuote (manca empty state) — FIXATO in B35.14
 - **Severita**: MEDIA (UX)
 - **File**: `frontend/lib/presentation/quaderno_screen/nodo_quaderno_screen.dart` righe 197-224
 - **Sintomo**: Quando l'utente apre il quaderno di un nodo su cui non ha mai fatto sessione, sotto "Le mie note" non c'e piu niente. Mancano il separator "— I tuoi appunti —" e le 3 sezioni log personale (formule viste in sessione, esercizi svolti, spiegazioni del tutor). L'utente non capisce nemmeno che dovrebbero esserci.
@@ -99,7 +99,7 @@
 
 ## Scenario 4 — Errori user-friendly
 
-### NB-05 — Messaggio errore quaderno generico, non sfrutta helper di B35.8
+### NB-05 — Messaggio errore quaderno generico — FIXATO in B35.14 (gia corretto nel codice)
 - **Severita**: MEDIA (UX)
 - **File**: `frontend/lib/presentation/quaderno_screen/nodo_quaderno_screen.dart` (gestione errore stato)
 - **Sintomo**: In modalita aereo, aprire il quaderno di un nodo non in cache mostra "Errore caricamento quaderno" con bottone "Riprova". Il messaggio e in italiano e c'e un retry, ma e GENERICO. Non riconosce che il problema e l'assenza di rete e non sfrutta l'helper `userFriendlyError` di B35.8 che dovrebbe restituire "Connessione assente. Controlla la rete e riprova."
@@ -117,7 +117,7 @@
 
 ## Scoperto in Scenario 4 (bug pre-esistente di B38.5, non della nottata)
 
-### NB-06 — Icona lucchetto sui nodi "da iniziare" semanticamente sbagliata
+### NB-06 — Icona lucchetto sui nodi "da iniziare" semanticamente sbagliata — FIXATO in B35.14
 - **Severita**: MEDIA (UX, fuorviante)
 - **File**: `frontend/lib/presentation/learning_path_screen/widgets/linear_path_map.dart`
 - **Sintomo**: Nella mappa lineare di "I miei studi", tutti i nodi "Da iniziare" hanno un'icona LUCCHETTO dentro il cerchio. Il lucchetto comunica "bloccato / non accessibile" — ma in realta tutti i nodi sono perfettamente tappabili e portano al bottom sheet. Semantica errata.
@@ -146,7 +146,7 @@
 - ✅ TextScaler effettivamente sbloccato: aumentando la dimensione carattere dalle impostazioni del sistema operativo, i testi di Dydat si scalano davvero (prima erano fissi). B35.13 verificato.
 - ⚠️ PARZIALE: lo scaling provoca un overflow di layout su Home.
 
-### NB-07 — Home: overflow 6.6px in MiniPercorsoWidget con TextScaler aumentato
+### NB-07 — Home: overflow 6.6px in MiniPercorsoWidget con TextScaler aumentato — FIXATO in B35.14
 - **Severita**: MEDIA (UX, regressione visiva quando l'utente scala i caratteri)
 - **File**: `frontend/lib/presentation/home_screen/widgets/mini_percorso_widget.dart:130`
 - **Sintomo**: Aumentando la dimensione caratteri dalle impostazioni di sistema, sulla Home appare overflow "RenderFlex overflowed by 6.6 pixels on the bottom" sulla Column del MiniPercorsoWidget (riga 130).

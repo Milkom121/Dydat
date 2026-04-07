@@ -44,19 +44,16 @@ class MiniPercorsoWidget extends StatelessWidget {
           ),
           SizedBox(height: 2.h),
           // Riga di nodi con connessioni
-          SizedBox(
-            height: 80,
-            child: LayoutBuilder(
-              builder: (layoutContext, constraints) {
-                return _buildNodeRow(
-                  context,
-                  theme,
-                  window.nodi,
-                  window.currentIndexInWindow,
-                  constraints.maxWidth,
-                );
-              },
-            ),
+          LayoutBuilder(
+            builder: (layoutContext, constraints) {
+              return _buildNodeRow(
+                context,
+                theme,
+                window.nodi,
+                window.currentIndexInWindow,
+                constraints.maxWidth,
+              );
+            },
           ),
           // Indicatore nodo corrente
           if (currentIndex < nodi.length) ...[
@@ -155,19 +152,22 @@ class MiniPercorsoWidget extends StatelessWidget {
         ),
         SizedBox(height: 0.5.h),
         SizedBox(
-          width: 50,
-          child: Text(
-            _abbreviate(nodo.nome),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: isCurrent
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-              fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-              fontSize: 9,
+          width: 54,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _abbreviate(nodo.nome),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: isCurrent
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 9,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

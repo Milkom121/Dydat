@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/sizer_extensions.dart';
 import '../../../models/sessione.dart';
 import '../../../theme/surface_decorations.dart';
+import '../../../utils/pluralize.dart' as pl;
 
 /// Header di benvenuto contestuale.
 /// Mostra un messaggio diverso in base a: primo accesso, ritorno normale,
@@ -132,8 +133,8 @@ class WelcomeHeader extends StatelessWidget {
 
     String? assenzaMessaggio;
     if (giorni != null && giorni > 7) {
-      assenzaMessaggio = 'Bentornato! Sono passati $giorni giorni '
-          "dall'ultima sessione. Riprendere e facile: "
+      assenzaMessaggio = 'Bentornato! Sono passati ${pl.giorno(giorni)} '
+          "dall'ultima sessione. Riprendere è facile: "
           'anche solo 5 minuti fanno la differenza.';
     }
 

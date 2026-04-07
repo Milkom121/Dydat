@@ -235,7 +235,7 @@ void main() {
       expect(find.text('Il tuo percorso'), findsOneWidget);
     });
 
-    testWidgets('NON mostra separator se no log personale', (tester) async {
+    testWidgets('mostra separator SEMPRE (con empty state se no log)', (tester) async {
       await tester.pumpWidget(_wrap(
         const NodoQuadernoScreen(
             nodoId: 'nodo_99', nodoNome: 'Proporzioni'),
@@ -243,7 +243,10 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.text('Il tuo percorso'), findsNothing);
+      // NB-04: il separator ora appare sempre
+      expect(find.text('Il tuo percorso'), findsOneWidget);
+      // E mostra il messaggio empty state del log personale
+      expect(find.text('Non hai ancora fatto sessioni su questo nodo.'), findsOneWidget);
     });
 
     testWidgets('NON mostra stato vuoto quando c\'è scheda', (tester) async {

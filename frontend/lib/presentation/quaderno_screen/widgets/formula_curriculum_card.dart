@@ -32,16 +32,20 @@ class FormulaCurriculumCard extends StatelessWidget {
           Center(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Math.tex(
-                formula.latex,
-                textStyle: TextStyle(
-                  fontSize: 16.sp,
-                  color: theme.colorScheme.onSurface,
-                ),
-                onErrorFallback: (err) => Text(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: Math.tex(
                   formula.latex,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'monospace',
+                  textStyle: TextStyle(
+                    fontSize: 20.sp,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  onErrorFallback: (err) => Text(
+                    formula.latex,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ),
               ),

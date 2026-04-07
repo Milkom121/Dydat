@@ -97,8 +97,9 @@ void main() {
       ));
       await tester.pump();
 
+      // NB-04: mostra il log empty state con messaggio invitante
       expect(
-        find.textContaining('si riempirà man mano'),
+        find.text('Non hai ancora fatto sessioni su questo nodo.'),
         findsOneWidget,
       );
     });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/sizer_extensions.dart';
 import '../../../models/quaderno.dart';
+import '../../../utils/pluralize.dart' as pl;
 import '../../../widgets/custom_icon_widget.dart';
 
 /// Header del quaderno: nome nodo, tema, livello, statistiche sintetiche.
@@ -80,20 +81,20 @@ class StatoHeader extends StatelessWidget {
             children: [
               _StatChip(
                 icon: 'assignment_turned_in',
-                label: '${stato.eserciziCompletati} esercizi',
+                label: pl.esercizio(stato.eserciziCompletati),
                 theme: theme,
               ),
               SizedBox(width: 3.w),
               _StatChip(
                 icon: 'history',
-                label: '${quaderno.sessioniCount} sessioni',
+                label: pl.sessione(quaderno.sessioniCount),
                 theme: theme,
               ),
               if (stato.srRipetizioni > 0) ...[
                 SizedBox(width: 3.w),
                 _StatChip(
                   icon: 'replay',
-                  label: '${stato.srRipetizioni} ripassi',
+                  label: pl.ripasso(stato.srRipetizioni),
                   theme: theme,
                 ),
               ],

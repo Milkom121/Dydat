@@ -10,6 +10,7 @@ import '../../widgets/skeleton_loader.dart';
 import 'widgets/collapsible_text.dart';
 import 'widgets/errore_comune_card.dart';
 import 'widgets/esercizi_section.dart';
+import 'widgets/esempio_inline_card.dart';
 import 'widgets/formula_curriculum_card.dart';
 import 'widgets/formule_section.dart';
 import 'widgets/nota_utente_editor.dart';
@@ -164,7 +165,7 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
               color: theme.colorScheme.secondary,
             ),
             SizedBox(height: 1.h),
-            ...quaderno.scheda!.esempi.map((e) => _buildEsempio(theme, e)),
+            ...quaderno.scheda!.esempi.map((e) => EsempioInlineCard(esempio: e)),
             SizedBox(height: 3.h),
           ],
 
@@ -194,34 +195,33 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
           ),
           SizedBox(height: 3.h),
 
-          // 9. Separator tra scheda curricolare e log personale
-          if (_hasLogPersonale(quaderno)) ...[
-            _buildSeparator(theme),
-            SizedBox(height: 3.h),
-          ],
+          // 9. Separator tra scheda curricolare e log personale (SEMPRE visibile)
+          _buildSeparator(theme),
+          SizedBox(height: 3.h),
 
           // 10. Log personale: formule tutor + esercizi + spiegazioni
-          if (quaderno.formule.isNotEmpty) ...[
-            FormuleSection(formule: quaderno.formule),
-            SizedBox(height: 3.h),
-          ],
+          if (_hasLogPersonale(quaderno)) ...[
+            if (quaderno.formule.isNotEmpty) ...[
+              FormuleSection(formule: quaderno.formule),
+              SizedBox(height: 3.h),
+            ],
 
-          if (quaderno.esercizi.isNotEmpty) ...[
-            EserciziSection(
-              esercizi: quaderno.esercizi,
-              totaleCorretti: quaderno.eserciziCorretti,
-              totaleErrati: quaderno.eserciziErrati,
-            ),
-            SizedBox(height: 3.h),
-          ],
+            if (quaderno.esercizi.isNotEmpty) ...[
+              EserciziSection(
+                esercizi: quaderno.esercizi,
+                totaleCorretti: quaderno.eserciziCorretti,
+                totaleErrati: quaderno.eserciziErrati,
+              ),
+              SizedBox(height: 3.h),
+            ],
 
-          if (quaderno.spiegazioni.isNotEmpty) ...[
-            SpiegazioniSection(spiegazioni: quaderno.spiegazioni),
-            SizedBox(height: 3.h),
+            if (quaderno.spiegazioni.isNotEmpty) ...[
+              SpiegazioniSection(spiegazioni: quaderno.spiegazioni),
+              SizedBox(height: 3.h),
+            ],
+          ] else ...[
+            _buildLogEmptyState(theme),
           ],
-
-          // Stato vuoto se non c'e nulla
-          if (_isCompletelyEmpty(quaderno)) _buildEmptyState(theme),
 
           SizedBox(height: 4.h),
         ],
@@ -255,12 +255,6 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
       q.esercizi.isNotEmpty ||
       q.spiegazioni.isNotEmpty;
 
-  bool _isCompletelyEmpty(QuadernoNodo q) =>
-      !_hasDefinizione(q) &&
-      !_hasFormuleCurriculum(q) &&
-      !_hasEsempi(q) &&
-      !_hasErroriComuni(q) &&
-      !_hasLogPersonale(q);
 
   // ---------------------------------------------------------------------------
   // Sub-widget: breadcrumb
@@ -358,39 +352,6 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Sub-widget: esempio singolo
-  // ---------------------------------------------------------------------------
-
-  Widget _buildEsempio(ThemeData theme, String esempio) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 1.h),
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CustomIconWidget(
-            iconName: 'arrow_right',
-            color: theme.colorScheme.secondary,
-            size: 4.5.w,
-          ),
-          SizedBox(width: 1.5.w),
-          Expanded(
-            child: Text(
-              esempio,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // Sub-widget: separator
   // ---------------------------------------------------------------------------
 
@@ -422,34 +383,34 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Sub-widget: stato vuoto
+  // Sub-widget: log personale vuoto
   // ---------------------------------------------------------------------------
 
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildLogEmptyState(ThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(6.w),
+      padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          CustomIconWidget(
-            iconName: 'auto_stories',
+          Icon(
+            Icons.menu_book_outlined,
+            size: 10.w,
             color: theme.colorScheme.onSurfaceVariant,
-            size: 12.w,
           ),
-          SizedBox(height: 2.h),
+          SizedBox(height: 1.5.h),
           Text(
-            'Il quaderno si riempirà man mano che studi questo argomento.',
+            'Non hai ancora fatto sessioni su questo nodo.',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 1.h),
+          SizedBox(height: 0.5.h),
           Text(
-            'Qui troverai formule, esercizi svolti e spiegazioni del tutor.',
+            'Inizia una sessione per popolare i tuoi appunti.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.outline,
             ),
@@ -459,4 +420,5 @@ class _NodoQuadernoScreenState extends ConsumerState<NodoQuadernoScreen> {
       ),
     );
   }
+
 }

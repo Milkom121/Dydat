@@ -284,7 +284,7 @@ class _CenteredNodeTile extends StatelessWidget {
   String _nodeIcon(_NodeState state) {
     switch (state) {
       case _NodeState.nonIniziato:
-        return 'lock_outline';
+        return 'circle_outlined';
       case _NodeState.inCorso:
         return 'play_arrow_rounded';
       case _NodeState.operativo:
