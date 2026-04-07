@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
   "current_block": "B35.14",
-  "total_blocks_run": 84,
-  "status": "CONTINUE",
-  "last_run": "2026-04-07T01:54:58Z",
-  "last_summary": "Test manuale nottata completato, 7 bug raccolti. Predisposto B35.14 come blocco di fix chirurgico unico sul branch wip/notte-quaderno-polish-2026-04-07. Dopo B35.14 verificato, merge manuale wip→develop."
+  "total_blocks_run": 85,
+  "status": "PHASE_COMPLETE",
+  "last_run": "2026-04-07T20:34:44Z",
+  "last_summary": "Fix chirurgico 7 bug UI post test manuale nottata. NB-01: FittedBox su FormulaCurriculumCard (formule LaTeX non sbordano piu). NB-02: nuovo EsempioInlineCard con rendering LaTeX intelligente (Math.tex + fallback Text). NB-03: nuovo pluralize.dart con 5 funzioni singolare/plurale, applicato in stato_header e welcome_header. NB-04: separator log personale sempre visibile + empty state gentile quando nessun log. NB-05: verificato che userFriendlyError era gia presente (nessun fix necessario). NB-06: icona nodi non iniziati da lock_outline a circle_outlined. NB-07: rimosso SizedBox(height:80) fisso in MiniPercorsoWidget + FittedBox su nomi nodo per TextScaler aumentato."
 }

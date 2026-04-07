@@ -313,3 +313,8 @@
 - **Status**: SUCCESS
 - **Summary**: Tutti i 13 blocchi pianificati eseguiti in 92 minuti totali. B35.5.1-B35.5.5 (Quaderno enciclopedico) + B35.6 (polish empty states) + B35.7-B35.13 (polish UX vari). Frontend: 459 → 564 test verdi (+105). Backend: 341 → 363 test verdi (+22). flutter analyze 0. Tutti i commit su branch wip/notte-quaderno-polish-2026-04-07. Pronti per review e merge su develop.
 ---
+
+## 2026-04-07 22:34:44 — Blocco F9BB35.14
+- **Status**: PHASE_COMPLETE
+- **Summary**: Fix chirurgico 7 bug UI post test manuale nottata. NB-01: FittedBox su FormulaCurriculumCard (formule LaTeX non sbordano piu). NB-02: nuovo EsempioInlineCard con rendering LaTeX intelligente (Math.tex + fallback Text). NB-03: nuovo pluralize.dart con 5 funzioni singolare/plurale, applicato in stato_header e welcome_header. NB-04: separator log personale sempre visibile + empty state gentile quando nessun log. NB-05: verificato che userFriendlyError era gia presente (nessun fix necessario). NB-06: icona nodi non iniziati da lock_outline a circle_outlined. NB-07: rimosso SizedBox(height:80) fisso in MiniPercorsoWidget + FittedBox su nomi nodo per TextScaler aumentato.
+---
