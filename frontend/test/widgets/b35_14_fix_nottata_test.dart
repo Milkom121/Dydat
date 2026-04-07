@@ -63,19 +63,35 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('contiene FittedBox per scaling', (tester) async {
+    testWidgets('NON contiene FittedBox (rompe uniformita)',
+        (tester) async {
+      // Strategia uniformita: tutte le formule usano fontSize fisso 18.0.
+      // FittedBox ridimensionerebbe ogni formula in modo diverso in base
+      // alla sua dimensione intrinseca, rompendo l'uniformita visiva.
       const formula = FormulaCurriculum(
-        latex: r'x^2',
+        latex: r'a^0 = 1',
         descrizione: '',
       );
       await tester.pumpWidget(_wrap(
-        const FormulaCurriculumCard(formula: formula),
+        const SizedBox(
+          width: 320,
+          child: FormulaCurriculumCard(formula: formula),
+        ),
       ));
-      expect(find.byType(FittedBox), findsOneWidget);
+      expect(
+        find.byType(FittedBox),
+        findsNothing,
+        reason:
+            'FormulaCurriculumCard non deve usare FittedBox: '
+            'rompe l\'uniformita di font tra formule corte e lunghe',
+      );
     });
 
-    testWidgets('NON contiene SingleChildScrollView orizzontale (annullerebbe FittedBox)',
+    testWidgets('formula lunga: scrollabile orizzontalmente come fallback',
         (tester) async {
+      // Per uniformita visiva accettiamo lo scroll orizzontale come fallback
+      // per le formule davvero lunghe. Tutte le formule mantengono lo stesso
+      // fontSize, quelle che sborderebbero diventano scrollabili.
       const formula = FormulaCurriculum(
         latex: r'a^n = a \cdot a \cdot a \text{ (n volte)}',
         descrizione: 'test',
@@ -86,20 +102,17 @@ void main() {
           child: FormulaCurriculumCard(formula: formula),
         ),
       ));
-      // Cerca eventuali SingleChildScrollView orizzontali — non ce ne devono essere
-      // perche darebbero larghezza infinita al FittedBox annullando lo scaling.
+      // Deve esserci uno scroll view orizzontale come fallback
       final scrollViews = tester.widgetList<SingleChildScrollView>(
         find.byType(SingleChildScrollView),
       );
-      for (final sv in scrollViews) {
-        expect(
-          sv.scrollDirection,
-          isNot(Axis.horizontal),
-          reason:
-              'FormulaCurriculumCard non deve avere SingleChildScrollView orizzontale: '
-              'annullerebbe il FittedBox e le formule sborderebbero',
-        );
-      }
+      expect(
+        scrollViews.any((sv) => sv.scrollDirection == Axis.horizontal),
+        isTrue,
+        reason:
+            'FormulaCurriculumCard deve avere uno scroll orizzontale come '
+            'fallback per le formule troppo larghe',
+      );
     });
   });
 
