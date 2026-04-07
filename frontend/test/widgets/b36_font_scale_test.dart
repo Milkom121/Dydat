@@ -12,7 +12,7 @@ import 'package:dydat/providers/achievement_provider.dart';
 import 'package:dydat/presentation/profile_screen/profile_screen.dart';
 
 /// Stub minimale per i provider richiesti da ProfileScreen.
-/// noSuchMethod deve restituire Future<void> per i metodi async.
+/// noSuchMethod deve restituire `Future<void>` per i metodi async.
 class _StubAuthNotifier extends StateNotifier<AuthState>
     implements AuthNotifier {
   _StubAuthNotifier() : super(AuthState());

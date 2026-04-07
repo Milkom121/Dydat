@@ -44,7 +44,7 @@ class EsempioInlineCard extends ConsumerWidget {
   }
 
   /// Costruisce il contenuto dell'esempio.
-  /// Lo schema tipico degli esempi e: "<formula> (<commento italiano>)".
+  /// Lo schema tipico degli esempi e: "formula (commento italiano)".
   /// Quando presente, separiamo formula e commento per renderizzarli
   /// in modi diversi: la formula con Math.tex (o Text plain) a font
   /// leggibile, il commento come Text plain piccolo sotto.
