@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B35.5.4",
-  "total_blocks_run": 66,
+  "current_block": "B35.5.5",
+  "total_blocks_run": 68,
   "status": "CONTINUE",
-  "last_run": "2026-04-07T01:00:00Z",
-  "last_summary": "B35.5.3 completato. 4 nuovi modelli Dart (FormulaCurriculum, ErroreComune, SchedaNodo, NotaUtente) + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente(). QuadernoNotifier.saveNota(). 15 nuovi test. 474 frontend verdi, analyze 0."
+  "last_run": "2026-04-07T01:15:00Z",
+  "last_summary": "B35.5.4 completato. 4 nuovi widget isolati: CollapsibleText, FormulaCurriculumCard, ErroreComuneCard, NotaUtenteEditor. 15 nuovi test. 489 frontend verdi, analyze 0."
 }

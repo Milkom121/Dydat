@@ -261,11 +261,12 @@
 - **Note**: 4 nuovi modelli Dart in quaderno.dart + QuadernoNodo esteso con scheda/notaUtente/copyWith. QuadernoState con isSaving. PathService.saveNotaUtente() PUT. QuadernoNotifier.saveNota(). ApiConfig.quadernoNota(). 15 nuovi test. 474 frontend verdi, analyze 0.
 
 #### Blocco B35.5.4 — Frontend widget riutilizzabili
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S39)
 - **Complessita'**: media
 - **Descrizione**: 4 nuovi widget isolati: `CollapsibleText`, `FormulaCurriculumCard` (LaTeX), `ErroreComuneCard` (accent rosso), `NotaUtenteEditor` (autosave debounced).
 - **File da toccare**: frontend/lib/presentation/quaderno_screen/widgets/* (nuovi), test widget
 - **Gate**: 4+ widget test, analyze 0
+- **Note**: CollapsibleText (Markdown, maxChars configurabile, expand/collapse). FormulaCurriculumCard (Math.tex con fallback, descrizione opzionale). ErroreComuneCard (accent error, RichText labeled). NotaUtenteEditor (TextField multiline, debounce 1500ms, indicatore salvataggio). 15 nuovi test. 489 frontend verdi, analyze 0.
 
 #### Blocco B35.5.5 — Frontend integrazione schermata
 - [ ] **Stato**: da fare
