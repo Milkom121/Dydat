@@ -237,10 +237,11 @@
 > Spezzato in 5 sub-blocchi piccoli e granulari per consentire al runner di lavorare con context ridotto. Ogni sub-blocco fattibile in una singola sessione 10-25 min.
 
 #### Blocco B35.5.1 — Backend GET quaderno esteso
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S37)
 - **Complessita'**: bassa
 - **Descrizione**: Estendere `GET /quaderno/{nodo_id}` con campo `scheda` (definizione_testo, formule, esempi, errori_comuni, parole_chiave da JSONB nodi) + `nota_utente`.
-- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_quaderno.py
+- **File da toccare**: backend/app/api/quaderno.py, backend/tests/test_b35_quaderno.py
+- **Note**: Aggiunta query NotaUtente + costruzione scheda da JSONB nodo. 3 nuovi test, 7 aggiornati. 351 backend verdi (10 skipped).
 - **Gate**: 3+ pytest, ruff pulito, schema Pydantic aggiornato
 
 #### Blocco B35.5.2 — Backend PUT nota utente
