@@ -286,16 +286,18 @@
 - **Note**: 4 fix applicati: EmptyStateWidget (rimosso URL Unsplash, icona nativa + testo caldo), SessionHistoryWidget (messaggio per storico vuoto), ProfileScreen achievement (messaggio motivazionale con icona), ProfileScreen stats (messaggio guida utente nuovo). Sezione ripasso Home e search I miei studi gia gestiti correttamente. Recap con 0 esercizi gestito dalla narrativa. 6 nuovi test. 506 frontend verdi, analyze 0.
 
 ### Blocco B35.7 — Pull-to-refresh sulle liste principali (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S42)
 - **Complessita'**: bassa
 - **Descrizione**: RefreshIndicator con pull-to-refresh su Home, I miei studi, Profilo, Storico sessioni. Riusa metodi provider gia esistenti.
 - **Gate di uscita**: 3-4 schermate con pull-to-refresh, 2+ widget test, analyze 0
+- **Note**: HomeScreen: RefreshIndicator + AlwaysScrollableScrollPhysics + _handleRefresh (parallelo). LearningPathScreen: IconButton refresh in AppBar (GraphOverview non scrollabile per InteractiveViewer). ProfileScreen gia aveva RefreshIndicator. 4 nuovi test. 510 frontend verdi, analyze 0.
 
 ### Blocco B35.8 — Snackbar errori user-friendly (bonus)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S43)
 - **Complessita'**: bassa
 - **Descrizione**: Audit + fix dei messaggi errore mostrati all'utente. Helper centralizzato `error_messages.dart` con `userFriendlyError(error)`. Sostituisce messaggi tecnici (DioException, 404, FormatException) con stringhe italiane gentili.
 - **Gate di uscita**: helper creato, 5-6 punti aggiornati, 3+ unit test, analyze 0
+- **Note**: Creato `utils/error_messages.dart` con `userFriendlyError()` (pattern matching su timeout, rete, HTTP 4xx/5xx, exception Dart). Applicato in 7 punti: studio_screen (2 snackbar), nodo_quaderno_screen, profile_screen, session_provider (stream + ErroreEvent), onboarding_provider (stream + ErroreEvent). Fix sse_client.dart (rimosso leak `$e` in 2 catch). Riscritto custom_error_widget.dart in italiano con Theme.of(context). 20 nuovi test (18 unit + 2 widget). 530 frontend verdi, analyze 0.
 
 ### Blocco B35.9 — Loading skeleton al posto degli spinner (bonus)
 - [ ] **Stato**: da fare
