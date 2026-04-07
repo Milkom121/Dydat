@@ -28,24 +28,25 @@ class FormulaCurriculumCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Formula LaTeX centrata
+          // Formula LaTeX centrata, rimpicciolita per stare nella card
+          // Nota: niente SingleChildScrollView attorno a FittedBox — uno
+          // scroll view orizzontale ha larghezza infinita, quindi FittedBox
+          // non saprebbe quanto rimpicciolire. FittedBox deve ricevere
+          // direttamente i constraint del Container (width double.infinity).
           Center(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.center,
-                child: Math.tex(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Math.tex(
+                formula.latex,
+                textStyle: TextStyle(
+                  fontSize: 22.sp,
+                  color: theme.colorScheme.onSurface,
+                ),
+                onErrorFallback: (err) => Text(
                   formula.latex,
-                  textStyle: TextStyle(
-                    fontSize: 20.sp,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  onErrorFallback: (err) => Text(
-                    formula.latex,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontFamily: 'monospace',
                   ),
                 ),
               ),

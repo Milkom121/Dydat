@@ -73,6 +73,34 @@ void main() {
       ));
       expect(find.byType(FittedBox), findsOneWidget);
     });
+
+    testWidgets('NON contiene SingleChildScrollView orizzontale (annullerebbe FittedBox)',
+        (tester) async {
+      const formula = FormulaCurriculum(
+        latex: r'a^n = a \cdot a \cdot a \text{ (n volte)}',
+        descrizione: 'test',
+      );
+      await tester.pumpWidget(_wrap(
+        const SizedBox(
+          width: 320,
+          child: FormulaCurriculumCard(formula: formula),
+        ),
+      ));
+      // Cerca eventuali SingleChildScrollView orizzontali — non ce ne devono essere
+      // perche darebbero larghezza infinita al FittedBox annullando lo scaling.
+      final scrollViews = tester.widgetList<SingleChildScrollView>(
+        find.byType(SingleChildScrollView),
+      );
+      for (final sv in scrollViews) {
+        expect(
+          sv.scrollDirection,
+          isNot(Axis.horizontal),
+          reason:
+              'FormulaCurriculumCard non deve avere SingleChildScrollView orizzontale: '
+              'annullerebbe il FittedBox e le formule sborderebbero',
+        );
+      }
+    });
   });
 
   // -------------------------------------------------------------------------
