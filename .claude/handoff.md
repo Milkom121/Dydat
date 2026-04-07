@@ -12,13 +12,21 @@ VERIFICATION: baseline verde, modello opus configurato.
 
 ## ⚠️ ISTRUZIONI CRITICHE PER IL RUNNER
 
+### Branch dedicato (NUOVO)
+Stai lavorando sul branch **`wip/notte-quaderno-polish-2026-04-07`**, NON su `develop`. Questo branch e stato creato apposta per isolare la sessione notturna e proteggere develop in caso di problemi. Regole branch:
+- **NON fare `git checkout`** ad altri branch
+- **NON fare merge verso develop o main** — Villa lo fara manualmente domani dopo review
+- Tutti i commit di tutti i blocchi vanno su `wip/notte-quaderno-polish-2026-04-07`
+- Push regolare al remote dello stesso branch (`git push origin wip/notte-quaderno-polish-2026-04-07`) e ok e raccomandato
+
+### Sequenza blocchi
 Stiamo facendo TREDICI sub-blocchi consecutivi in una sola nottata. Per evitare loop e mantenere ordine, segui ESATTAMENTE questo flusso:
 
 1. Esegui il blocco corrente (vedi sotto la sequenza).
 2. Quando hai finito un blocco, aggiorna `.claude/handoff.md` settando `BLOCK:` al PROSSIMO blocco della sequenza (vedi tabella sotto), e `STATUS: CONTINUE`.
 3. Aggiorna `ROADMAP.md` marcando come `[x] completato (Sxx)` il blocco appena finito, lasciando i successivi come `[ ] da fare`.
 4. Continua col prossimo.
-5. Quando hai finito **B35.13** (ultimo della sequenza), setta `STATUS: PHASE_COMPLETE` e **FERMATI**. Non avanzare a B39 senza nuova decisione di Villa.
+5. Quando hai finito **B35.13** (ultimo della sequenza), setta `STATUS: PHASE_COMPLETE` e **FERMATI**. Non avanzare a B39 senza nuova decisione di Villa. Non fare merge verso develop.
 
 ## SEQUENZA BLOCCHI
 
