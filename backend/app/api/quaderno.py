@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_utente_corrente
 from app.db.engine import get_db
+from app.db.models.gamification import NotaUtente
 from app.db.models.grafo import Esercizio, Nodo, NodoTema, Tema
 from app.db.models.stato_utente import StatoNodoUtente, StoricoEsercizi
 from app.db.models.utenti import Sessione, TurnoConversazione, Utente
@@ -141,6 +142,27 @@ async def get_quaderno_nodo(
     )
     sessioni_count = sessioni_count_result.scalar_one()
 
+    # Nota personale dell'utente per questo nodo
+    nota_result = await db.execute(
+        select(NotaUtente).where(
+            NotaUtente.utente_id == utente.id,
+            NotaUtente.nodo_id == nodo_id,
+        )
+    )
+    nota = nota_result.scalar_one_or_none()
+
+    # Scheda intrinseca: dati curricolari dal nodo stesso (JSONB)
+    definizioni = nodo.definizioni_formali
+    scheda = {
+        "definizione_testo": (
+            definizioni.get("testo") if isinstance(definizioni, dict) else None
+        ),
+        "formule": nodo.formule_proprieta if nodo.formule_proprieta else [],
+        "esempi": nodo.esempi_applicazione if nodo.esempi_applicazione else [],
+        "errori_comuni": nodo.errori_comuni if nodo.errori_comuni else [],
+        "parole_chiave": nodo.parole_chiave if nodo.parole_chiave else [],
+    }
+
     return {
         "nodo_id": nodo_id,
         "nodo_nome": nodo.nome,
@@ -184,4 +206,13 @@ async def get_quaderno_nodo(
             }
             for row in spiegazioni_rows
         ],
+        "scheda": scheda,
+        "nota_utente": (
+            {
+                "testo": nota.contenuto,
+                "updated_at": nota.updated_at.isoformat() if nota.updated_at else None,
+            }
+            if nota
+            else None
+        ),
     }
