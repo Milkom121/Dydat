@@ -1,8 +1,8 @@
 {
-  "current_phase": "9",
-  "current_block": "fix-bug-cosmetici (skipped - already fixed)",
+  "current_phase": "10",
+  "current_block": "B39.1.1",
   "total_blocks_run": 91,
-  "status": "PHASE_COMPLETE",
-  "last_run": "2026-04-08T02:43:40Z",
-  "last_summary": "Catena notturna completata. B33.5 implementato (primo turno caldo del tutor). Blocco fix-bug-cosmetici skippato: tutti e 5 i bug (BUG-01/02/03/05/07) erano gia stati fixati nel blocco B38.5 (S36). Codice verificato: i fix sono tutti presenti nei file sorgente."
+  "status": "CONTINUE",
+  "last_run": "2026-04-08T15:30:00Z",
+  "last_summary": "Predisposizione catena B39 Onboarding Narrativo - 38 sub-blocchi in 11 fasi. Design doc completo in docs/discussions/b39-onboarding-narrativo.md. Primo sub-blocco: migrazione Alembic per campi onboarding_stato e lingua_preferita. Baseline verde."
 }
