@@ -334,6 +334,15 @@
 - **Gate di uscita**: 5+ schermate con Semantics labels base, TextScaler ripristinato, 2-3 fix contrasto, analyze 0
 - **Note**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7>0.87). dev-shortcuts aggiornato. 12 nuovi test. 564 frontend verdi, analyze 0.
 
+### Blocco B36 — Impostazione dimensione font in-app
+- [x] **Stato**: completato (S50)
+- **Complessita'**: bassa-media
+- **Descrizione**: Aggiunge un'impostazione utente per scalare la dimensione dei font dell'app. 4 opzioni discrete (Piccolo 0.85 / Normale 1.0 / Grande 1.15 / Molto grande 1.3). Sezione "Aspetto" nel Profilo con anteprima live. Helper LaTeX per coordinare le formule (flutter_math_fork non rispetta TextScaler nativo).
+- **File creati**: font_scale_provider.dart, latex_font_size.dart
+- **File modificati**: main.dart, profile_screen.dart, formula_curriculum_card.dart, esempio_inline_card.dart
+- **Gate di uscita**: provider con persistenza, MediaQuery wrapper, helper LaTeX, UI con 4 opzioni e anteprima, 8 test nuovi, analyze 0, 588 frontend verdi
+- **Note**: Provider Riverpod + SharedPreferences (pattern identico a theme_provider). MediaQuery builder in main.dart moltiplica TextScaler di sistema per fattore Dydat (complementare, non sostitutivo). Helper scaledLatexFontSize per flutter_math_fork. FormulaCurriculumCard e EsempioInlineCard convertiti da StatelessWidget a ConsumerWidget. 2 test esistenti aggiornati con ProviderScope.
+
 ### Blocco B35.14 — Fix post-test manuale nottata (consolidamento)
 - [x] **Stato**: completato (S49)
 - **Complessita'**: media

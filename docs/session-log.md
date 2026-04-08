@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-08 — Sessione S50 — B36 Impostazione dimensione font in-app
+- **Status**: PHASE_COMPLETE
+- **Summary**: Provider Riverpod con persistenza SharedPreferences (4 opzioni: 0.85/1.0/1.15/1.3). MediaQuery wrapper in main.dart complementare al TextScaler di sistema. Helper LaTeX per flutter_math_fork. Sezione Aspetto in Profilo con anteprima live. FormulaCurriculumCard e EsempioInlineCard convertiti a ConsumerWidget. 8 nuovi test, 588 totale frontend, analyze 0. Fase 9 COMPLETATA.
+---
+
 ## 2026-04-07 — Sessione S48 — B35.13 Audit accessibilita base (Semantics)
 - **Status**: CONTINUE
 - **Summary**: Rimosso TextScaler.linear(1.0) da main.dart. Semantics labels su 7 widget interattivi (LinearPathMap, GraphOverview, ToolsTray, Mascotte, TutorPanel, CollapsibleText). Tooltip su 5 IconButton chiudi. Fix contrasto celebration_overlay (alpha 0.7→0.87). dev-shortcuts aggiornato. 12 nuovi test, 564 totale frontend, analyze 0.
@@ -317,4 +322,19 @@
 ## 2026-04-07 22:34:44 — Blocco F9BB35.14
 - **Status**: PHASE_COMPLETE
 - **Summary**: Fix chirurgico 7 bug UI post test manuale nottata. NB-01: FittedBox su FormulaCurriculumCard (formule LaTeX non sbordano piu). NB-02: nuovo EsempioInlineCard con rendering LaTeX intelligente (Math.tex + fallback Text). NB-03: nuovo pluralize.dart con 5 funzioni singolare/plurale, applicato in stato_header e welcome_header. NB-04: separator log personale sempre visibile + empty state gentile quando nessun log. NB-05: verificato che userFriendlyError era gia presente (nessun fix necessario). NB-06: icona nodi non iniziati da lock_outline a circle_outlined. NB-07: rimosso SizedBox(height:80) fisso in MiniPercorsoWidget + FittedBox su nomi nodo per TextScaler aumentato.
+---
+
+## 2026-04-08 00:50:42 — Blocco F9BB36
+- **Status**: CONTINUE
+- **Summary**: Aggiunge un'impostazione utente per scalare la dimensione dei font dell'app indipendentemente dal TextScaler di sistema. Provider Riverpod con persistenza, sezione Aspetto in Profilo, helper LaTeX coordinato. Branch dedicato wip/B36-font-scale.
+---
+
+## 2026-04-08 00:52:43 — Blocco F9BB36
+- **Status**: CONTINUE
+- **Summary**: Aggiunge un'impostazione utente per scalare la dimensione dei font dell'app indipendentemente dal TextScaler di sistema. Provider Riverpod con persistenza, sezione Aspetto in Profilo, helper LaTeX coordinato. Branch dedicato wip/B36-font-scale.
+---
+
+## 2026-04-08 00:54:37 — Blocco F9BB36
+- **Status**: CONTINUE
+- **Summary**: Aggiunge un'impostazione utente per scalare la dimensione dei font dell'app indipendentemente dal TextScaler di sistema. Provider Riverpod con persistenza, sezione Aspetto in Profilo, helper LaTeX coordinato. Branch dedicato wip/B36-font-scale.
 ---
