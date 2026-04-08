@@ -78,6 +78,35 @@ format_minutes() {
     fi
 }
 
+# Trasforma un testo di summary libero in un elenco puntato leggibile.
+# Delega a Python via env var per evitare problemi di escape (vedi send_telegram).
+# Strategia di split: ". " seguito da maiuscola o cifra, " — ", ";"/";".
+# Se il testo e gia una singola frase, ritorna un unico bullet.
+format_summary_as_bullets() {
+    local raw="$1"
+    if [[ -z "$raw" ]]; then
+        echo "• (nessuna descrizione)"
+        return
+    fi
+    SUMMARY_RAW="$raw" python -c "
+import os, re
+text = os.environ.get('SUMMARY_RAW', '').strip()
+# Normalizza spazi e newline multipli in singolo spazio
+text = re.sub(r'\s+', ' ', text)
+if not text:
+    print('• (nessuna descrizione)')
+else:
+    # Split su: fine frase (. seguito da maiuscola o cifra), em dash, punto e virgola
+    parts = re.split(r'(?<=\.) (?=[A-Z0-9])| — |; ', text)
+    parts = [p.strip() for p in parts if p.strip()]
+    if not parts:
+        print('• ' + text)
+    else:
+        for p in parts:
+            print('• ' + p)
+" 2>/dev/null || echo "• $raw"
+}
+
 send_notification() {
     $NOTIFY || return 0; echo -ne '\a'
     # Notifiche desktop (leggere, per il beep)
@@ -128,6 +157,10 @@ send_telegram_report() {
         time_section="⏱ Sessione totale: ${total_fmt}"
     fi
 
+    # Formatta summary in elenco puntato per leggibilita
+    local summary_bullets
+    summary_bullets="$(format_summary_as_bullets "$summary")"
+
     # Header principale
     local msg="${icon} ${project_name}
 ${label}
@@ -136,7 +169,7 @@ ${label}
 ${time_section}
 
 📝 Fatto:
-${summary}"
+${summary_bullets}"
 
     # Sezione Prossimo: inclusa solo se next e' valorizzato
     if [[ -n "$next" && "$next" != "Nessuna indicazione" ]]; then
