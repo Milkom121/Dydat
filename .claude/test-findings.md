@@ -211,5 +211,76 @@ Priorita test: Scenari 4 (esercizio fullscreen), 5 (recap narrativo), 6 (mappa),
 - **Workaround per test odierno**: non usare Login dev, usare "Nuovo utente? Inizia qui" nella LoginScreen e fare registrazione manuale con `dev@dydat.dev` / `dev12345` / `Dev User` alla fine dell'onboarding.
 - **Candidato blocco**: `fix-dev-login-onboarding` (basso complesso, 20 min) — oppure integrarlo nel redesign onboarding di Fase 10 B39 scegliendo l'opzione (b).
 
+## UX-03 — Messaggio errore password troncato nella RegistrationScreen
+- **Severita**: MEDIA (blocca l'utente perche non capisce come correggere)
+- **Dove**: `frontend/lib/presentation/registration_screen/registration_screen.dart` (campo password, messaggio errore di validazione)
+- **Sintomo**: Quando la password non rispetta le regole (almeno 8 caratteri, una maiuscola, un numero), sotto il campo compare il messaggio *"La password deve contenere almeno una letter..."* troncato con tre puntini. L'utente vede "almeno una letter..." e non sa se deve aggiungere una lettera, una maiuscola, o altro. Sotto c'e un helper text che spiega le regole complete ma visivamente sembra scollegato e puo passare inosservato.
+- **Causa probabile**: il Text dell'errore di validazione ha probabilmente `maxLines: 1` o comunque un constraint di larghezza troppo stretto. Il messaggio originale e piu lungo di quanto il campo puo mostrarlo.
+- **Fix proposto**: rimuovere il constraint di riga singola sul messaggio errore (`maxLines: 2` o nessun limite), oppure accorciare il messaggio a qualcosa che sta su una riga ("Serve maiuscola e numero, min 8 caratteri"), oppure unificare errore + helper text in un unico blocco multiriga sempre visibile.
+- **Screenshot**: fornito da Villa 2026-04-08 durante test manuale.
+
+## DEV-02 — Password hardcoded del Login dev non rispetta le regole di validazione
+- **Severita**: MEDIA (rende il Login dev inutilizzabile per il primo accesso dopo un reset DB)
+- **Dove**: `frontend/lib/config/app_config.dart:14` — `static const String devPassword = 'dev12345';`
+- **Sintomo**: La password hardcoded `dev12345` e tutta minuscola e non rispetta la regola "almeno una maiuscola" richiesta dalla RegistrationScreen. Finche esiste gia un utente `dev@dydat.dev` nel DB con quella password il Login dev funziona (passa dal ramo login diretto). Ma dopo un wipe del DB, il Login dev va nel ramo register, chiama il provider `register()` con `dev12345`, e a seconda di dove vive la validazione fallisce silenziosamente:
+  - Se la validazione e solo frontend nella form di registrazione: il provider `register()` probabilmente non la esegue, chiama direttamente il backend, e a seconda del backend il register riesce (password debole accettata lato server) o fallisce con errore generico.
+  - Confermato il 2026-04-08 che al primo tentativo dopo il wipe, la Login dev "sembra funzionare" (l'utente finiva su home con profilo vuoto), quindi il backend probabilmente NON valida la password e l'accetta com'e. Pero questo e incoerente con il frontend.
+- **Problema derivato**: la validazione frontend e backend sono disallineate. Se in futuro rafforziamo la validazione backend, il Login dev smettera di funzionare completamente.
+- **Fix proposto**: 
+  1. **Immediato**: cambiare `devPassword` in `app_config.dart` a qualcosa che rispetta le regole (es. `Dev12345!`). Cambiare anche la eventuale documentazione/README che menziona la password.
+  2. **Strutturale**: aggiungere la stessa validazione password lato backend (`backend/app/schemas/` e/o `backend/app/core/auth.py`) e centralizzare le regole in un unico posto condiviso. Registrato anche come voce `dev-shortcuts.md` priorita media.
+- **Workaround per test odierno**: registrarsi a mano con `Dev12345` come password (maiuscola D), non via Login dev.
+
+## UX-04 — Errore password non sparisce dopo aver corretto l'input
+- **Severita**: BASSA-MEDIA (l'utente registra comunque se il form lo lascia procedere, ma vede un errore che sembra ancora attivo — confusione visiva)
+- **Dove**: `frontend/lib/presentation/registration_screen/registration_screen.dart` (campo password, validation state)
+- **Sintomo**: Dopo aver inserito una password invalida (`dev12345`) e visto l'errore "La password deve contenere almeno una letter...", correggendo la password con un valore valido (`Dev12345`) il messaggio rosso sotto il campo **non sparisce**. Resta visibile anche se l'input e ora corretto. Il bottone "Crea account" permette comunque la registrazione — l'errore e visuale, non funzionale.
+- **Causa probabile**: il `TextFormField` ha un `validator` che gira solo su submit (default `AutovalidateMode.disabled`) o su `onUserInteraction` non configurato correttamente. Oppure il messaggio errore e salvato in uno stato locale del widget e non viene resettato a ogni modifica del controller.
+- **Fix proposto**: aggiungere `autovalidateMode: AutovalidateMode.onUserInteraction` al TextFormField della password, in modo che la validazione giri a ogni modifica del testo e l'errore scompaia appena il contenuto diventa valido. Fix di una riga.
+- **Screenshot**: fornito da Villa 2026-04-08, stesso screenshot di UX-03.
+
+## ONB-01 — CRITICO — L'onboarding non salva il profilo utente da nessuna parte
+- **Severita**: CRITICA (blocca l'attivazione di B33.5 primo turno caldo e impedisce qualsiasi personalizzazione basata sul profilo utente)
+- **Dove**: integrazione tra
+  - `frontend/lib/presentation/onboarding_screen/onboarding_screen.dart:144-145` (chiama `completeOnboarding()` senza argomenti)
+  - `frontend/lib/providers/onboarding_provider.dart:220` (firma con parametri opzionali ma mai passati dal chiamante)
+  - `frontend/lib/services/onboarding_service.dart:45` (passa i dati opzionali al backend)
+  - `backend/app/schemas/onboarding.py:18` (schema ha solo `contesto_personale` e `preferenze_tutor`, NON ha `profilo_sintetizzato`)
+  - `backend/app/core/onboarding.py:220-295` (`completa_onboarding` scrive `contesto_personale` e `preferenze_tutor` se presenti, ma il frontend li manda sempre null; e NON scrive `profilo_sintetizzato` mai, neanche se arrivasse)
+- **Sintomo**: Durante il test manuale B33.5 del 2026-04-08, dopo aver completato tutto l'onboarding conversazionale col tutor (5 turni di risposte ricche: "voglio imparare per conto mio", "matematica", "lavoro ma voglio recuperare", "operazioni base", "mix teoria e pratica"), lo stato finale dell'utente `dev@dydat.dev` in DB risultava:
+  ```
+  profilo_sintetizzato: {}
+  contesto_personale:   {}
+  preferenze_tutor:     {}
+  materie_attive:       ['matematica']   # unico dato salvato
+  obiettivo_giornaliero_min: 20
+  ```
+  Le uniche cose che sopravvivono sono la materia scelta e l'obiettivo di default (20 min), tutto il resto della conversazione onboarding viene perso dal punto di vista del profilo.
+- **Conseguenza diretta su B33.5**: l'helper `_preambolo_caldo` ha un branch per quando `profilo_sintetizzato is None` (fallback con saluto generico) e un branch per quando e presente (parafrasi dei campi `chi_e`, `motivo`, `stile_cognitivo`). Dato che il campo e sempre vuoto per ogni utente, **il branch "caldo con profilo" non si attiva mai in produzione**. B33.5 e tecnicamente implementato correttamente (14 test unitari verdi, pass-through in contesto.py corretto) ma il suo effetto visibile non puo manifestarsi finche ONB-01 non e fixato.
+- **Cosa manca nel codice**:
+  1. **Nessun tool LLM** che il tutor di onboarding puo chiamare per salvare campi del profilo durante la conversazione (es. `salva_chi_e`, `salva_motivo`, `salva_stile_cognitivo`).
+  2. **Nessuna estrazione post-hoc**: alla fine dell'onboarding manca una call LLM (idealmente Haiku per costo) che legge la conversazione completa e produce il JSON del profilo strutturato.
+  3. **Schema API incompleto**: `OnboardingCompletaRequest` non ha `profilo_sintetizzato` ne accetta il conversazione grezza.
+  4. **`completa_onboarding` non scrive `profilo_sintetizzato`** anche se il campo fosse passato.
+- **Fix proposto — ibrido (raccomandato)**:
+  1. Aggiungere alla funzione `completa_onboarding` una chiamata Haiku che prende tutti i turni della sessione onboarding e ne estrae un JSON strutturato con `chi_e`, `motivo`, `stile_cognitivo`, `contesto_personale`, `preferenze_tutor`. Prompt di estrazione chiaro, output validato con Pydantic, fallback a dict vuoti se estrazione fallisce (no crash).
+  2. Salvare il risultato in `utente.profilo_sintetizzato`, `utente.contesto_personale`, `utente.preferenze_tutor`.
+  3. Niente modifiche al frontend (o modifiche minime a schemi).
+- **Collegamenti**:
+  - Questa e la causa radice per cui B33.5 non e testabile funzionalmente oggi.
+  - E anche la barriera per far funzionare l'idea "onboarding narrativo" pensata per B39 (vedi `.claude/ideas.md` 2026-04-08).
+  - PRE-01 (placement test non erogato) e nello stesso cluster di lacune dell'onboarding.
+- **Candidato blocco**: `fix-onboarding-profile-extraction` (complessita media, 30-60 min) OPPURE integrarlo come primo sub-blocco di Fase 10 B39 "Onboarding con Momento Wow".
+
+## ONB-02 — Turni del tutor di onboarding salvati con `contenuto = None`
+- **Severita**: MEDIA (la conversazione e visualizzata correttamente all'utente durante la sessione, ma dopo la sessione 6 turni su 8 sono irrecuperabili dal DB)
+- **Dove**: probabilmente `backend/app/core/onboarding.py` — funzione che gestisce lo streaming SSE del turno di onboarding, oppure il conversation manager
+- **Sintomo**: Ispezionando i `turni_conversazione` della sessione onboarding di `dev@dydat.dev` (sessione `afcfa97f-...`) risultano 15 turni totali, 7 del tutor. Di questi 7, solo 2 hanno `contenuto` valorizzato ("Ciao! Sono il tuo tutor Dydat..." e "Perfetto, matematica! E un viaggio fantastico."). Gli altri 5 hanno `contenuto = None` nel DB anche se Villa li ha visti effettivamente sullo schermo durante l'onboarding (quindi il testo e stato streamato al client ma non persistito).
+- **Causa probabile**: pattern classico dello streaming SSE — il turno assistente viene creato come riga placeholder nel DB all'inizio dello stream, poi il contenuto si accumula in memoria chunk per chunk, e **solo alla fine dello stream** viene fatta una singola UPDATE. Se quella UPDATE finale ha un bug (exception swallowed, condizione sbagliata, chiamata mancante in un path), il placeholder resta `None`. Notare che i 2 turni che invece sono salvati sono probabilmente quelli generati DAI LLM senza tool use (solo testo), mentre i 5 mancanti potrebbero essere quelli con tool use (ogni tool use spezza il flusso dello stream e probabilmente interrompe la logica di save finale).
+- **Fix proposto**: trovare il punto dove il contenuto streamato viene persistito a fine turno, garantire che l'UPDATE avvenga anche quando ci sono tool use, e aggiungere logging se lo stream finisce senza contenuto. Aggiungere test unitario che simula uno stream con tool use e verifica la persistenza finale.
+- **Impatto collaterale**: se lo stesso bug esiste nelle sessioni di studio normali (stessa infrastruttura streaming), ogni sessione di apprendimento potrebbe perdere parti della conversazione del tutor dalla storia persistita, con impatto sul contesto dei turni successivi e sui test di promozione che potrebbero basarsi sul contenuto delle risposte.
+- **Da verificare**: fare lo stesso controllo su una sessione di studio reale per vedere se il problema e isolato all'onboarding o diffuso.
+- **Candidato blocco**: `fix-streaming-persistence` (bassa complessita, 20 min) — prioritario se confermato impatto anche su sessioni di studio.
+
 
 
