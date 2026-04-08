@@ -31,7 +31,12 @@ from app.grafo.algoritmi import ordinamento_topologico
 from app.grafo.struttura import grafo_knowledge
 from app.llm.client import chiama_llm_singolo
 from app.llm.prompts.onboarding_extractor import build_extractor_prompt
-from app.schemas.onboarding import CampoConConfidenza, ProfiloEstratto
+from app.schemas.onboarding import (
+    AzioneDecisore,
+    CampoConConfidenza,
+    Decisione,
+    ProfiloEstratto,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +45,86 @@ TURNI_CONOSCENZA_MAX = 6
 
 # Fasi onboarding in ordine
 FASI_ONBOARDING = ("accoglienza", "conoscenza", "placement", "piano", "conclusione")
+
+# Tetto massimo turni narrativi prima di chiusura forzata (Decisione 4)
+TETTO_TURNI_NARRATIVI = 7
+
+# Priorità campi: obbligatori prima, opzionali dopo
+_CAMPI_PRIORITA = (
+    "chi_e",
+    "motivo",
+    "stile_cognitivo",
+    "tempo_disponibile",
+    "vissuto_scolastico",
+)
+
+# I primi 3 sono obbligatori per un profilo minimamente utilizzabile
+_CAMPI_OBBLIGATORI = {"chi_e", "motivo", "stile_cognitivo"}
+
+
+def decidi_prossima_mossa(
+    profilo_stato: ProfiloEstratto,
+    turni_fatti: int,
+    fase_placement: str | None = None,
+) -> Decisione:
+    """Decisore forma C: regole deterministiche, nessun LLM.
+
+    Dato lo stato corrente del profilo estratto e il numero di turni fatti,
+    decide la prossima mossa del tutor di onboarding.
+
+    Regole (in ordine di priorità):
+    1. turni_fatti >= TETTO → forza_chiusura_tetto_turni
+    2. Tutti i 5 campi con confidenza alta o media → chiudi_narrativa
+    3. Campo mancante (bassa confidenza) → chiedi_campo_mancante (per priorità)
+
+    Args:
+        profilo_stato: profilo estratto con 5 campi + confidenza
+        turni_fatti: numero di turni narrativi già eseguiti
+        fase_placement: riservato per estensioni future (placement test)
+
+    Returns:
+        Decisione con azione, campo_da_chiedere (se applicabile), motivo
+    """
+    # Regola 1: tetto turni raggiunto → chiusura forzata
+    if turni_fatti >= TETTO_TURNI_NARRATIVI:
+        return Decisione(
+            azione=AzioneDecisore.forza_chiusura_tetto_turni,
+            campo_da_chiedere=None,
+            motivo=(
+                f"Tetto di {TETTO_TURNI_NARRATIVI} turni raggiunto "
+                f"({turni_fatti} fatti), chiusura forzata"
+            ),
+        )
+
+    # Regola 2: profilo completo → chiudi narrativa
+    if profilo_stato.is_completo():
+        return Decisione(
+            azione=AzioneDecisore.chiudi_narrativa,
+            campo_da_chiedere=None,
+            motivo="Tutti i 5 campi hanno confidenza alta o media",
+        )
+
+    # Regola 3: campo mancante → chiedi per priorità
+    # campi_mancanti() ritorna solo quelli a bassa confidenza
+    mancanti = set(profilo_stato.campi_mancanti())
+
+    # Cerca il primo campo mancante nell'ordine di priorità
+    for campo in _CAMPI_PRIORITA:
+        if campo in mancanti:
+            tipo = "obbligatorio" if campo in _CAMPI_OBBLIGATORI else "opzionale"
+            return Decisione(
+                azione=AzioneDecisore.chiedi_campo_mancante,
+                campo_da_chiedere=campo,
+                motivo=f"Campo {tipo} '{campo}' mancante o a bassa confidenza",
+            )
+
+    # Non dovrebbe mai arrivare qui (is_completo sarebbe True),
+    # ma per sicurezza chiudi
+    return Decisione(
+        azione=AzioneDecisore.chiudi_narrativa,
+        campo_da_chiedere=None,
+        motivo="Nessun campo mancante trovato (fallback)",
+    )
 
 
 def _profilo_vuoto() -> ProfiloEstratto:

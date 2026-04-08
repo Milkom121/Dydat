@@ -1,6 +1,7 @@
 """Schemas Pydantic v2 per onboarding."""
 
 import uuid
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, model_validator
@@ -62,6 +63,28 @@ class ProfiloEstratto(BaseModel):
     def is_completo(self) -> bool:
         """True se tutti i 5 campi hanno confidenza alta o media."""
         return len(self.campi_mancanti()) == 0
+
+
+# --- Schema decisore forma C (B39.3.1) ---
+
+class AzioneDecisore(str, Enum):
+    """Azioni possibili del decisore onboarding forma C."""
+
+    chiedi_campo_mancante = "chiedi_campo_mancante"
+    chiudi_narrativa = "chiudi_narrativa"
+    forza_chiusura_tetto_turni = "forza_chiusura_tetto_turni"
+    passa_a_placement = "passa_a_placement"
+
+
+class Decisione(BaseModel):
+    """Output del decisore forma C: prossima mossa del tutor onboarding.
+
+    Prodotta da `decidi_prossima_mossa()`, funzione pura senza LLM.
+    """
+
+    azione: AzioneDecisore
+    campo_da_chiedere: str | None = None
+    motivo: str
 
 
 # --- Schemi endpoint onboarding ---
