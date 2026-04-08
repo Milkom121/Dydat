@@ -13,6 +13,8 @@ class UtenteResponse(BaseModel):
     contesto_personale: dict | None = None
     materie_attive: list[str] | None = None
     obiettivo_giornaliero_min: int
+    onboarding_stato: str = "not_started"
+    lingua_preferita: str = "it"
 
     model_config = {"from_attributes": True}
 
