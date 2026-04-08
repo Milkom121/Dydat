@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.2.4",
-  "total_blocks_run": 104,
+  "total_blocks_run": 105,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T00:15:00Z",
-  "last_summary": "Catena B39 ripartenza dopo stop manuale. 6 sub-blocchi completati (B39.1.1, B39.1.2, B39.1.3, B39.2.1, B39.2.2, B39.2.3). Handoff ripristinato a B39.2.4. Runner patchato con commit_handoff_if_dirty per evitare disallineamento stato/codice."
+  "last_run": "2026-04-08T22:57:55Z",
+  "last_summary": "B39.2.3 completato — Funzione estrai_profilo con chiamata Opus e retry (ca67488). Prossimo: B39.2.4, unit test integrazione estrattore. Catena B39 Onboarding Narrativo in corso, 6 sub-blocchi su 38 completati (B39.1.1, B39.1.2, B39.1.3, B39.2.1, B39.2.2, B39.2.3). Handoff ripristinato dopo stop manuale del runner per patch al meccanismo di commit stato."
 }

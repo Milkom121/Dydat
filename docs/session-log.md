@@ -398,3 +398,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.2.1 completato - Prompt estrattore profilo onboarding scritto in onboarding_extractor.py. Il prompt istruisce Opus a estrarre 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico) con confidenze (alta/media/bassa) dalla conversazione onboarding. Output JSON rigido con 2 esempi few-shot (completo e parziale). Costanti CAMPI_PROFILO e CONFIDENZE_VALIDE esportate per riuso dal decisore forma C.
 ---
+
+## 2026-04-09 00:57:55 — Blocco F10BB39.2.4
+- **Status**: CONTINUE
+- **Summary**: B39.2.3 completato — Funzione estrai_profilo con chiamata Opus e retry (ca67488). Prossimo: B39.2.4, unit test integrazione estrattore. Catena B39 Onboarding Narrativo in corso, 6 sub-blocchi su 38 completati (B39.1.1, B39.1.2, B39.1.3, B39.2.1, B39.2.2, B39.2.3). Handoff ripristinato dopo stop manuale del runner per patch al meccanismo di commit stato.
+---
