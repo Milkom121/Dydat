@@ -339,7 +339,9 @@ class TestCelebrazionePromozione:
 
         class FakeUtente:
             id = "utente_1"
+            nome = None
             preferenze_tutor = {}
+            profilo_sintetizzato = None
 
         class FakeNodo:
             id = "eq_2_grado"
@@ -355,6 +357,7 @@ class TestCelebrazionePromozione:
         with (
             patch("app.core.contesto._carica_prerequisiti_diretti", return_value=[]),
             patch("app.core.contesto._carica_stati_nodi_utente", return_value={}),
+            patch("app.core.contesto._carica_stato_nodo_utente", return_value=None),
             patch("app.core.contesto.flag_modified"),
         ):
             result = await _genera_direttiva(db, sessione, FakeUtente(), FakeNodo())
@@ -385,7 +388,9 @@ class TestCelebrazionePromozione:
 
         class FakeUtente:
             id = "utente_1"
+            nome = None
             preferenze_tutor = {}
+            profilo_sintetizzato = None
 
         class FakeNodo:
             id = "eq_1_grado"
@@ -400,6 +405,7 @@ class TestCelebrazionePromozione:
         with (
             patch("app.core.contesto._carica_prerequisiti_diretti", return_value=[]),
             patch("app.core.contesto._carica_stati_nodi_utente", return_value={}),
+            patch("app.core.contesto._carica_stato_nodo_utente", return_value=None),
         ):
             result = await _genera_direttiva(db, FakeSessione(), FakeUtente(), FakeNodo())
 
@@ -429,7 +435,9 @@ class TestCelebrazionePromozione:
 
         class FakeUtente:
             id = "utente_1"
+            nome = None
             preferenze_tutor = {}
+            profilo_sintetizzato = None
 
         class FakeNodo:
             id = "eq_2_grado"
@@ -445,6 +453,7 @@ class TestCelebrazionePromozione:
         with (
             patch("app.core.contesto._carica_prerequisiti_diretti", return_value=[]),
             patch("app.core.contesto._carica_stati_nodi_utente", return_value={}),
+            patch("app.core.contesto._carica_stato_nodo_utente", return_value=None),
             patch("app.core.contesto.flag_modified"),
         ):
             # Prima chiamata: celebrazione presente

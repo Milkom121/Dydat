@@ -354,6 +354,9 @@ async def _genera_direttiva(
             nodo_nome=nodo.nome if nodo else "(sconosciuto)",
             attivita_precedente=stato_orch.get("attivita_al_momento_sospensione", "studio"),
             dettaglio=stato_orch.get("dettaglio_sospensione"),
+            nome_utente=utente.nome,
+            profilo_sintetizzato=utente.profilo_sintetizzato,
+            ritmo_minuti=sessione.durata_prevista_min,
         )
 
     if nodo is None:
@@ -409,6 +412,10 @@ async def _genera_direttiva(
 
     pref = utente.preferenze_tutor or {}
 
+    # Verifica se il nodo è presunto padroneggiato (dal placement test)
+    stato_nodo = await _carica_stato_nodo_utente(db, utente.id, nodo.id)
+    nodo_presunto = stato_nodo.presunto if stato_nodo else False
+
     direttiva = direttiva_spiegazione(
         nodo_nome=nodo.nome,
         nodo_id=nodo.id,
@@ -420,6 +427,10 @@ async def _genera_direttiva(
         stile_cognitivo=pref.get("stile_cognitivo"),
         esempi_preferiti=pref.get("esempi_preferiti"),
         minuti_rimasti=minuti_rimasti,
+        nome_utente=utente.nome,
+        nodo_presunto=nodo_presunto,
+        profilo_sintetizzato=utente.profilo_sintetizzato,
+        ritmo_minuti=sessione.durata_prevista_min,
     )
 
     # Se c'è una promozione appena avvenuta, anteponi il contesto di celebrazione

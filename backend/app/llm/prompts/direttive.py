@@ -25,6 +25,71 @@ def _formatta_lista(items: list | None) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
+def _preambolo_caldo(
+    nome_utente: str,
+    profilo_sintetizzato: dict | None = None,
+    ritmo_minuti: int | None = None,
+) -> str:
+    """Genera istruzioni di prompt per un saluto caldo e contestualizzato.
+
+    Il preambolo istruisce il tutor a comporre un'apertura a tre elementi:
+    1. Saluto con nome
+    2. Riconoscimento del profilo (parafrasato, mai verbatim)
+    3. Citazione leggera del ritmo scelto
+
+    Riutilizzabile da tutte le direttive di "primo momento".
+    """
+    righe = [
+        f'Apri con un saluto caldo che usa il nome "{nome_utente}".',
+    ]
+
+    # Profilo: estrai i campi rilevanti e istruisci il tutor a parafrasarli
+    if profilo_sintetizzato:
+        chi_e = profilo_sintetizzato.get("chi_e")
+        motivo = profilo_sintetizzato.get("motivo")
+        stile = profilo_sintetizzato.get("stile_cognitivo")
+
+        dettagli = []
+        if chi_e:
+            dettagli.append(chi_e)
+        if motivo:
+            dettagli.append(f"studia per {motivo}")
+        if stile:
+            dettagli.append(f"preferisce {stile}")
+
+        if dettagli:
+            info = " e ".join(dettagli)
+            righe.append(
+                f"Riconosci con UNA frase, parafrasata e naturale, "
+                f"che {info} "
+                f"(NON ripetere alla lettera il profilo, parafrasa con le tue parole)."
+            )
+    else:
+        righe.append(
+            "Non hai informazioni dettagliate sul profilo: "
+            "limitati a un saluto caloroso e accogliente."
+        )
+
+    # Ritmo scelto
+    if ritmo_minuti is not None:
+        if ritmo_minuti <= 15:
+            tempo_desc = "un quarto d'ora veloce"
+        elif ritmo_minuti <= 30:
+            tempo_desc = "una mezz'ora"
+        else:
+            tempo_desc = "un'ora"
+        righe.append(
+            f"Cita con leggerezza i ~{ritmo_minuti} minuti che avete insieme "
+            f'("{tempo_desc}", "un po\' di tempo insieme", non come scadenza rigida).'
+        )
+
+    righe.append(
+        "Il tono è caldo ma non smielato, professionale ma non freddo."
+    )
+
+    return "\n".join(righe)
+
+
 def direttiva_spiegazione(
     *,
     nodo_nome: str,
@@ -37,8 +102,17 @@ def direttiva_spiegazione(
     stile_cognitivo: str | None = None,
     esempi_preferiti: str | None = None,
     minuti_rimasti: int | None = None,
+    nome_utente: str | None = None,
+    nodo_presunto: bool = False,
+    profilo_sintetizzato: dict | None = None,
+    ritmo_minuti: int | None = None,
 ) -> str:
-    """Direttiva per spiegazione di un concetto nuovo."""
+    """Direttiva per spiegazione di un concetto nuovo.
+
+    Se nome_utente è fornito, genera un primo messaggio "caldo" a tre battute.
+    Se nodo_presunto=True, il primo messaggio sarà di verifica veloce
+    invece di spiegazione.
+    """
     prereq_str = (
         ", ".join(prerequisiti_completati) if prerequisiti_completati else "nessuno"
     )
@@ -64,7 +138,47 @@ def direttiva_spiegazione(
             f" Preferisce esempi da: {esempi}."
         ),
         "",
-        (
+    ]
+
+    # Istruzioni primo turno: differenziate in base al contesto
+    if nome_utente and nodo_presunto:
+        # Nodo presunto padroneggiato: verifica veloce
+        preambolo = _preambolo_caldo(nome_utente, profilo_sintetizzato, ritmo_minuti)
+        righe.append(
+            "ISTRUZIONI PRIMO TURNO (NODO PRESUNTO PADRONEGGIATO):\n"
+            f"{preambolo}\n"
+            f"Dopo il saluto, riconosci che dal test iniziale il nodo "
+            f'"{nodo_nome}" risulta già familiare allo studente. '
+            f"Proponi subito una domanda-sonda sul concetto chiave per "
+            f"verificare se lo padroneggia davvero.\n"
+            f"NON partire con la spiegazione: il primo messaggio è di "
+            f"tipo verifica. Se l'utente risponde bene si va avanti, "
+            f"se sbaglia scenderai in modalità spiegazione normale "
+            f"(questo lo gestirai nei turni successivi).\n"
+            "Tutto in UN SOLO messaggio, massimo 8-10 righe, "
+            "tre paragrafi visivamente distinti."
+        )
+    elif nome_utente:
+        # Nodo nuovo: presentazione calda con micro-indice
+        preambolo = _preambolo_caldo(nome_utente, profilo_sintetizzato, ritmo_minuti)
+        righe.append(
+            "ISTRUZIONI PRIMO TURNO:\n"
+            f"{preambolo}\n"
+            f"Dopo il saluto, presenta il nodo \"{nodo_nome}\" con un "
+            f"micro-indice DISCORSIVO (NON un elenco puntato): "
+            f"\"Oggi vediamo X, prima Y, poi Z, e ci giochiamo un po'\". "
+            f"Due o tre tappe, linguaggio colloquiale.\n"
+            f"Chiudi con UNA domanda aperta di warm-up rispondibile "
+            f"da chi non sa ancora niente del concetto.\n"
+            "Tutto in UN SOLO messaggio con tre paragrafi visivamente "
+            "distinti, massimo 8-10 righe. NON spiegare tutto subito. "
+            "Il flusso Concreto → Problema → Formale si sviluppa "
+            "su PIÙ turni.\n"
+            "Al termine del percorso (non adesso), proponi un esercizio."
+        )
+    else:
+        # Fallback: comportamento classico (senza nome utente)
+        righe.append(
             "ISTRUZIONI:\n"
             "- Questo è il PRIMO turno: parti con un esempio concreto "
             "dalla vita reale (2-3 frasi) e chiudi con una domanda "
@@ -74,8 +188,7 @@ def direttiva_spiegazione(
             "- Massimo 4-5 righe per questo turno. Lo studente "
             "deve rispondere prima di proseguire.\n"
             "- Al termine del percorso (non adesso), proponi un esercizio."
-        ),
-    ]
+        )
 
     if minuti_rimasti is not None:
         righe.append(f"\nTEMPO RIMASTO: {minuti_rimasti} minuti.")
@@ -329,17 +442,38 @@ def direttiva_ripresa_sessione(
     nodo_nome: str,
     attivita_precedente: str,
     dettaglio: str | None = None,
+    nome_utente: str | None = None,
+    profilo_sintetizzato: dict | None = None,
+    ritmo_minuti: int | None = None,
 ) -> str:
     """Direttiva per ripresa di una sessione sospesa."""
-    return (
-        "ATTIVITÀ: Ripresa sessione\n"
-        f"NODO: {nodo_nome}\n"
-        f"ATTIVITÀ PRECEDENTE: {attivita_precedente}\n"
-        f"CONTESTO: Lo studente aveva sospeso la sessione. {dettaglio or ''}\n\n"
-        "ISTRUZIONI: Riaccoglilo brevemente (\"Bentornato! Stavamo lavorando su...\"). "
-        "Riprendi da dove vi eravate fermati senza ripetere spiegazioni già date. "
-        "Se l'attività era un esercizio, riproponi lo stesso esercizio."
-    )
+    righe = [
+        "ATTIVITÀ: Ripresa sessione",
+        f"NODO: {nodo_nome}",
+        f"ATTIVITÀ PRECEDENTE: {attivita_precedente}",
+        f"CONTESTO: Lo studente aveva sospeso la sessione. {dettaglio or ''}",
+        "",
+    ]
+
+    if nome_utente:
+        preambolo = _preambolo_caldo(nome_utente, profilo_sintetizzato, ritmo_minuti)
+        righe.append(
+            "ISTRUZIONI:\n"
+            f"{preambolo}\n"
+            "Dopo il saluto, riprendi da dove vi eravate fermati: "
+            "\"Bentornato! Stavamo lavorando su...\". "
+            "La mappa breve qui è diversa: ripartiamo da dove ci siamo fermati. "
+            "NON ripetere spiegazioni già date. "
+            "Se l'attività era un esercizio, riproponi lo stesso esercizio."
+        )
+    else:
+        righe.append(
+            "ISTRUZIONI: Riaccoglilo brevemente (\"Bentornato! Stavamo lavorando su...\"). "
+            "Riprendi da dove vi eravate fermati senza ripetere spiegazioni già date. "
+            "Se l'attività era un esercizio, riproponi lo stesso esercizio."
+        )
+
+    return "\n".join(righe)
 
 
 def direttiva_feynman(
