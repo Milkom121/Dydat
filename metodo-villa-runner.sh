@@ -88,23 +88,29 @@ format_summary_as_bullets() {
         echo "• (nessuna descrizione)"
         return
     fi
-    SUMMARY_RAW="$raw" python -c "
-import os, re
+    # PYTHONIOENCODING=utf-8 garantisce che stdout di python sia UTF-8 anche su
+    # Windows Git Bash (dove il default e spesso cp1252). Senza questo, caratteri
+    # unicode come il bullet vengono stripped o mangled.
+    # Uso \u escape sequence per il bullet cosi il carattere non passa dalla
+    # command line (problema encoding) ma viene costruito da Python stesso.
+    PYTHONIOENCODING=utf-8 SUMMARY_RAW="$raw" python -c "
+import os, re, sys
 text = os.environ.get('SUMMARY_RAW', '').strip()
 # Normalizza spazi e newline multipli in singolo spazio
 text = re.sub(r'\s+', ' ', text)
+bullet = '\u2022 '
 if not text:
-    print('• (nessuna descrizione)')
+    sys.stdout.write(bullet + '(nessuna descrizione)\n')
 else:
     # Split su: fine frase (. seguito da maiuscola o cifra), em dash, punto e virgola
-    parts = re.split(r'(?<=\.) (?=[A-Z0-9])| — |; ', text)
+    parts = re.split(r'(?<=\.) (?=[A-Z0-9])| \u2014 | - |; ', text)
     parts = [p.strip() for p in parts if p.strip()]
     if not parts:
-        print('• ' + text)
+        sys.stdout.write(bullet + text + '\n')
     else:
         for p in parts:
-            print('• ' + p)
-" 2>/dev/null || echo "• $raw"
+            sys.stdout.write(bullet + p + '\n')
+" 2>/dev/null || echo "- $raw"
 }
 
 send_notification() {
@@ -179,15 +185,22 @@ ${summary_bullets}"
 ${next}"
     fi
 
-    # Sezione Dispatch: SOLO sugli stati di STOP (tutti tranne BLOCCO_OK)
-    # Include istruzioni chiare su cosa serve e come usarla.
+    # Sezione Dispatch: SOLO sugli stati di STOP (tutti tranne BLOCCO_OK).
+    # Fornisce al fondatore istruzioni chiare per riprendere il lavoro da
+    # smartphone usando la modalita Dispatch dell'app Claude.
     if [[ "$status" != "BLOCCO_OK" ]]; then
         local win_dir; win_dir="$(cd "$PROJECT_DIR" && pwd -W 2>/dev/null || pwd)"
+        local project_label; project_label="$(basename "$PROJECT_DIR")"
         local dispatch_prompt="Leggi i file ${win_dir}\\.claude\\handoff.md e ${win_dir}\\${ROADMAP}. Fammi il punto della situazione e dimmi cosa serve per procedere."
         msg+="
 
 ━━━━━━━━━━━━━━━━━━━
-💡 Se vuoi riprendere il lavoro su Claude Code, copia il testo qui sotto e incollalo come primo messaggio in una nuova sessione:
+💡 Vuoi riprendere il lavoro dal telefono?
+Puoi usare Claude Code in modalita Dispatch direttamente dallo smartphone:
+
+1. Apri l'app Claude sul telefono
+2. Vai in Dispatch e avvia una nuova sessione sul repo ${project_label}
+3. Incolla il testo qui sotto come primo messaggio:
 
 ${dispatch_prompt}"
     fi
