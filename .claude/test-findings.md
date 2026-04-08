@@ -194,5 +194,22 @@ Priorita test: Scenari 4 (esercizio fullscreen), 5 (recap narrativo), 6 (mappa),
 ## Pre-esistenti (fuori scope Fase 7-9)
 - **PRE-01** Test di posizionamento promesso ma non erogato (onboarding)
 
+---
+
+# Test manuale 2026-04-08 — primi finding
+
+## DEV-01 — Bottone "Login dev" salta completamente l'onboarding anche per utenti freschi
+- **Severita**: MEDIA (blocca i test manuali di B33.5 e ogni altra verifica che richiede un utente nuovo con profilo onboardato)
+- **Dove**: `frontend/lib/presentation/login_screen/login_screen.dart` funzione `_handleDevLogin` (~riga 369)
+- **Sintomo**: Premendo "Login dev" su un DB senza utenti, l'app prova login → fallisce → fa `register()` via authProvider → autenticazione OK → il router globale fa redirect a `/home`. L'onboarding (`/onboarding`) non viene MAI raggiunto, quindi il nuovo utente atterra su home con profilo vuoto. Confermato il 2026-04-08 durante il tentativo di test B33.5: dopo wipe DB + Login dev, schermata Home visibile con "Benvenuto su Dydat!" generico e 0/0/0 stats, nessuna traccia di onboarding.
+- **Causa tecnica**: due concause:
+  1. `_handleDevLogin` dopo il ramo `register()` non naviga a `/onboarding`, si limita a fare `HapticFeedback.lightImpact()`.
+  2. Il router (`app_router.dart` `redirect` ~riga 91) non ha nessun check "ha completato l'onboarding?" — se `isAuthenticated == true` e sei su login/splash/registration, vieni sparato su `/home`, indipendentemente dallo stato del profilo. Il flusso normale funziona solo perche LoginScreen ha il link "Nuovo utente? Inizia qui" che porta a `/onboarding` PRIMA dell'autenticazione, e l'onboarding stesso termina con un handoff a `/registration`.
+- **Fix proposto**: due opzioni, non esclusive:
+  - (a) In `_handleDevLogin`, dopo una `register()` riuscita (quindi solo al primo login dev con DB vuoto), navigare a `/onboarding` invece di lasciare che il router rediriga a home. Riconoscere che e una registrazione fresca usando lo stato pre-login (se il login iniziale fallisce ed e stato necessario il register, allora e nuovo).
+  - (b) Piu pulito ma piu invasivo: il router controlla `profilo_sintetizzato` dell'utente autenticato; se e `null`, rediriga a `/onboarding` invece che a `/home`. Cosi il fix vale per QUALSIASI utente appena creato, non solo il dev. Richiede che lo stato utente sia disponibile nel router (probabilmente gia lo e via `authProvider`).
+- **Workaround per test odierno**: non usare Login dev, usare "Nuovo utente? Inizia qui" nella LoginScreen e fare registrazione manuale con `dev@dydat.dev` / `dev12345` / `Dev User` alla fine dell'onboarding.
+- **Candidato blocco**: `fix-dev-login-onboarding` (basso complesso, 20 min) — oppure integrarlo nel redesign onboarding di Fase 10 B39 scegliendo l'opzione (b).
+
 
 

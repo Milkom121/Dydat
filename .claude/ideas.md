@@ -3,6 +3,31 @@
 Idee e intuizioni emerse durante le sessioni di sviluppo che non fanno parte del blocco corrente.
 Ogni voce ha data e contesto. Verranno riprese in fase di pianificazione.
 
+## 2026-04-08 - Onboarding ibrido a narrazione libera + estrazione AI (input obbligatorio per B39 "Momento Wow")
+- **Contesto**: Emersa durante il test manuale di B33.5 del 2026-04-08. Villa stava per iniziare l'onboarding per testare il primo turno caldo e ha proposto un approccio alternativo: invece di un questionario strutturato (chi sei / perche studi / come preferisci imparare), lasciare che l'utente si racconti liberamente in prima persona e che l'AI estragga il profilo dalla narrazione, facendo domande di chiarimento solo sui buchi.
+- **Motivazione di Villa**: il questionario strutturato attuale sembra "burocratico" e rompe il tono caldo del tutor prima ancora che il tutor entri in scena. Un racconto libero crea fiducia, cattura sfumature emotive (vissuto scolastico, rapporto con la materia, aspettative) che il form non raccoglie, e rispetta l'autonomia dell'utente.
+- **Versione che funziona — approccio IBRIDO** (non chat libera pura — vedi sezione "rischi" sotto):
+  1. **Apertura guidata ma aperta**: il tutor propone un singolo turno libero con esempio breve tra parentesi per evitare la sindrome della pagina bianca. Esempio: *"In due righe, raccontami cosa ti ha spinto a scaricare Dydat — niente formalita, mi basta capire da dove vieni. (Tipo: 'sono un quarantenne che vuole riprendere la matematica dopo anni perche mi serve sul lavoro', o 'curioso di natura, studio per piacere'.)"*
+  2. **Un singolo turno di narrazione libera**, con range raccomandato (20-400 parole). L'AI estrae quello che trova nei campi strutturati che il backend richiede (`chi_e`, `motivo`, `stile_cognitivo`, eventuali altri).
+  3. **1-3 domande mirate SOLO sui buchi**, senza re-chiedere quello che l'utente ha gia detto. Es. se ha raccontato tutto tranne lo stile cognitivo: *"Mi hai detto tutto quello che mi serve, manca solo una cosa: quando studi, ti viene piu facile partire da esempi concreti oppure dalla regola astratta?"*
+  4. **NIENTE riepilogo verbatim finale**: non dire *"quindi se ho capito bene, sei X, Y, Z, corretto?"* — quello crea l'effetto "call center che rilegge il ticket" ed e proprio l'errore che UX-01 decisione 3 ci ha gia insegnato a evitare. L'AI usa direttamente il profilo raccolto nel primo turno caldo della prima sessione (B33.5); se ha frainteso, l'utente lo corregge conversazionalmente durante la sessione vera.
+  5. **Test di posizionamento** opzionale alla fine, e questa volta lo implementiamo davvero fixando PRE-01 (oggi il tutor lo propone ma non lo eroga).
+- **Peso della chat vocale in questo ragionamento**: punto critico sollevato da Villa. Un quarantenne su smartphone scrive lento, e chiedergli 300 parole di racconto via tastiera e una barriera concreta all'adozione. **Per rendere sostenibile un onboarding narrativo, la chat vocale non e un nice-to-have, e un vincolo progettuale**. L'utente deve poter **parlare** al posto di scrivere durante l'onboarding (speech-to-text nel campo di input, idealmente con feedback visivo durante il parlato). Senza chat vocale, anche l'approccio ibrido rischia di diventare una rottura di scatole. Collegare esplicitamente questa idea con la voce del 2026-02-25 *"Voice input per risposte studente"* e con B40 *"Sistema Audio Base"* di Fase 10 — B39 e B40 vanno progettati insieme, non in sequenza indipendente, perche B39 dipende dal vocale di B40 per funzionare davvero.
+- **Rischi identificati che l'ibrido mitiga** (se si facesse chat libera pura sarebbero letali):
+  1. **Pagina bianca** — mitigato dall'esempio tra parentesi nel prompt iniziale.
+  2. **Costo di digitazione su mobile** — mitigato dalla chat vocale (vedi sopra).
+  3. **Affidabilita estrazione AI** — mitigato dalle domande mirate sui buchi.
+  4. **Sindrome customer care nel recap** — mitigato dall'eliminazione del recap esplicito (il profilo viene usato direttamente in B33.5).
+  5. **Contenuti sensibili** (utente che si apre troppo) — va gestito con un prompt che istruisce il tutor a non approfondire temi emotivi delicati in fase di onboarding, e a spostare il focus sui temi di studio con gentilezza.
+  6. **Utenti "wrong mode"** (chi lo usa come chatbot generico, chi scrive in inglese, chi chiede di Dydat invece di rispondere) — prompt guardrail chiari + rediirezione morbida.
+  7. **Testabilita** — la chat libera e meno testabile della forma strutturata. Serviranno test su casi rappresentativi (racconto breve, racconto lungo, contenuto fuori tema, lingua sbagliata, ecc.) invece di unit test rigidi.
+- **Direzione**: **questa idea va trattata come input obbligatorio della sessione di discovery di B39** "Onboarding con Momento Wow" in Fase 10. Non va implementata ora. Quando inizieremo a progettare B39, questa nota va letta insieme a:
+  - `docs/discussions/ux-01-primo-turno-caldo.md` (decisioni di design gia prese su profilo utente e primo turno caldo)
+  - `.claude/test-findings.md` PRE-01 (placement test non erogato — va fixato qui)
+  - B40 Sistema Audio Base (dipendenza — il vocale deve essere disponibile prima che B39 sia davvero usabile)
+  - Questa voce stessa
+- **Priorita**: alta come input di design, ma non urgente — si attiva quando si apre la sessione di discovery di B39.
+
 ## 2026-04-08 - Modello temporale Dydat e neuroscienze dell'apprendimento mobile (macro-riprogettazione)
 - **Contesto**: Emersa durante la sessione Cowork di design del "primo turno caldo" (UX-01). Discutendo del "piano sessione" da 15/30/60 minuti, Villa ha sollevato il punto piu grosso: quei numeri sono gia enormi per come funziona l'attenzione su smartphone, e dovremmo ripensare da zero il modello temporale di Dydat tenendo conto delle neuroscienze dell'apprendimento e del modo in cui gli esseri umani usano davvero il telefono.
 - **Direzione**: spostare da "sessione lunga monolitica" a "contenitore che ospita tanti micro-cicli brevi":
