@@ -34,14 +34,31 @@ TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
 send_telegram() {
     [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]] && return 0
     local msg="$1"
+    local silent="${2:-false}"  # se "true" la notifica arriva senza suono/vibrazione
     # Usa Python per gestire correttamente UTF-8/emoji su Git Bash Windows
     python -c "
 import json, urllib.request
-data = json.dumps({'chat_id': '${TELEGRAM_CHAT_ID}', 'text': '''${msg}'''}).encode('utf-8')
+data = json.dumps({
+    'chat_id': '${TELEGRAM_CHAT_ID}',
+    'text': '''${msg}''',
+    'disable_notification': ${silent}
+}).encode('utf-8')
 req = urllib.request.Request('https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage', data=data, headers={'Content-Type': 'application/json; charset=utf-8'})
 try: urllib.request.urlopen(req)
 except: pass
 " >> "$PROJECT_DIR/$RUNNER_LOG" 2>&1 || true
+}
+
+# Formatta un numero di minuti in "Xmin" oppure "Xh Ymin" se >= 60.
+format_minutes() {
+    local m="${1:-0}"
+    if [[ $m -lt 60 ]]; then
+        echo "${m}min"
+    else
+        local h=$((m / 60))
+        local r=$((m % 60))
+        echo "${h}h ${r}min"
+    fi
 }
 
 send_notification() {
@@ -52,40 +69,80 @@ send_notification() {
     elif command -v powershell.exe &>/dev/null; then powershell.exe -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('$2','$1')" 2>/dev/null || true; fi
 }
 
-# Resoconto Telegram con dettagli — chiamato solo quando il runner si ferma
+# Resoconto Telegram con dettagli.
+# Parametri posizionali:
+#   1 status          — BLOCCO_OK / CHECKPOINT / PHASE_COMPLETE / ERROR / BLOCKED / MISSING / FAILED / LIMITE_RAGGIUNTO
+#   2 bid             — identificativo del blocco (es. F10BB39.2.4)
+#   3 blocks_run      — numero blocchi eseguiti in questa sessione (contatore interno)
+#   4 elapsed_total   — minuti dall'inizio della sessione runner
+#   5 summary         — testo del SUMMARY dal handoff
+#   6 next            — testo del NEXT dal handoff
+#   7 elapsed_block   — minuti di durata del singolo blocco appena chiuso (default 0)
+#
+# Comportamento:
+# - BLOCCO_OK → notifica SILENZIOSA (disable_notification=true), senza sezione Dispatch
+# - Tutti gli altri stati di STOP → notifica SONORA e include la sezione Dispatch con istruzioni
 send_telegram_report() {
-    local status="$1" bid="$2" blocks_run="$3" elapsed="$4" summary="$5" next="$6"
-    local icon
+    local status="$1" bid="$2" blocks_run="$3" elapsed_total="$4" summary="$5" next="$6" elapsed_block="${7:-0}"
+    local icon label silent="false"
     case "$status" in
         CONTINUE) return 0;;  # nessuna notifica su CONTINUE generico — usa BLOCCO_OK
-        BLOCCO_OK) icon="✔️";;  # blocco completato con successo, runner prosegue
-        CHECKPOINT) icon="⏸️";;
-        PHASE_COMPLETE) icon="✅";;
-        ERROR) icon="❌";;
-        BLOCKED) icon="🚧";;
-        MISSING) icon="⚠️";;
-        FAILED) icon="💥";;
-        *) icon="❓";;
+        BLOCCO_OK)       icon="✔️"; label="Blocco completato";        silent="true";;
+        CHECKPOINT)      icon="⏸️"; label="Checkpoint — decisione richiesta";;
+        PHASE_COMPLETE)  icon="✅"; label="FASE COMPLETATA";;
+        ERROR)           icon="❌"; label="Errore";;
+        BLOCKED)         icon="🚧"; label="Bloccato";;
+        MISSING)         icon="⚠️"; label="Handoff mancante";;
+        FAILED)          icon="💥"; label="Sessione fallita";;
+        "LIMITE RAGGIUNTO") icon="🏁"; label="Limite blocchi raggiunto";;
+        *)               icon="❓"; label="$status";;
     esac
-    # Costruisci prompt pronto per Dispatch (path Windows completo)
-    local win_dir; win_dir="$(cd "$PROJECT_DIR" && pwd -W 2>/dev/null || pwd)"
-    local dispatch_prompt="Leggi i file ${win_dir}\\.claude\\handoff.md e ${win_dir}\\${ROADMAP}. Fammi il punto della situazione e dimmi cosa serve per procedere."
 
     local project_name; project_name="$(basename "$PROJECT_DIR")"
-    local msg="${icon} ${project_name} — ${status}
+    local total_fmt block_fmt
+    total_fmt="$(format_minutes "$elapsed_total")"
+    block_fmt="$(format_minutes "$elapsed_block")"
 
-Blocco: ${bid} (${blocks_run} eseguiti)
-Tempo: ${elapsed} min
+    # Sezione tempo: per BLOCCO_OK mostra entrambi (blocco + totale), per stop solo il totale
+    local time_section
+    if [[ "$status" == "BLOCCO_OK" ]]; then
+        time_section="⏱ Blocco: ${block_fmt}   |   Sessione: ${total_fmt}"
+    else
+        time_section="⏱ Sessione totale: ${total_fmt}"
+    fi
 
-Fatto:
-${summary}
+    # Header principale
+    local msg="${icon} ${project_name}
+${label}
 
-Prossimo:
-${next:-Nessuna indicazione}
+📦 ${bid}   (${blocks_run}/${MAX_BLOCKS})
+${time_section}
 
-Copia su Dispatch:
+📝 Fatto:
+${summary}"
+
+    # Sezione Prossimo: inclusa solo se next e' valorizzato
+    if [[ -n "$next" && "$next" != "Nessuna indicazione" ]]; then
+        msg+="
+
+➡️ Prossimo:
+${next}"
+    fi
+
+    # Sezione Dispatch: SOLO sugli stati di STOP (tutti tranne BLOCCO_OK)
+    # Include istruzioni chiare su cosa serve e come usarla.
+    if [[ "$status" != "BLOCCO_OK" ]]; then
+        local win_dir; win_dir="$(cd "$PROJECT_DIR" && pwd -W 2>/dev/null || pwd)"
+        local dispatch_prompt="Leggi i file ${win_dir}\\.claude\\handoff.md e ${win_dir}\\${ROADMAP}. Fammi il punto della situazione e dimmi cosa serve per procedere."
+        msg+="
+
+━━━━━━━━━━━━━━━━━━━
+💡 Se vuoi riprendere il lavoro su Claude Code, copia il testo qui sotto e incollalo come primo messaggio in una nuova sessione:
+
 ${dispatch_prompt}"
-    send_telegram "$msg"
+    fi
+
+    send_telegram "$msg" "$silent"
 }
 
 read_file_safe() { local f="$PROJECT_DIR/$1"; [[ -f "$f" ]] && cat "$f" || echo ""; }
@@ -294,14 +351,16 @@ main() {
     log "${BOLD}=== Inizio ciclo ===${NC}\n"
     while [[ $br -lt $MAX_BLOCKS ]]; do
         br=$((br+1)); local bid="F${cp}B${cb}"
+        local block_st; block_st="$(date +%s)"  # tempo inizio blocco per metrica per-block
         log "━━━ ${BOLD}Blocco $bid ($br/$MAX_BLOCKS)${NC} ━━━"
         check_git_branch
         local pr; pr="$(build_prompt "$cp" "$cb" "$hc" "$fb")"
         if ! run_claude_session "$pr" "$bid"; then
             local el_now; el_now="$(( ($(date +%s) - st) / 60 ))"
+            local el_block; el_block=$(( ($(date +%s) - block_st) / 60 ))
             append_session_log "$bid" "FAILED" "Errore o timeout"; update_progress "$cp" "$cb" "error" "Fallito"
             send_notification "Metodo Villa" "Blocco $bid fallito"
-            send_telegram_report "FAILED" "$bid" "$br" "$el_now" "Sessione crashata o timeout" ""; break; fi
+            send_telegram_report "FAILED" "$bid" "$br" "$el_now" "Sessione crashata o timeout" "" "$el_block"; break; fi
         local s; s="$(parse_handoff_status)"; local sm; sm="$(parse_handoff_summary)"; local sn; sn="$(parse_handoff_next)"
         # Aggiorna fase/blocco dall'handoff (sono stringhe, non numeri)
         local np nb; np="$(parse_handoff_phase)"; nb="$(parse_handoff_block)"
@@ -310,27 +369,28 @@ main() {
         log "Status: ${BOLD}$s${NC} — $sm"
         append_session_log "$bid" "$s" "$sm"; update_progress "$cp" "$cb" "$s" "$sm"
         local el_now; el_now="$(( ($(date +%s) - st) / 60 ))"
+        local el_block; el_block=$(( ($(date +%s) - block_st) / 60 ))
         case "$s" in
             CONTINUE) log "${GREEN}Continuo${NC}"; hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false"
                 commit_handoff_if_dirty "$bid"
                 push_current_branch
-                send_telegram_report "BLOCCO_OK" "$bid" "$br" "$el_now" "$sm" "$sn";;
+                send_telegram_report "BLOCCO_OK" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block";;
             CHECKPOINT) log "${YELLOW}CHECKPOINT — decisione umana${NC}"; send_notification "Metodo Villa" "Checkpoint $bid"
                 commit_handoff_if_dirty "$bid"
                 push_current_branch
-                send_telegram_report "CHECKPOINT" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
+                send_telegram_report "CHECKPOINT" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             PHASE_COMPLETE) log "${GREEN}FASE $cp COMPLETATA${NC}"; send_notification "Metodo Villa" "Fase $cp completata!"
                 commit_handoff_if_dirty "$bid"
                 push_current_branch
-                send_telegram_report "PHASE_COMPLETE" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
+                send_telegram_report "PHASE_COMPLETE" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             ERROR) log "${RED}ERRORE $bid${NC}"; send_notification "Metodo Villa" "Errore $bid"
-                send_telegram_report "ERROR" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
+                send_telegram_report "ERROR" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             BLOCKED) log "${YELLOW}BLOCCATO${NC}"; send_notification "Metodo Villa" "Bloccato $bid"
                 commit_handoff_if_dirty "$bid"
                 push_current_branch
-                send_telegram_report "BLOCKED" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
+                send_telegram_report "BLOCKED" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             MISSING) log "${RED}Handoff mancante${NC}"; send_notification "Metodo Villa" "Handoff mancante"
-                send_telegram_report "MISSING" "$bid" "$br" "$el_now" "Handoff non trovato" ""; break;;
+                send_telegram_report "MISSING" "$bid" "$br" "$el_now" "Handoff non trovato" "" "$el_block"; break;;
             *) log "${YELLOW}Status ignoto: $s${NC}"; break;;
         esac
         [[ $br -lt $MAX_BLOCKS ]] && sleep 5
@@ -340,7 +400,7 @@ main() {
     if [[ $br -ge $MAX_BLOCKS ]]; then
         log "${YELLOW}Limite $MAX_BLOCKS raggiunto${NC}"
         send_notification "Metodo Villa" "$MAX_BLOCKS blocchi in ${el}min"
-        send_telegram_report "LIMITE RAGGIUNTO" "$bid" "$br" "$el" "Completati $MAX_BLOCKS blocchi senza problemi" "$(parse_handoff_next)"
+        send_telegram_report "LIMITE RAGGIUNTO" "$bid" "$br" "$el" "Completati $MAX_BLOCKS blocchi senza problemi" "$(parse_handoff_next)" "0"
     fi
     echo -ne '\a'
 }
