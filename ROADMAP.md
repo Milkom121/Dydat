@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (8/38 sub-blocchi completati)
+- [>] **Stato**: in corso (9/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -431,11 +431,12 @@
 - **Gate**: 23+ unit test su 10+ scenari, 511 backend verdi
 
 #### Blocco B39.3.2 — Integrazione decisore nell'endpoint /onboarding/turno
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato
 - **Complessita'**: media
 - **Descrizione**: Dopo ogni turno utente nell'endpoint `/onboarding/turno`, chiamare l'estrattore di B39.2.3 per aggiornare il profilo, poi chiamare il decisore di B39.3.1 per determinare la prossima mossa del tutor. L'endpoint ritorna nella response la fase corrente e l'azione decisa.
 - **File da toccare**: `backend/app/api/onboarding.py` (modifica endpoint turno), eventualmente `backend/app/core/onboarding.py`
 - **Gate**: integration test del flusso turno completo con mock LLM, tutti i test esistenti passano
+- **Note**: elabora_decisione_onboarding() in core/onboarding.py. Evento SSE 'decisione_onboarding' con azione/campo_da_chiedere/motivo/fase_corrente/campi_completi. aggiorna_fase_onboarding non transisce piu' da sola a placement (gestito dal decisore). 13 nuovi test, 2 aggiornati. 524 backend verdi (10 skipped).
 
 #### Blocco B39.4.1 — Fix completa_onboarding scrittura profilo (ONB-01)
 - [ ] **Stato**: da fare
