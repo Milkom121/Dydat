@@ -36,18 +36,34 @@ send_telegram() {
     [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]] && return 0
     local msg="$1"
     local silent="${2:-false}"  # se "true" la notifica arriva senza suono/vibrazione
-    # Usa Python per gestire correttamente UTF-8/emoji su Git Bash Windows
+    # Passa tutto via variabili d'ambiente per evitare problemi di escape:
+    # - backslash Windows nei percorsi (es. \.claude\handoff.md) rompe le stringhe Python inline
+    # - apici, triple-quote e caratteri speciali nei messaggi rompono l'interpolazione bash->Python
+    # - true/false bash != True/False Python (NameError silenzioso)
+    # Le env vars passano i valori raw senza interpretazione.
+    TG_TOKEN="$TELEGRAM_BOT_TOKEN" \
+    TG_CHAT="$TELEGRAM_CHAT_ID" \
+    TG_MSG="$msg" \
+    TG_SILENT="$silent" \
     python -c "
-import json, urllib.request
-data = json.dumps({
-    'chat_id': '${TELEGRAM_CHAT_ID}',
-    'text': '''${msg}''',
-    'disable_notification': ${silent}
-}).encode('utf-8')
-req = urllib.request.Request('https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage', data=data, headers={'Content-Type': 'application/json; charset=utf-8'})
-try: urllib.request.urlopen(req)
-except: pass
-" >> "$PROJECT_DIR/$RUNNER_LOG" 2>&1 || true
+import json, os, sys, urllib.request
+try:
+    data = json.dumps({
+        'chat_id': os.environ['TG_CHAT'],
+        'text': os.environ['TG_MSG'],
+        'disable_notification': os.environ.get('TG_SILENT', 'false').lower() == 'true',
+    }).encode('utf-8')
+    req = urllib.request.Request(
+        'https://api.telegram.org/bot' + os.environ['TG_TOKEN'] + '/sendMessage',
+        data=data,
+        headers={'Content-Type': 'application/json; charset=utf-8'},
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        print('TG OK status=' + str(resp.status))
+except Exception as e:
+    print('TG ERR ' + type(e).__name__ + ': ' + str(e)[:300], file=sys.stderr)
+    sys.exit(1)
+" >> "$PROJECT_DIR/$RUNNER_LOG" 2>&1 || log_verbose "send_telegram: chiamata fallita (vedi runner-log.txt)"
 }
 
 # Formatta un numero di minuti in "Xmin" oppure "Xh Ymin" se >= 60.
