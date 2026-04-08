@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (9/38 sub-blocchi completati)
+- [>] **Stato**: in corso (10/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -439,11 +439,12 @@
 - **Note**: elabora_decisione_onboarding() in core/onboarding.py. Evento SSE 'decisione_onboarding' con azione/campo_da_chiedere/motivo/fase_corrente/campi_completi. aggiorna_fase_onboarding non transisce piu' da sola a placement (gestito dal decisore). 13 nuovi test, 2 aggiornati. 524 backend verdi (10 skipped).
 
 #### Blocco B39.4.1 — Fix completa_onboarding scrittura profilo (ONB-01)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato
 - **Complessita'**: media
 - **Descrizione**: La funzione `completa_onboarding` in `backend/app/core/onboarding.py` deve scrivere `profilo_sintetizzato`, `contesto_personale`, `preferenze_tutor` sull'utente usando i dati estratti dalla conversazione (fix del finding ONB-01: oggi non vengono mai scritti).
 - **File da toccare**: `backend/app/core/onboarding.py`, `backend/app/api/onboarding.py` (schema payload)
 - **Gate**: integration test verifica i 3 campi popolati nel DB dopo completamento, ONB-01 chiuso
+- **Note**: 3 helper (_costruisci_profilo_sintetizzato, _costruisci_contesto_personale, _costruisci_preferenze_tutor). Profilo estratto letto da stato_orchestratore. Payload ha priorita' su profilo estratto. onboarding_stato aggiornato a COMPLETED. Gestione errore su profilo malformato. 16 nuovi test. 540 backend verdi (10 skipped).
 
 #### Blocco B39.4.2 — Fix persistenza streaming turni (ONB-02)
 - [ ] **Stato**: da fare

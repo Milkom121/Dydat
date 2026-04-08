@@ -10,9 +10,9 @@
 ## Date
 
 - **Data creazione**: 2026-02-18
-- **Data ultimo aggiornamento**: 2026-04-07
-- **Data ultima sessione**: 2026-04-07 (S49 — B35.14, Fix post-test manuale nottata)
-- **Prossima sessione**: S50 — B39 (Fase 10, Onboarding con Momento Wow)
+- **Data ultimo aggiornamento**: 2026-04-09
+- **Data ultima sessione**: 2026-04-09 (S51 — B39.4.1, Fix completa_onboarding scrittura profilo)
+- **Prossima sessione**: S52 — B39.4.2 (Fix persistenza streaming turni ONB-02)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 
