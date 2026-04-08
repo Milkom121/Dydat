@@ -3,7 +3,7 @@ set -euo pipefail
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
-MAX_BLOCKS=10; TIMEOUT_MINUTES=30; PROJECT_DIR="$(pwd)"; DRY_RUN=false; VERBOSE=false; NOTIFY=true; RESUME=false; TARGET_PHASE=""
+MAX_BLOCKS=10; TIMEOUT_MINUTES=30; PROJECT_DIR="$(pwd)"; DRY_RUN=false; VERBOSE=false; NOTIFY=true; RESUME=false; TARGET_PHASE=""; TEST_TELEGRAM=false
 CLAUDE_MD="CLAUDE.md"; PROJECT_CONFIG="PROJECT_CONFIG.md"; ROADMAP="ROADMAP.md"; PROGRESS_FILE="docs/progress.json"
 HANDOFF_FILE=".claude/handoff.md"; SESSION_LOG="docs/session-log.md"; RUNNER_LOG="docs/runner-log.txt"
 
@@ -12,7 +12,8 @@ while [[ $# -gt 0 ]]; do
         --dry-run) DRY_RUN=true; shift;; --max-blocks) MAX_BLOCKS="$2"; shift 2;; --phase) TARGET_PHASE="$2"; shift 2;;
         --timeout) TIMEOUT_MINUTES="$2"; shift 2;; --project) PROJECT_DIR="$2"; shift 2;; --verbose) VERBOSE=true; shift;;
         --no-notify) NOTIFY=false; shift;; --resume) RESUME=true; shift;;
-        -h|--help) echo "Uso: ./metodo-villa-runner.sh [--dry-run] [--max-blocks N] [--phase N] [--timeout N] [--verbose] [--resume]"; exit 0;;
+        --test-telegram) TEST_TELEGRAM=true; shift;;
+        -h|--help) echo "Uso: ./metodo-villa-runner.sh [--dry-run] [--max-blocks N] [--phase N] [--timeout N] [--verbose] [--resume] [--test-telegram]"; exit 0;;
         *) echo -e "${RED}Opzione sconosciuta: $1${NC}"; exit 1;;
     esac
 done
@@ -341,6 +342,51 @@ main() {
     echo -e "${BOLD}╚══════════════════════════════════════════════╝${NC}\n"
     log "Config: max=$MAX_BLOCKS timeout=${TIMEOUT_MINUTES}min phase=${TARGET_PHASE:-tutte}"
     $DRY_RUN && log "${YELLOW}DRY RUN${NC}"
+
+    # Modalita TEST TELEGRAM: invia 3 messaggi di prova e esci.
+    # Utile per validare il formato dei messaggi senza eseguire un ciclo di sviluppo vero.
+    # Salta la validazione ambiente (non servono Claude CLI, git, progress.json).
+    if $TEST_TELEGRAM; then
+        mkdir -p "$PROJECT_DIR/docs" "$PROJECT_DIR/.claude"
+        [[ -f "$PROJECT_DIR/$RUNNER_LOG" ]] || echo -e "# Metodo Villa Runner Log\n# $(date)\n" > "$PROJECT_DIR/$RUNNER_LOG"
+        log "${BOLD}=== MODALITA TEST TELEGRAM ===${NC}"
+        if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
+            log "${RED}Credenziali Telegram non configurate in .env.runner${NC}"
+            log "${RED}Configura TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID prima di testare.${NC}"
+            exit 1
+        fi
+        log "Credenziali Telegram trovate. Invio 3 messaggi di prova..."
+        echo
+
+        log "${BLUE}[1/3] BLOCCO_OK (notifica silenziosa, senza dispatch)${NC}"
+        send_telegram_report "BLOCCO_OK" "F10BB39.2.4" "12" "28" \
+            "B39.2.4 completato — Unit test integrazione estrattore. 5 scenari coperti (utente ricco, parziale, off-topic, vuoto, fallimento LLM con retry). 15 nuovi test, 424 backend verdi." \
+            "B39.3.1 — Rules-based decisor puro Python" \
+            "4"
+        log "${GREEN}Test 1 inviato${NC}"
+        sleep 3
+
+        log "${BLUE}[2/3] PHASE_COMPLETE (notifica sonora, con dispatch)${NC}"
+        send_telegram_report "PHASE_COMPLETE" "F10BB39.11.1" "38" "512" \
+            "Catena B39 Onboarding Narrativo COMPLETATA. 38 sub-blocchi eseguiti con successo in 11 fasi tematiche. Profilo estrattore, placement test, voce trasversale: tutto integrato e testato. Pronto per il test manuale del fondatore." \
+            "" \
+            "6"
+        log "${GREEN}Test 2 inviato${NC}"
+        sleep 3
+
+        log "${BLUE}[3/3] ERROR (notifica sonora, con dispatch)${NC}"
+        send_telegram_report "ERROR" "F10BB39.5.1" "13" "72" \
+            "B39.5.1 fallito — validate_secrets_for_startup non trova OPENAI_API_KEY in produzione. Serve configurare la chiave OpenAI in .env del backend prima di poter proseguire con il motore voce Whisper." \
+            "" \
+            "8"
+        log "${GREEN}Test 3 inviato${NC}"
+        echo
+        log "${BOLD}${GREEN}Tutti i test inviati. Controlla Telegram.${NC}"
+        log "Verifica: Test 1 dovrebbe arrivare senza suono (silenzioso)."
+        log "Verifica: Test 2 e Test 3 dovrebbero suonare e contenere la sezione Dispatch."
+        exit 0
+    fi
+
     validate_environment
     local cp cb; cp="$(read_progress_field current_phase)"; cb="$(read_progress_field current_block)"; cp="${cp:-0}"; cb="${cb:-0}"
     [[ -n "$TARGET_PHASE" ]] && cp="$TARGET_PHASE"
