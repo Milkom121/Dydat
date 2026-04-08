@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.3.1",
-  "total_blocks_run": 108,
+  "total_blocks_run": 109,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T01:15:00Z",
-  "last_summary": "B39.2.4 completato — Unit test integrazione estrattore profilo (18 test su 7 scenari). 488 backend verdi. Fase 2 chiusa. Handoff ripristinato manualmente dopo 4 iterazioni a vuoto del runner su B39.2.4 (Claude eseguiva il blocco ma non aggiornava handoff.md). Nuove istruzioni nell'handoff chiariscono che Claude DEVE scrivere il nuovo handoff a fine blocco."
+  "last_run": "2026-04-08T23:18:49Z",
+  "last_summary": "B39.2.4 completato — Unit test integrazione estrattore profilo con 18 nuovi test su 7 scenari realistici (utente collaborativo 5/5 campi, utente parziale 2/5, off-topic, conversazione minimale, fallimento LLM con retry, confidenze miste, conversazione lunga). 488 test backend verdi, 10 skipped. Fase 2 chiusa al 100%."
 }
