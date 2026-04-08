@@ -205,3 +205,45 @@ async def chiama_tutor(
     )
 
     yield {"tipo": "stop", "risultato": risultato}
+
+
+async def chiama_llm_singolo(
+    *,
+    user_prompt: str,
+    system: str | None = None,
+    modello: str | None = None,
+    max_tokens: int = 2048,
+) -> str:
+    """Chiamata LLM non-streaming per task puntuali (estrazione profilo, etc.).
+
+    Ritorna il testo completo della risposta. Non gestisce tool use.
+    Solleva eccezioni Anthropic in caso di errore (il chiamante gestisce retry).
+    """
+    modello = modello or settings.LLM_MODEL_PIPELINE
+    client = _get_client()
+
+    kwargs: dict = {
+        "model": modello,
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": user_prompt}],
+    }
+    if system:
+        kwargs["system"] = system
+
+    async with asyncio.timeout(settings.TIMEOUT_LLM_SEC):
+        response = await client.messages.create(**kwargs)
+
+    testo = "".join(
+        block.text for block in response.content if hasattr(block, "text")
+    )
+
+    token_in = response.usage.input_tokens
+    token_out = response.usage.output_tokens
+    costo = _stima_costo(modello, token_in, token_out)
+
+    logger.info(
+        "LLM singolo completato (%s): %d token in, %d token out, $%.4f",
+        modello, token_in, token_out, costo,
+    )
+
+    return testo

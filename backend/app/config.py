@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     LLM_MODEL_TUTOR: str = "claude-sonnet-4-5-20250929"
     LLM_MODEL_PIPELINE: str = "claude-haiku-4-5-20251001"
     LLM_MODEL_ESCALATION: str = "claude-sonnet-4-5-20250929"
+    LLM_MODEL_ONBOARDING: str = "claude-opus-4-6"
 
     # Server
     HOST: str = "0.0.0.0"

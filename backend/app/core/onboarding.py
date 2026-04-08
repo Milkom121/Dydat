@@ -14,18 +14,24 @@ Punto di partenza personalizzato via placement o segnale punto_partenza_suggerit
 
 from __future__ import annotations
 
+import json as json_module
 import logging
 import uuid
 from datetime import datetime, timezone
 
+import anthropic
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
+from app.config import settings
 from app.db.models.stato_utente import StatoNodoUtente
 from app.db.models.utenti import PercorsoUtente, Sessione, TurnoConversazione, Utente
 from app.grafo.algoritmi import ordinamento_topologico
 from app.grafo.struttura import grafo_knowledge
+from app.llm.client import chiama_llm_singolo
+from app.llm.prompts.onboarding_extractor import build_extractor_prompt
+from app.schemas.onboarding import CampoConConfidenza, ProfiloEstratto
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +40,130 @@ TURNI_CONOSCENZA_MAX = 6
 
 # Fasi onboarding in ordine
 FASI_ONBOARDING = ("accoglienza", "conoscenza", "placement", "piano", "conclusione")
+
+
+def _profilo_vuoto() -> ProfiloEstratto:
+    """Profilo con tutti i campi a bassa confidenza (fallback su errore)."""
+    campo_vuoto = CampoConConfidenza(valore=None, confidenza="bassa")
+    return ProfiloEstratto(
+        chi_e=campo_vuoto,
+        motivo=campo_vuoto,
+        stile_cognitivo=campo_vuoto,
+        tempo_disponibile=campo_vuoto,
+        vissuto_scolastico=campo_vuoto,
+    )
+
+
+async def estrai_profilo(conversazione: list[dict]) -> ProfiloEstratto:
+    """Estrae il profilo utente dalla conversazione onboarding via Opus.
+
+    Chiama Opus con il prompt estrattore, parsa il JSON, valida con Pydantic.
+    Retry 1 volta su fallimento. Fallback a profilo vuoto se irrecuperabile.
+
+    Args:
+        conversazione: lista di messaggi [{role: "user"|"assistant", content: str}]
+
+    Returns:
+        ProfiloEstratto validato (tutti i 5 campi sempre presenti).
+    """
+    if not conversazione:
+        logger.warning("estrai_profilo: conversazione vuota, ritorno profilo vuoto")
+        return _profilo_vuoto()
+
+    prompt = build_extractor_prompt(conversazione)
+    max_tentativi = 2  # 1 tentativo + 1 retry
+
+    for tentativo in range(max_tentativi):
+        try:
+            testo_risposta = await chiama_llm_singolo(
+                user_prompt=prompt,
+                modello=settings.LLM_MODEL_ONBOARDING,
+                max_tokens=1024,
+            )
+
+            # Parsa il JSON dalla risposta
+            profilo_dict = _parsa_json_risposta(testo_risposta)
+            if profilo_dict is None:
+                raise ValueError("JSON non trovato nella risposta LLM")
+
+            # Valida con Pydantic
+            profilo = ProfiloEstratto.model_validate(profilo_dict)
+            logger.info(
+                "Profilo estratto: %d/%d campi completi (tentativo %d)",
+                len(profilo.campi_completi()),
+                5,
+                tentativo + 1,
+            )
+            return profilo
+
+        except (anthropic.APIError, TimeoutError) as e:
+            # Errore di rete/API — ritentabile
+            logger.warning(
+                "estrai_profilo tentativo %d fallito (API): %s",
+                tentativo + 1, e,
+            )
+        except (ValueError, json_module.JSONDecodeError) as e:
+            # JSON malformato o validazione Pydantic fallita — ritentabile
+            logger.warning(
+                "estrai_profilo tentativo %d fallito (parsing): %s",
+                tentativo + 1, e,
+            )
+        except Exception:
+            # Errore inatteso — non ritentare, fallback immediato
+            logger.exception("estrai_profilo: errore inatteso")
+            return _profilo_vuoto()
+
+    # Tutti i tentativi falliti — fallback a profilo vuoto
+    logger.error(
+        "estrai_profilo: %d tentativi falliti, ritorno profilo vuoto",
+        max_tentativi,
+    )
+    return _profilo_vuoto()
+
+
+def _parsa_json_risposta(testo: str) -> dict | None:
+    """Estrae e parsa il primo oggetto JSON valido dalla risposta LLM.
+
+    Gestisce i casi in cui Opus aggiunge testo prima/dopo il JSON
+    o lo wrappa in un blocco ```json.
+    """
+    testo = testo.strip()
+
+    # Caso 1: risposta è direttamente JSON
+    try:
+        risultato = json_module.loads(testo)
+        if isinstance(risultato, dict):
+            return risultato
+    except json_module.JSONDecodeError:
+        pass
+
+    # Caso 2: JSON dentro blocco markdown ```json ... ```
+    if "```" in testo:
+        # Cerca il contenuto tra ``` (opzionalmente con "json" dopo il primo ```)
+        parti = testo.split("```")
+        for parte in parti[1::2]:  # indici dispari = contenuto dentro ```
+            contenuto = parte.strip()
+            if contenuto.startswith("json"):
+                contenuto = contenuto[4:].strip()
+            try:
+                risultato = json_module.loads(contenuto)
+                if isinstance(risultato, dict):
+                    return risultato
+            except json_module.JSONDecodeError:
+                continue
+
+    # Caso 3: JSON preceduto/seguito da testo — cerca { ... }
+    inizio = testo.find("{")
+    fine = testo.rfind("}")
+    if inizio != -1 and fine > inizio:
+        try:
+            risultato = json_module.loads(testo[inizio:fine + 1])
+            if isinstance(risultato, dict):
+                return risultato
+        except json_module.JSONDecodeError:
+            pass
+
+    return None
 
 
 async def crea_utente_temporaneo(db: AsyncSession) -> Utente:
