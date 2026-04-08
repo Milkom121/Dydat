@@ -146,6 +146,44 @@ check_git_branch() {
     local d; d="$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null)"; if [[ -n "$d" ]]; then log "${YELLOW}Modifiche non committate${NC}"; fi
 }
 
+# Pusha il branch corrente su origin. Usa -u al primo push (upstream non configurato).
+# Protezione: rifiuta main/master. Non fatale in caso di errore (logga e prosegue).
+# Da chiamare SOLO dopo un blocco completato con test verdi (stato stabile).
+push_current_branch() {
+    git -C "$PROJECT_DIR" rev-parse --git-dir &>/dev/null || return 0
+    local b; b="$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null)"
+    if [[ -z "$b" ]]; then
+        log "${YELLOW}Push saltato: detached HEAD${NC}"
+        return 0
+    fi
+    if [[ "$b" == "main" || "$b" == "master" ]]; then
+        log "${YELLOW}Push saltato: branch protetto ($b)${NC}"
+        return 0
+    fi
+    # Verifica se il branch ha gia un upstream configurato
+    local has_upstream=false
+    if git -C "$PROJECT_DIR" rev-parse --abbrev-ref --symbolic-full-name "@{u}" &>/dev/null; then
+        has_upstream=true
+    fi
+    log "${BLUE}Push $b -> origin...${NC}"
+    local push_out push_ec=0
+    if $has_upstream; then
+        push_out="$(git -C "$PROJECT_DIR" push origin "$b" 2>&1)" || push_ec=$?
+    else
+        push_out="$(git -C "$PROJECT_DIR" push -u origin "$b" 2>&1)" || push_ec=$?
+    fi
+    if [[ $push_ec -eq 0 ]]; then
+        log "${GREEN}Push OK ($b)${NC}"
+        log_verbose "$push_out"
+    else
+        log "${YELLOW}Push fallito (ec=$push_ec) — runner prosegue, lavoro salvo in locale${NC}"
+        log_verbose "$push_out"
+        # Notifica Telegram solo se configurata, non blocca
+        send_telegram "⚠️ Runner: push $b fallito (ec=$push_ec). Lavoro salvo in locale, verifica al risveglio."
+    fi
+    return 0
+}
+
 build_prompt() {
     local phase="$1" block="$2" handoff="$3" first="$4" prompt=""
     local c; c="$(read_file_safe "$CLAUDE_MD")"; [[ -n "$c" ]] && prompt+="$c"$'\n\n'
@@ -241,14 +279,18 @@ main() {
         local el_now; el_now="$(( ($(date +%s) - st) / 60 ))"
         case "$s" in
             CONTINUE) log "${GREEN}Continuo${NC}"; hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false"
+                push_current_branch
                 send_telegram_report "BLOCCO_OK" "$bid" "$br" "$el_now" "$sm" "$sn";;
             CHECKPOINT) log "${YELLOW}CHECKPOINT — decisione umana${NC}"; send_notification "Metodo Villa" "Checkpoint $bid"
+                push_current_branch
                 send_telegram_report "CHECKPOINT" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
             PHASE_COMPLETE) log "${GREEN}FASE $cp COMPLETATA${NC}"; send_notification "Metodo Villa" "Fase $cp completata!"
+                push_current_branch
                 send_telegram_report "PHASE_COMPLETE" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
             ERROR) log "${RED}ERRORE $bid${NC}"; send_notification "Metodo Villa" "Errore $bid"
                 send_telegram_report "ERROR" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
             BLOCKED) log "${YELLOW}BLOCCATO${NC}"; send_notification "Metodo Villa" "Bloccato $bid"
+                push_current_branch
                 send_telegram_report "BLOCKED" "$bid" "$br" "$el_now" "$sm" "$sn"; break;;
             MISSING) log "${RED}Handoff mancante${NC}"; send_notification "Metodo Villa" "Handoff mancante"
                 send_telegram_report "MISSING" "$bid" "$br" "$el_now" "Handoff non trovato" ""; break;;
