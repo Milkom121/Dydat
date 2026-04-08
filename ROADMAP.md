@@ -367,12 +367,278 @@
 > Riferimento: concept v1.1 sezioni 4, 11
 > Primo contatto memorabile e sistema audio che da personalita.
 
-### Blocco B39 — Onboarding con Momento Wow
-- [>] **Stato**: in corso (Fase 1 DB completata, Fase 2 in corso: B39.2.3 estrai_profilo con Opus — 470 backend verdi)
+### Blocco B39 — Onboarding Narrativo con Momento Wow
+- [>] **Stato**: in corso (8/38 sub-blocchi completati)
 - **Complessita'**: alta
-- **Descrizione**: Ristrutturare l'onboarding. (1) Momento wow (30-60s): l'app mostra una domanda curiosa e la risponde con una visualizzazione animata. Lo studente guarda, non interagisce. Widget nativo (CustomPainter o fl_chart). (2) Domande rapide: eta, cosa studi, perche sei qui. UI a scelta multipla, veloce. (3) Poi il flusso attuale (conversazione tutor + costruzione percorso). (4) Registrazione alla fine, non all'inizio. (5) La mascotte compare qui per la prima volta.
-- **File da toccare**: onboarding_screen.dart (ristrutturazione), nuovi widget per momento wow, flow di registrazione posticipato
-- **Gate di uscita**: Wow moment funziona, domande rapide, registrazione posticipata, flusso completo E2E, analyze 0, test verdi
+- **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
+- **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
+- **Spezzato in 38 sub-blocchi** piccoli e granulari distribuiti in 11 fasi tematiche, per consentire al runner di lavorare con context ridotto in ogni sessione.
+
+#### Blocco B39.1.1 — Migrazione Alembic: onboarding_stato + lingua_preferita
+- [x] **Stato**: completato
+- **Complessita'**: bassa
+- **Descrizione**: Aggiungere due nuovi campi alla tabella `utenti`: `onboarding_stato` (enum not_started/in_progress/completed) e `lingua_preferita` (varchar, default 'it').
+- **File da toccare**: nuova migrazione in `backend/alembic/versions/`
+- **Gate**: migrazione applicata, upgrade/downgrade verificati, tutti i test backend continuano a passare
+
+#### Blocco B39.1.2 — Modello SQLAlchemy Utente
+- [x] **Stato**: completato
+- **Complessita'**: bassa
+- **Descrizione**: Aggiornare modello `Utente` in `backend/app/db/models/utenti.py` per esporre i nuovi campi con enum `OnboardingStato` e default sensati.
+- **File da toccare**: `backend/app/db/models/utenti.py`
+- **Gate**: 9+ unit test modello, tutti i test esistenti passano
+
+#### Blocco B39.1.3 — Schema Pydantic UtenteResponse
+- [x] **Stato**: completato
+- **Complessita'**: bassa
+- **Descrizione**: Aggiornare gli schemi Pydantic in `backend/app/schemas/` per serializzare i nuovi campi nelle response API.
+- **File da toccare**: `backend/app/schemas/utente.py` (o file correlato)
+- **Gate**: 9+ test contract (serializzazione, defaults, from_attributes), tutti i test passano
+
+#### Blocco B39.2.1 — Prompt estrattore profilo onboarding
+- [x] **Stato**: completato
+- **Complessita'**: media
+- **Descrizione**: Scrivere in `backend/app/llm/prompts/onboarding_extractor.py` il prompt che istruisce Opus a estrarre i 5 campi del profilo (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico) con confidenze (alta/media/bassa) dalla conversazione onboarding. JSON rigido con 2 esempi few-shot.
+- **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_extractor.py`
+- **Gate**: 21+ test unitari su costanti, schema JSON, formattazione conversazione, build_extractor_prompt
+
+#### Blocco B39.2.2 — Schema Pydantic output estrattore
+- [x] **Stato**: completato
+- **Complessita'**: bassa
+- **Descrizione**: Modelli Pydantic `CampoConConfidenza` e `ProfiloEstratto` in `backend/app/schemas/onboarding.py` per rappresentare l'output dell'estrattore.
+- **File da toccare**: `backend/app/schemas/onboarding.py`
+- **Gate**: test di validazione, serializzazione, deserializzazione
+
+#### Blocco B39.2.3 — Funzione estrai_profilo con Opus + retry
+- [x] **Stato**: completato
+- **Complessita'**: media
+- **Descrizione**: Funzione `estrai_profilo(conversazione)` in `backend/app/core/onboarding.py` che chiama Opus con il prompt, parsa il JSON, valida con Pydantic, gestisce retry su errore. Fallback a profilo vuoto in caso di fallimento irrecuperabile.
+- **File da toccare**: `backend/app/core/onboarding.py`
+- **Gate**: unit test con mock LLM (JSON prefabbricati), test retry logic, test fallimento totale
+
+#### Blocco B39.2.4 — Unit test integrazione estrattore
+- [x] **Stato**: completato
+- **Complessita'**: media
+- **Descrizione**: Test di integrazione dell'estrattore su scenari realistici con mock LLM: utente collaborativo, parziale, off-topic, conversazione vuota, fallimento LLM con retry, confidenze miste, conversazione lunga.
+- **File da toccare**: nuovo `backend/tests/test_b39_2_4_extractor_integration.py`
+- **Gate**: 18+ test nuovi su 7 scenari, 488 backend verdi
+
+#### Blocco B39.3.1 — Rules-based decisor puro Python
+- [x] **Stato**: completato
+- **Complessita'**: media
+- **Descrizione**: Funzione `decidi_prossima_mossa(profilo_stato, turni_fatti)` pura Python (nessun LLM) che, dato lo stato del profilo + turni fatti, decide la prossima mossa del tutor: chiedi campo mancante, chiudi narrativa, forza chiusura al tetto turni. Priorita tra campi: chi_e > motivo > stile_cognitivo > tempo_disponibile > vissuto_scolastico.
+- **File da toccare**: `backend/app/core/onboarding.py`, `backend/app/schemas/onboarding.py` (per enum `AzioneDecisore`)
+- **Gate**: 23+ unit test su 10+ scenari, 511 backend verdi
+
+#### Blocco B39.3.2 — Integrazione decisore nell'endpoint /onboarding/turno
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Dopo ogni turno utente nell'endpoint `/onboarding/turno`, chiamare l'estrattore di B39.2.3 per aggiornare il profilo, poi chiamare il decisore di B39.3.1 per determinare la prossima mossa del tutor. L'endpoint ritorna nella response la fase corrente e l'azione decisa.
+- **File da toccare**: `backend/app/api/onboarding.py` (modifica endpoint turno), eventualmente `backend/app/core/onboarding.py`
+- **Gate**: integration test del flusso turno completo con mock LLM, tutti i test esistenti passano
+
+#### Blocco B39.4.1 — Fix completa_onboarding scrittura profilo (ONB-01)
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: La funzione `completa_onboarding` in `backend/app/core/onboarding.py` deve scrivere `profilo_sintetizzato`, `contesto_personale`, `preferenze_tutor` sull'utente usando i dati estratti dalla conversazione (fix del finding ONB-01: oggi non vengono mai scritti).
+- **File da toccare**: `backend/app/core/onboarding.py`, `backend/app/api/onboarding.py` (schema payload)
+- **Gate**: integration test verifica i 3 campi popolati nel DB dopo completamento, ONB-01 chiuso
+
+#### Blocco B39.4.2 — Fix persistenza streaming turni (ONB-02)
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Fix del finding ONB-02: i turni del tutor in sessione onboarding vengono salvati con `contenuto = None` in presenza di tool use. Serve garantire che l'UPDATE finale del contenuto streamato avvenga anche quando ci sono tool use. Aggiungere logging se lo stream finisce senza contenuto.
+- **File da toccare**: `backend/app/api/onboarding.py` o `backend/app/core/onboarding.py` (dove gira lo streaming SSE)
+- **Gate**: unit test simula stream con tool use + contenuto, verifica persistenza nel DB
+
+#### Blocco B39.4.3 — Pulizia codice onboarding legacy
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Rimuovere codice dell'onboarding vecchio non piu utilizzato dopo il refactor di B39.3.2 e B39.4.1.
+- **File da toccare**: vari in `backend/app/core/onboarding.py` e `backend/app/api/onboarding.py`
+- **Gate**: tutti i test esistenti continuano a passare, nessuna regressione
+
+#### Blocco B39.5.1 — Configurazione OPENAI_API_KEY
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Aggiungere segreto `OPENAI_API_KEY` al backend per uso Whisper. Aggiornare `.env.example`, `docker-compose.yml`, `validate_secrets_for_startup` in `config.py`. Registrare la nuova dipendenza esterna in `docs/dev-shortcuts.md`.
+- **File da toccare**: `backend/app/config.py`, `backend/.env.example`, `backend/docker-compose.yml`, `docs/dev-shortcuts.md`
+- **Gate**: unit test verifica fallimento in produzione se chiave manca, backend parte con chiave presente
+
+#### Blocco B39.5.2 — Endpoint POST /stt/transcribe
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Nuovo endpoint che riceve audio multipart, chiama OpenAI Whisper via client Python, restituisce il testo trascritto. Gestione errori (formato invalido, API down, rate limit).
+- **File da toccare**: nuovo `backend/app/api/stt.py`, registrare router in `backend/app/main.py`
+- **Gate**: unit test con mock client OpenAI, test formato invalido, test API down
+
+#### Blocco B39.5.3 — Test endpoint STT con audio reale
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Test di integrazione con audio reale di smoke (file WAV italiano di prova) per l'endpoint `/stt/transcribe`. Marcato `@pytest.mark.integration` (non gira nel runner automatico).
+- **File da toccare**: nuovo `backend/tests/test_stt.py`
+- **Gate**: test skippato di default, eseguibile con flag integration, verde in esecuzione manuale
+
+#### Blocco B39.6.1 — Prompt auto-valutazione placement
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Prompt in `backend/app/llm/prompts/onboarding_self_assessment.py` che istruisce il tutor a chiedere per ogni area chiave della materia se l'utente si sente `forte` / `incerto` / `digiuno`.
+- **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_self_assessment.py`
+- **Gate**: unit test presenza istruzioni chiave, aree selezionate dal grafo curriculum
+
+#### Blocco B39.6.2 — Logica selezione aree fondazionali
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Funzione `seleziona_aree_fondazionali(aree_forte, grafo)` che, data la lista aree dichiarate forti dall'utente, seleziona le N piu fondazionali partendo dai nodi del grafo con meno prerequisiti. Cap a 6 per la verifica.
+- **File da toccare**: `backend/app/core/onboarding.py`
+- **Gate**: unit test deterministici con grafo mockato
+
+#### Blocco B39.6.3 — Prompt generatore esercizi compound
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Prompt Opus in `backend/app/llm/prompts/onboarding_exercise_generator.py` che genera un esercizio a scelta multipla (3-4 opzioni, 1 risposta corretta) che copre fino a 2 concetti contemporaneamente.
+- **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_exercise_generator.py`
+- **Gate**: unit test presenza istruzioni (max 2 concetti, formato multiple choice), output JSON specificato
+
+#### Blocco B39.6.4 — Funzione genera_esercizi_verifica
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Funzione `genera_esercizi_verifica(aree_da_verificare)` che prende le aree in coppie, chiama Opus per ciascuna coppia con il prompt di B39.6.3, ritorna lista di esercizi compound. Max 3 esercizi (cap duro). Retry su fallimento, lista vuota in caso di fallimento totale.
+- **File da toccare**: `backend/app/core/onboarding.py`, schema `EsercizioCompound` in `backend/app/schemas/onboarding.py`
+- **Gate**: unit test con mock LLM, test schema output, test retry
+
+#### Blocco B39.6.5 — Logica grading deterministico
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Funzione `valuta_risposta(esercizio, risposta_utente)` deterministica che confronta la scelta dell'utente con la risposta corretta. Ritorna bool + lista concetti retroceduti in caso di fail (entrambi i concetti dell'esercizio compound → incerto).
+- **File da toccare**: `backend/app/core/onboarding.py`
+- **Gate**: unit test con risposte corrette e sbagliate, verifica retrocessione concetti
+
+#### Blocco B39.6.6 — Integrazione stato_orchestratore + path planner
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Salvare la mappa placement finale (`{concetto: forte_confermato/forte_unverified/incerto/digiuno}`) nello `stato_orchestratore` della sessione onboarding. Il path planner la legge per scegliere il nodo di partenza del percorso.
+- **File da toccare**: `backend/app/core/onboarding.py`, `backend/app/core/path_planner.py`
+- **Gate**: integration test flusso completo onboarding + placement + creazione percorso
+
+#### Blocco B39.7.1 — Scheletro widget VoiceInputField
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: File Flutter con struttura base del widget riutilizzabile: TextFormField + pulsante microfono disabilitato come placeholder. Nessuna funzionalita audio ancora.
+- **File da toccare**: nuovo `frontend/lib/widgets/voice_input_field.dart`
+- **Gate**: widget compila, widget test rendering base
+
+#### Blocco B39.7.2 — Libreria audio + permessi mic
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Aggiungere libreria audio (es. `record` o equivalente), configurare permessi microfono in `AndroidManifest.xml` e `Info.plist`, integrare in `VoiceInputField` l'avvio/stop registrazione.
+- **File da toccare**: `frontend/pubspec.yaml`, `frontend/android/app/src/main/AndroidManifest.xml`, `frontend/ios/Runner/Info.plist`, `voice_input_field.dart`
+- **Gate**: permessi configurati, widget registra/ferma audio con mock
+
+#### Blocco B39.7.3 — UI stato registrazione
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Feedback visivo durante registrazione: wave animata sul volume della voce, timer secondi, pulsante stop rosso pulsante, sfondo del campo leggermente diverso.
+- **File da toccare**: `voice_input_field.dart`
+- **Gate**: widget test stato registrazione attivo, animazioni renderizzano
+
+#### Blocco B39.7.4 — Chiamata endpoint /stt/transcribe
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Dopo lo stop della registrazione, upload dell'audio al backend, gestione spinner durante la trascrizione.
+- **File da toccare**: `voice_input_field.dart`, nuovo `frontend/lib/services/stt_service.dart`
+- **Gate**: widget test con mock service, upload funzionante, spinner visibile
+
+#### Blocco B39.7.5 — Popolamento campo testo trascritto modificabile
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Il testo trascritto popola il campo input, l'utente lo puo modificare a tastiera prima di inviare. NO auto-invio.
+- **File da toccare**: `voice_input_field.dart`
+- **Gate**: widget test flusso completo registrazione → trascrizione → modifica → invio
+
+#### Blocco B39.7.6 — Gestione errori + widget test
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Gestione fallimenti: mic denied, rete assente, API STT down, audio troppo corto. Fallback silenzioso con messaggio breve "La voce non e disponibile — puoi continuare a scrivere".
+- **File da toccare**: `voice_input_field.dart`
+- **Gate**: widget test su ogni fallimento, utente puo sempre scrivere a mano
+
+#### Blocco B39.8.1 — Aggiorna onboarding_provider.dart
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Il provider deve passare i dati reali al backend, gestire le nuove fasi (conoscenza/auto-valutazione/verifica/chiusura), gestire lo skip.
+- **File da toccare**: `frontend/lib/providers/onboarding_provider.dart`
+- **Gate**: unit test provider con nuove fasi, flussi mockati
+
+#### Blocco B39.8.2 — Riscrittura onboarding_screen.dart con VoiceInputField + skip
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Schermata onboarding usa il nuovo widget VoiceInputField, ha il bottone "Salta per ora" visibile fin dalla prima schermata.
+- **File da toccare**: `frontend/lib/presentation/onboarding_screen/onboarding_screen.dart`
+- **Gate**: widget test nuovo flusso, test skip, rendering corretto
+
+#### Blocco B39.8.3 — System prompt tutor onboarding riscritto
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Scrivere il system prompt del tutor di onboarding: personificato in prima persona, patto esplicito, menzione della voce, tono caldo, forma C adattiva.
+- **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_system_prompt.py`, integrato nel flusso del turno
+- **Gate**: unit test presenza istruzioni chiave (io sono Dydat, patto, voce, adattivita)
+
+#### Blocco B39.8.4 — Test integrazione onboarding completo
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Test end-to-end del flusso onboarding con mock LLM: utente collaborativo -> completamento, utente taciturno -> chiusura forzata al turno 7, utente che salta.
+- **File da toccare**: `frontend/test/presentation/onboarding_screen_test.dart`
+- **Gate**: widget test flusso completo verde
+
+#### Blocco B39.9.1 — Widget OnboardingPendingBanner
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Card persistente, non dismissibile, con messaggio caldo + CTA "Riprendi" / "Inizia" a seconda dello stato onboarding.
+- **File da toccare**: nuovo `frontend/lib/widgets/onboarding_pending_banner.dart`
+- **Gate**: widget test rendering + tap su CTA
+
+#### Blocco B39.9.2 — Integrazione banner in home_screen
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Il banner compare condizionale su `onboarding_stato != completato`. Nascosto quando l'onboarding e completo.
+- **File da toccare**: `frontend/lib/presentation/home_screen/home_screen.dart`
+- **Gate**: widget test con stati vari (not_started, in_progress, completed)
+
+#### Blocco B39.9.3 — Logica "Riprendi" con stato preservato
+- [ ] **Stato**: da fare
+- **Complessita'**: media
+- **Descrizione**: Il tap su "Riprendi" riapre `/onboarding` con la conversazione precedente intatta. Il backend deve supportare il retrieval della sessione esistente.
+- **File da toccare**: `onboarding_provider.dart`, `onboarding_screen.dart`, modifica backend `/onboarding/inizia`
+- **Gate**: integration test ripresa onboarding dopo skip
+
+#### Blocco B39.10.1 — VoiceInputField in chat di sessione studio
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Sostituire il campo input della chat tutor in sessione di studio con il nuovo widget `VoiceInputField`.
+- **File da toccare**: schermata session screen dove e il campo input
+- **Gate**: widget test integrazione, microfono visibile e funzionante
+
+#### Blocco B39.10.2 — VoiceInputField in ricerca "I miei studi"
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Sostituire il campo di ricerca in `learning_path_screen` con il nuovo widget `VoiceInputField`.
+- **File da toccare**: `learning_path_screen.dart` o widget search correlato
+- **Gate**: widget test integrazione
+
+#### Blocco B39.10.3 — Widget test finali integrazione trasversale
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Test che verificano il comportamento di `VoiceInputField` in tutti i contesti di utilizzo (onboarding, sessione, ricerca).
+- **File da toccare**: test widget vari
+- **Gate**: tutti i test verdi, nessuna regressione
+
+#### Blocco B39.11.1 — Checklist test manuale + consegna
+- [ ] **Stato**: da fare
+- **Complessita'**: bassa
+- **Descrizione**: Claude prepara un file con scenari dettagliati per il test manuale del fondatore (utente collaborativo, taciturno, off-topic, skip, voce, placement, banner). Villa eseguira il test e riportera i finding in `.claude/test-findings.md`. Dopo B39.11.1 la catena B39 si chiude con STATUS: PHASE_COMPLETE.
+- **File da toccare**: nuovo `docs/discussions/b39-checklist-test-manuale.md`
+- **Gate**: file creato, scenari chiari, pronto per Villa
 
 ### Blocco B40 — Sistema Audio Base
 - [ ] **Stato**: da fare
