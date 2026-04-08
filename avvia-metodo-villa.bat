@@ -13,7 +13,7 @@ if defined GITBASH (
     echo Trovato Git Bash: %GITBASH%
     echo Avvio runner...
     echo.
-    "%GITBASH%" -c "cd '%~dp0' && chmod +x metodo-villa-runner.sh && ./metodo-villa-runner.sh --max-blocks 13 --timeout 45 --verbose"
+    "%GITBASH%" -c "cd '%~dp0' && chmod +x metodo-villa-runner.sh && ./metodo-villa-runner.sh --max-blocks 50 --timeout 45 --verbose"
     echo.
     echo === Runner terminato ===
     pause
