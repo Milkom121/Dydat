@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.3.1",
-  "total_blocks_run": 109,
+  "total_blocks_run": 110,
   "status": "CONTINUE",
-  "last_run": "2026-04-08T23:18:49Z",
+  "last_run": "2026-04-08T23:20:32Z",
   "last_summary": "B39.2.4 completato — Unit test integrazione estrattore profilo con 18 nuovi test su 7 scenari realistici (utente collaborativo 5/5 campi, utente parziale 2/5, off-topic, conversazione minimale, fallimento LLM con retry, confidenze miste, conversazione lunga). 488 test backend verdi, 10 skipped. Fase 2 chiusa al 100%."
 }

@@ -423,3 +423,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.2.4 completato — Unit test integrazione estrattore profilo con 18 nuovi test su 7 scenari realistici (utente collaborativo 5/5 campi, utente parziale 2/5, off-topic, conversazione minimale, fallimento LLM con retry, confidenze miste, conversazione lunga). 488 test backend verdi, 10 skipped. Fase 2 chiusa al 100%.
 ---
+
+## 2026-04-09 01:20:32 — Blocco F10BB39.3.1
+- **Status**: CONTINUE
+- **Summary**: B39.2.4 completato — Unit test integrazione estrattore profilo con 18 nuovi test su 7 scenari realistici (utente collaborativo 5/5 campi, utente parziale 2/5, off-topic, conversazione minimale, fallimento LLM con retry, confidenze miste, conversazione lunga). 488 test backend verdi, 10 skipped. Fase 2 chiusa al 100%.
+---
