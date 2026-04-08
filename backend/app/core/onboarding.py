@@ -27,7 +27,13 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.config import settings
 from app.core.conversazione import carica_conversazione
 from app.db.models.stato_utente import StatoNodoUtente
-from app.db.models.utenti import PercorsoUtente, Sessione, TurnoConversazione, Utente
+from app.db.models.utenti import (
+    OnboardingStato,
+    PercorsoUtente,
+    Sessione,
+    TurnoConversazione,
+    Utente,
+)
 from app.grafo.algoritmi import ordinamento_topologico
 from app.grafo.struttura import grafo_knowledge
 from app.llm.client import chiama_llm_singolo
@@ -490,6 +496,44 @@ def seleziona_nodi_gateway() -> list[dict]:
     return gateways
 
 
+def _costruisci_profilo_sintetizzato(profilo: ProfiloEstratto) -> dict:
+    """Converte ProfiloEstratto in dict piatto per utente.profilo_sintetizzato.
+
+    Include solo i valori dei campi con confidenza alta o media.
+    Formato atteso dal sistema di direttive (B33.5): dict con chiavi
+    chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico.
+    """
+    risultato = {}
+    for campo in (
+        "chi_e", "motivo", "stile_cognitivo",
+        "tempo_disponibile", "vissuto_scolastico",
+    ):
+        obj = getattr(profilo, campo)
+        if obj.confidenza in ("alta", "media") and obj.valore:
+            risultato[campo] = obj.valore
+    return risultato
+
+
+def _costruisci_contesto_personale(profilo: ProfiloEstratto) -> dict:
+    """Costruisce contesto_personale dai campi biografici del profilo estratto."""
+    risultato = {}
+    for campo in ("chi_e", "motivo", "vissuto_scolastico"):
+        obj = getattr(profilo, campo)
+        if obj.confidenza in ("alta", "media") and obj.valore:
+            risultato[campo] = obj.valore
+    return risultato
+
+
+def _costruisci_preferenze_tutor(profilo: ProfiloEstratto) -> dict:
+    """Costruisce preferenze_tutor dai campi di preferenza del profilo estratto."""
+    risultato = {}
+    for campo in ("stile_cognitivo", "tempo_disponibile"):
+        obj = getattr(profilo, campo)
+        if obj.confidenza in ("alta", "media") and obj.valore:
+            risultato[campo] = obj.valore
+    return risultato
+
+
 async def completa_onboarding(
     db: AsyncSession,
     sessione: Sessione,
@@ -499,17 +543,59 @@ async def completa_onboarding(
 ) -> dict:
     """Completa l'onboarding: salva profilo, crea percorso, inizializza stato.
 
+    Usa il profilo estratto dalla conversazione (stato_orchestratore.profilo_estratto)
+    per popolare profilo_sintetizzato, contesto_personale e preferenze_tutor.
+    I parametri contesto_personale e preferenze_tutor dal payload hanno priorità
+    (override esplicito dal frontend).
+
     Usa i risultati del placement test (se disponibili) per determinare
     il punto di partenza. Fallback su punto_partenza_suggerito dal LLM.
 
     Returns:
         Dict con {percorso_id, nodo_iniziale, nodi_inizializzati}.
     """
-    # 1. Salva profilo utente
+    # 1. Ricostruisci profilo dalla conversazione se disponibile
+    stato = sessione.stato_orchestratore or {}
+    profilo_raw = stato.get("profilo_estratto")
+
+    if profilo_raw:
+        try:
+            profilo = ProfiloEstratto.model_validate(profilo_raw)
+
+            # profilo_sintetizzato: sempre dal profilo estratto
+            utente.profilo_sintetizzato = _costruisci_profilo_sintetizzato(profilo)
+            utente.profilo_sintetizzato_at = datetime.now(timezone.utc)
+
+            # contesto_personale: dal payload se fornito, altrimenti dal profilo
+            if not contesto_personale:
+                contesto_personale = _costruisci_contesto_personale(profilo)
+
+            # preferenze_tutor: dal payload se fornito, altrimenti dal profilo
+            if not preferenze_tutor:
+                preferenze_tutor = _costruisci_preferenze_tutor(profilo)
+
+            logger.info(
+                "Profilo sintetizzato scritto: %d campi, contesto=%d, preferenze=%d",
+                len(utente.profilo_sintetizzato),
+                len(contesto_personale),
+                len(preferenze_tutor),
+            )
+        except Exception:
+            logger.warning(
+                "Errore ricostruzione profilo da stato_orchestratore, "
+                "uso parametri diretti",
+                exc_info=True,
+            )
+
+    # Scrivi contesto_personale e preferenze_tutor
     if contesto_personale:
         utente.contesto_personale = contesto_personale
     if preferenze_tutor:
         utente.preferenze_tutor = preferenze_tutor
+
+    # Aggiorna onboarding_stato
+    utente.onboarding_stato = OnboardingStato.COMPLETED
+
     await db.flush()
 
     # 2. Chiudi sessione onboarding
