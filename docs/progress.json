@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B33.5",
-  "total_blocks_run": 90,
-  "status": "CONTINUE",
-  "last_run": "2026-04-08T22:00:00Z",
-  "last_summary": "Predisposizione catena notturna: B33.5 Primo turno caldo (backend) -> fix-bug-cosmetici (frontend). Baseline verde su develop dopo merge wip/B36-font-scale. Handoff dettagliato con template per entrambi i blocchi."
+  "current_block": "fix-bug-cosmetici (skipped - already fixed)",
+  "total_blocks_run": 91,
+  "status": "PHASE_COMPLETE",
+  "last_run": "2026-04-08T02:43:40Z",
+  "last_summary": "Catena notturna completata. B33.5 implementato (primo turno caldo del tutor). Blocco fix-bug-cosmetici skippato: tutti e 5 i bug (BUG-01/02/03/05/07) erano gia stati fixati nel blocco B38.5 (S36). Codice verificato: i fix sono tutti presenti nei file sorgente."
 }

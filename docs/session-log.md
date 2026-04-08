@@ -338,3 +338,8 @@
 - **Status**: CONTINUE
 - **Summary**: Aggiunge un'impostazione utente per scalare la dimensione dei font dell'app indipendentemente dal TextScaler di sistema. Provider Riverpod con persistenza, sezione Aspetto in Profilo, helper LaTeX coordinato. Branch dedicato wip/B36-font-scale.
 ---
+
+## 2026-04-08 04:43:40 — Blocco F9BB33.5
+- **Status**: PHASE_COMPLETE
+- **Summary**: Catena notturna completata. B33.5 implementato (primo turno caldo del tutor). Blocco fix-bug-cosmetici skippato: tutti e 5 i bug (BUG-01/02/03/05/07) erano gia stati fixati nel blocco B38.5 (S36). Codice verificato: i fix sono tutti presenti nei file sorgente.
+---
