@@ -29,6 +29,7 @@ from app.core.onboarding import (
     completa_onboarding,
     crea_sessione_onboarding,
     crea_utente_temporaneo,
+    elabora_decisione_onboarding,
     seleziona_nodi_gateway,
     transizione_fase_onboarding,
 )
@@ -174,7 +175,9 @@ class TestAggiornaFaseOnboarding:
         assert sessione.stato_orchestratore["turni_conoscenza"] == 3
 
     @pytest.mark.asyncio
-    async def test_conoscenza_a_placement_max_turni(self):
+    async def test_conoscenza_incrementa_anche_al_max(self):
+        """Dopo B39.3.2 la transizione a placement è gestita dal decisore,
+        aggiorna_fase_onboarding incrementa il contatore senza transire."""
         db = AsyncMock()
         sessione = _mock_sessione(
             stato_orchestratore={
@@ -184,7 +187,8 @@ class TestAggiornaFaseOnboarding:
         )
 
         fase = await aggiorna_fase_onboarding(db, sessione)
-        assert fase == "placement"
+        assert fase == "conoscenza"
+        assert sessione.stato_orchestratore["turni_conoscenza"] == TURNI_CONOSCENZA_MAX
 
     @pytest.mark.asyncio
     async def test_conclusione_resta_conclusione(self):
@@ -507,12 +511,28 @@ class TestFlussoOnboardingE2E:
         fase = await aggiorna_fase_onboarding(db, sessione)
         assert fase == "conoscenza"
 
-        # Step 4: Simula turni in conoscenza fino a placement
-        # Servono TURNI_CONOSCENZA_MAX chiamate: da 0 si incrementa a 1,2,...,6
+        # Step 4: Simula turni in conoscenza + decisore che transisce a placement
+        # aggiorna_fase incrementa il contatore, il decisore decide la transizione
         for i in range(TURNI_CONOSCENZA_MAX):
             fase = await aggiorna_fase_onboarding(db, sessione)
+        assert fase == "conoscenza"  # aggiorna_fase non transisce più da sola
 
-        assert fase == "placement"
+        # Il decisore transisce a placement (profilo completo dopo i turni)
+        with patch("app.core.onboarding.carica_conversazione") as mock_conv, \
+             patch("app.core.onboarding.estrai_profilo") as mock_estrai:
+            mock_conv.return_value = [{"role": "user", "content": "tutto detto"}]
+            # Profilo completo → chiudi_narrativa → placement
+            from app.schemas.onboarding import CampoConConfidenza, ProfiloEstratto
+            mock_estrai.return_value = ProfiloEstratto(
+                chi_e=CampoConConfidenza(valore="studente", confidenza="alta"),
+                motivo=CampoConConfidenza(valore="esame", confidenza="alta"),
+                stile_cognitivo=CampoConConfidenza(valore="visuale", confidenza="alta"),
+                tempo_disponibile=CampoConConfidenza(valore="1h", confidenza="alta"),
+                vissuto_scolastico=CampoConConfidenza(valore="ok", confidenza="alta"),
+            )
+            decisione = await elabora_decisione_onboarding(db, sessione)
+            assert decisione is not None
+            assert sessione.stato_orchestratore["fase_onboarding"] == "placement"
 
         # Step 5: Transizione placement → piano (via segnale)
         nuova_fase = await transizione_fase_onboarding(db, sessione, "piano")

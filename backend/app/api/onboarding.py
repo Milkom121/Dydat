@@ -22,6 +22,7 @@ from app.core.onboarding import (
     completa_onboarding,
     crea_sessione_onboarding,
     crea_utente_temporaneo,
+    elabora_decisione_onboarding,
 )
 from app.core.turno import esegui_turno
 from app.db.engine import get_db
@@ -50,7 +51,11 @@ async def _genera_stream_onboarding(
     messaggio_utente: str | None = None,
     evento_iniziale: dict | None = None,
 ) -> AsyncGenerator[dict, None]:
-    """Genera eventi SSE per turno onboarding."""
+    """Genera eventi SSE per turno onboarding.
+
+    Dopo il turno, se siamo in fase conoscenza, chiama l'estrattore
+    profilo + decisore forma C e emette evento decisione_onboarding.
+    """
     if evento_iniziale:
         yield {
             "event": evento_iniziale["event"],
@@ -67,6 +72,45 @@ async def _genera_stream_onboarding(
             "event": evento["event"],
             "data": json.dumps(evento["data"]),
         }
+
+    # Post-turno: estrattore + decisore in fase conoscenza
+    if messaggio_utente:
+        try:
+            sessione = await _carica_sessione_safe(db, sessione_id)
+            if sessione:
+                decisione = await elabora_decisione_onboarding(db, sessione)
+                if decisione:
+                    stato = sessione.stato_orchestratore or {}
+                    profilo_raw = stato.get("profilo_estratto", {})
+                    # Conta campi con confidenza alta o media
+                    campi_completi = sum(
+                        1 for campo in (
+                            "chi_e", "motivo", "stile_cognitivo",
+                            "tempo_disponibile", "vissuto_scolastico",
+                        )
+                        if profilo_raw.get(campo, {}).get("confidenza")
+                        in ("alta", "media")
+                    )
+                    yield {
+                        "event": "decisione_onboarding",
+                        "data": json.dumps({
+                            "azione": decisione.azione.value,
+                            "campo_da_chiedere": decisione.campo_da_chiedere,
+                            "motivo": decisione.motivo,
+                            "fase_corrente": stato.get(
+                                "fase_onboarding", "conoscenza"
+                            ),
+                            "campi_completi": campi_completi,
+                        }),
+                    }
+                    await db.commit()
+        except Exception:
+            # Non bloccante: il turno è già completato, la decisione
+            # è un arricchimento. Log e continua.
+            logger.warning(
+                "Errore elaborazione decisione onboarding (non bloccante)",
+                exc_info=True,
+            )
 
 
 # ===================================================================
@@ -209,3 +253,14 @@ async def _carica_sessione_onboarding(
         )
 
     return sessione
+
+
+async def _carica_sessione_safe(
+    db: AsyncSession,
+    sessione_id: uuid.UUID,
+) -> Sessione | None:
+    """Carica sessione senza sollevare eccezioni (per uso post-turno)."""
+    result = await db.execute(
+        select(Sessione).where(Sessione.id == sessione_id)
+    )
+    return result.scalar_one_or_none()

@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.config import settings
+from app.core.conversazione import carica_conversazione
 from app.db.models.stato_utente import StatoNodoUtente
 from app.db.models.utenti import PercorsoUtente, Sessione, TurnoConversazione, Utente
 from app.grafo.algoritmi import ordinamento_topologico
@@ -125,6 +126,70 @@ def decidi_prossima_mossa(
         campo_da_chiedere=None,
         motivo="Nessun campo mancante trovato (fallback)",
     )
+
+
+async def elabora_decisione_onboarding(
+    db: AsyncSession,
+    sessione: Sessione,
+) -> Decisione | None:
+    """Dopo un turno in fase conoscenza, estrae profilo e decide prossima mossa.
+
+    Flusso:
+    1. Carica conversazione dal DB
+    2. Chiama estrattore Opus per aggiornare il profilo a 5 campi
+    3. Chiama decisore rules-based per la prossima mossa
+    4. Salva profilo + decisione nello stato_orchestratore
+    5. Se chiudi_narrativa o forza_chiusura → transizione a placement
+
+    Returns:
+        Decisione se fase == conoscenza, None altrimenti.
+    """
+    stato = sessione.stato_orchestratore or {}
+    fase = stato.get("fase_onboarding", "accoglienza")
+
+    if fase != "conoscenza":
+        return None
+
+    # 1. Carica conversazione per l'estrattore
+    conversazione = await carica_conversazione(db, sessione.id)
+
+    # 2. Estrai profilo dalla conversazione
+    profilo = await estrai_profilo(conversazione)
+
+    # 3. Conta turni conoscenza (già incrementato da aggiorna_fase_onboarding)
+    turni_fatti = stato.get("turni_conoscenza", 0)
+
+    # 4. Decidi prossima mossa
+    decisione = decidi_prossima_mossa(profilo, turni_fatti)
+
+    # 5. Salva profilo e decisione nello stato_orchestratore
+    stato["profilo_estratto"] = profilo.model_dump()
+    stato["ultima_decisione"] = decisione.model_dump()
+
+    # 6. Se chiudi_narrativa o forza_chiusura → transizione a placement
+    if decisione.azione in (
+        AzioneDecisore.chiudi_narrativa,
+        AzioneDecisore.forza_chiusura_tetto_turni,
+    ):
+        stato["fase_onboarding"] = "placement"
+        logger.info(
+            "Onboarding: conoscenza → placement (decisore: %s, turni=%d)",
+            decisione.azione.value,
+            turni_fatti,
+        )
+
+    sessione.stato_orchestratore = stato
+    flag_modified(sessione, "stato_orchestratore")
+    await db.flush()
+
+    logger.info(
+        "Decisione onboarding: azione=%s, campo=%s, profilo=%d/5 completi",
+        decisione.azione.value,
+        decisione.campo_da_chiedere,
+        len(profilo.campi_completi()),
+    )
+
+    return decisione
 
 
 def _profilo_vuoto() -> ProfiloEstratto:
@@ -320,20 +385,13 @@ async def aggiorna_fase_onboarding(
             logger.info("Onboarding: accoglienza → conoscenza")
 
     elif fase == "conoscenza":
+        # Incrementa contatore turni — la transizione a placement è gestita
+        # dal decisore forma C in elabora_decisione_onboarding (B39.3.2)
         turni = stato.get("turni_conoscenza", 0) + 1
         stato["turni_conoscenza"] = turni
-
-        if turni >= TURNI_CONOSCENZA_MAX:
-            fase = "placement"
-            stato["fase_onboarding"] = fase
-            sessione.stato_orchestratore = stato
-            flag_modified(sessione, "stato_orchestratore")
-            await db.flush()
-            logger.info("Onboarding: conoscenza → placement (max turni)")
-        else:
-            sessione.stato_orchestratore = stato
-            flag_modified(sessione, "stato_orchestratore")
-            await db.flush()
+        sessione.stato_orchestratore = stato
+        flag_modified(sessione, "stato_orchestratore")
+        await db.flush()
 
     # placement e piano: transizioni guidate da segnale transizione_fase
     # (gestite in elaborazione.py → _processa_transizione_fase)
