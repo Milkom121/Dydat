@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.2.3",
-  "total_blocks_run": 103,
+  "current_block": "B39.2.4",
+  "total_blocks_run": 104,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T10:00:00Z",
-  "last_summary": "B39.2.3 completato - Funzione estrai_profilo() in core/onboarding.py con chiamata Opus, parser JSON robusto, retry 1x, fallback a profilo vuoto. Nuova chiama_llm_singolo() non-streaming in client.py. LLM_MODEL_ONBOARDING in config.py. 22 nuovi test, 470 backend verdi."
+  "last_run": "2026-04-09T00:15:00Z",
+  "last_summary": "Catena B39 ripartenza dopo stop manuale. 6 sub-blocchi completati (B39.1.1, B39.1.2, B39.1.3, B39.2.1, B39.2.2, B39.2.3). Handoff ripristinato a B39.2.4. Runner patchato con commit_handoff_if_dirty per evitare disallineamento stato/codice."
 }
