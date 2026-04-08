@@ -456,9 +456,27 @@ main() {
     if $RESUME && [[ -f "$PROJECT_DIR/$HANDOFF_FILE" ]]; then hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false"
     elif [[ -f "$PROJECT_DIR/$HANDOFF_FILE" ]] && [[ "$(read_progress_field total_blocks_run)" != "0" ]]; then hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false"; fi
     local br=0 st; st="$(date +%s)"
+    # Protezione loop: se lo stesso bid si ripete >= 2 volte consecutive con CONTINUE,
+    # vuol dire che Claude non sta aggiornando BLOCK nell'handoff e il runner ciclerebbe
+    # all'infinito. Fermiamo tutto con ERROR automatico.
+    local last_bid="" consecutive_same=0
     log "${BOLD}=== Inizio ciclo ===${NC}\n"
     while [[ $br -lt $MAX_BLOCKS ]]; do
         br=$((br+1)); local bid="F${cp}B${cb}"
+        # Loop detection: confronta con il bid precedente
+        if [[ "$bid" == "$last_bid" ]]; then
+            consecutive_same=$((consecutive_same + 1))
+        else
+            consecutive_same=0
+        fi
+        last_bid="$bid"
+        if [[ $consecutive_same -ge 2 ]]; then
+            log "${RED}LOOP RILEVATO: blocco $bid ripetuto per la ${consecutive_same}a volta consecutiva.${NC}"
+            log "${RED}Claude non sta aggiornando il campo BLOCK in handoff.md. Interruzione automatica.${NC}"
+            local el_now; el_now="$(( ($(date +%s) - st) / 60 ))"
+            send_telegram_report "ERROR" "$bid" "$br" "$el_now" "Loop rilevato: blocco $bid ripetuto $consecutive_same volte consecutive. Il runner si e fermato per evitare iterazioni a vuoto. Verifica manualmente .claude/handoff.md e aggiorna BLOCK al prossimo sub-blocco reale." "" "0"
+            break
+        fi
         local block_st; block_st="$(date +%s)"  # tempo inizio blocco per metrica per-block
         log "━━━ ${BOLD}Blocco $bid ($br/$MAX_BLOCKS)${NC} ━━━"
         check_git_branch
