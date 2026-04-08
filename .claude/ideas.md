@@ -3,6 +3,24 @@
 Idee e intuizioni emerse durante le sessioni di sviluppo che non fanno parte del blocco corrente.
 Ogni voce ha data e contesto. Verranno riprese in fase di pianificazione.
 
+## 2026-04-08 - Modello temporale Dydat e neuroscienze dell'apprendimento mobile (macro-riprogettazione)
+- **Contesto**: Emersa durante la sessione Cowork di design del "primo turno caldo" (UX-01). Discutendo del "piano sessione" da 15/30/60 minuti, Villa ha sollevato il punto piu grosso: quei numeri sono gia enormi per come funziona l'attenzione su smartphone, e dovremmo ripensare da zero il modello temporale di Dydat tenendo conto delle neuroscienze dell'apprendimento e del modo in cui gli esseri umani usano davvero il telefono.
+- **Direzione**: spostare da "sessione lunga monolitica" a "contenitore che ospita tanti micro-cicli brevi":
+  1. **Micro-cicli di 3-7 minuti** di focus reale, seguiti da micro-pause o da cambi di modalita
+  2. **Richiamo attivo** al posto dell'ascolto passivo (lo studente DEVE fare qualcosa, non assistere)
+  3. **Ripetizione distanziata** integrata DENTRO la sessione corrente, non solo tra sessioni diverse — recupero in 30-60 secondi di cose viste nei giorni precedenti
+  4. **Alternanza rapida** input nuovo / richiamo / pratica, invece di un unico flusso espositivo lungo
+  5. **Smartphone come device di micro-momenti**, non surrogato del libro di testo
+  6. **Ridefinizione del "successo sessione"**: non piu "hai completato i 30 minuti" ma "hai completato N cicli utili"
+- **Impatti stimati** (se si procedera):
+  - Ripensare come il tutor distribuisce le mosse nel tempo (direttive, orchestratore, signal di transizione)
+  - Probabile introduzione di indicatori visivi nel frontend (ciclo 2 di 6, micro-pause esplicite, forse anche micro-notifiche per ripasso distanziato)
+  - Rivedere la logica "ora basta spiegare, facciamo un esercizio" — oggi implicita nel prompt, dovrebbe diventare signal-driven con budget per micro-ciclo
+  - Integrare un meccanismo di FSRS/SRS light anche intra-sessione, non solo inter-sessione
+- **Vincolo esplicito del fondatore**: NON partire di pancia. Prima serve una sessione di discovery vera con la ricerca sull'apprendimento mobile sotto mano (paper, linee guida, esempi di app che lo fanno bene) per decidere numeri concreti, strutture e meccanismi. Solo DOPO si progettano i blocchi di sviluppo.
+- **Priorita**: alta strategica ma NON urgente. Non blocca niente di oggi. Va ripresa quando si chiude la fase UX Redesign in corso.
+- **Collegamento**: decisione presa nel contesto di UX-01 (`docs/discussions/ux-01-primo-turno-caldo.md`, sezione 5). Il primo turno caldo di oggi implementa solo la citazione leggera del tempo + modulazione morbida, NON un vero piano sessione strutturato, proprio per lasciare spazio a questa riprogettazione piu grande.
+
 ## 2026-04-07 - Impostazione dimensione font in-app
 - **Contesto**: Discussione post-test manuale B35.14 con Villa. L'app ora rispetta il TextScaler di sistema (B35.13), ma molti utenti non sanno che esiste o vorrebbero scalare solo Dydat indipendentemente dal sistema.
 - **Proposta blocco**: **B36 - Impostazione dimensione font in-app** (~30-45 min runner)
@@ -27,6 +45,7 @@ Ogni voce ha data e contesto. Verranno riprese in fase di pianificazione.
 - **Proposta**: blocco dedicato **B33.5 "Primo turno caldo"** oppure integrazione nel redesign onboarding di Fase 10 B39. Approccio: primo turno parzialmente deterministico (template "accoglienza + presentazione nodo + proposta") prima di lasciare il timone all'LLM + iniezione esplicita del profilo utente nel contesto.
 - **Priorita**: alta. Impatta la prima impressione dell'utente e il senso di "tutor che ti conosce".
 - **File detail**: vedi `.claude/test-findings.md` UX-01.
+- **AGGIORNAMENTO 2026-04-08**: discussione strategica completata con Villa in sessione Cowork. Prese le 7 decisioni di design (struttura monolitica a tre battute, approccio parzialmente deterministico con iniezione nome + titolo nodo, uso parafrasato di chi_e/motivo/stile_cognitivo, micro-indice discorsivo del nodo, citazione leggera del ritmo + modulazione morbida, trattamento differenziato per nodi presunti padroneggiati, helper preambolo caldo riutilizzabile). Documento di sintesi completo pronto per implementazione in `docs/discussions/ux-01-primo-turno-caldo.md`. File codice principali: `backend/app/llm/prompts/direttive.py` (riscrittura `direttiva_spiegazione` + nuovo helper `_preambolo_caldo`), `backend/app/core/contesto.py` (pass-through nome utente e flag nodo presunto), `direttiva_ripresa_sessione` (anche lei usa il nuovo helper).
 
 
 ## 2026-02-19 - Mascotte "Creatura di Luce"
