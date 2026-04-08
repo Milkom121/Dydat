@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.2.2",
-  "total_blocks_run": 100,
+  "current_block": "B39.2.3",
+  "total_blocks_run": 103,
   "status": "CONTINUE",
-  "last_run": "2026-04-08T22:30:00Z",
-  "last_summary": "B39.2.2 completato - Schema Pydantic CampoConConfidenza e ProfiloEstratto per estrattore profilo onboarding. 24 nuovi test, 448 backend verdi."
+  "last_run": "2026-04-09T10:00:00Z",
+  "last_summary": "B39.2.3 completato - Funzione estrai_profilo() in core/onboarding.py con chiamata Opus, parser JSON robusto, retry 1x, fallback a profilo vuoto. Nuova chiama_llm_singolo() non-streaming in client.py. LLM_MODEL_ONBOARDING in config.py. 22 nuovi test, 470 backend verdi."
 }

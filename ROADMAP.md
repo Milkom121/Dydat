@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding con Momento Wow
-- [>] **Stato**: in corso (Fase 1 DB completata, Fase 2 in corso: B39.2.2 schema Pydantic estrattore — 448 backend verdi)
+- [>] **Stato**: in corso (Fase 1 DB completata, Fase 2 in corso: B39.2.3 estrai_profilo con Opus — 470 backend verdi)
 - **Complessita'**: alta
 - **Descrizione**: Ristrutturare l'onboarding. (1) Momento wow (30-60s): l'app mostra una domanda curiosa e la risponde con una visualizzazione animata. Lo studente guarda, non interagisce. Widget nativo (CustomPainter o fl_chart). (2) Domande rapide: eta, cosa studi, perche sei qui. UI a scelta multipla, veloce. (3) Poi il flusso attuale (conversazione tutor + costruzione percorso). (4) Registrazione alla fine, non all'inizio. (5) La mascotte compare qui per la prima volta.
 - **File da toccare**: onboarding_screen.dart (ristrutturazione), nuovi widget per momento wow, flow di registrazione posticipato

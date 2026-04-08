@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-09 — Runner B39.2.3 — Funzione estrai_profilo con Opus
+- **Status**: CONTINUE
+- **Summary**: estrai_profilo() con chiamata Opus, parser JSON robusto, retry 1x, fallback profilo vuoto. chiama_llm_singolo() non-streaming. LLM_MODEL_ONBOARDING. 22 nuovi test. 470 backend verdi, 10 skipped.
+---
+
 ## 2026-04-08 — Runner B39.2.2 — Schema Pydantic estrattore profilo
 - **Status**: CONTINUE
 - **Summary**: CampoConConfidenza (valore+confidenza con model_validator) e ProfiloEstratto (5 campi + helper campi_completi/mancanti/is_completo). 24 nuovi test. 448 backend verdi, 10 skipped.
@@ -380,6 +385,11 @@
 ---
 
 ## 2026-04-08 23:56:22 — Blocco F10BB39.1.3
+- **Status**: CONTINUE
+- **Summary**: B39.2.1 completato - Prompt estrattore profilo onboarding scritto in onboarding_extractor.py. Il prompt istruisce Opus a estrarre 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico) con confidenze (alta/media/bassa) dalla conversazione onboarding. Output JSON rigido con 2 esempi few-shot (completo e parziale). Costanti CAMPI_PROFILO e CONFIDENZE_VALIDE esportate per riuso dal decisore forma C.
+---
+
+## 2026-04-09 00:00:16 — Blocco F10BB39.2.1
 - **Status**: CONTINUE
 - **Summary**: B39.2.1 completato - Prompt estrattore profilo onboarding scritto in onboarding_extractor.py. Il prompt istruisce Opus a estrarre 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico) con confidenze (alta/media/bassa) dalla conversazione onboarding. Output JSON rigido con 2 esempi few-shot (completo e parziale). Costanti CAMPI_PROFILO e CONFIDENZE_VALIDE esportate per riuso dal decisore forma C.
 ---
