@@ -1,8 +1,8 @@
 {
   "current_phase": "9",
-  "current_block": "B36",
+  "current_block": "B33.5",
   "total_blocks_run": 90,
-  "status": "PHASE_COMPLETE",
-  "last_run": "2026-04-08T09:00:00Z",
-  "last_summary": "B36 completato: impostazione font in-app con provider Riverpod, MediaQuery wrapper, helper LaTeX, UI Profilo con 4 opzioni e anteprima live. 588 test verdi, analyze 0. Fix lint doc comment. Pronto per test manuale Villa e merge verso develop."
+  "status": "CONTINUE",
+  "last_run": "2026-04-08T22:00:00Z",
+  "last_summary": "Predisposizione catena notturna: B33.5 Primo turno caldo (backend) -> fix-bug-cosmetici (frontend). Baseline verde su develop dopo merge wip/B36-font-scale. Handoff dettagliato con template per entrambi i blocchi."
 }
