@@ -433,3 +433,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.3.2 completato - Integrazione decisore nell'endpoint /onboarding/turno. Dopo ogni turno utente in fase conoscenza, l'estrattore Opus aggiorna il profilo e il decisore rules-based decide la prossima mossa. Evento SSE decisione_onboarding emesso. 13 nuovi test, 2 aggiornati. 524 backend verdi, 10 skipped.
 ---
+
+## 2026-04-09 01:52:17 — Blocco F10BB39.4.1
+- **Status**: CONTINUE
+- **Summary**: B39.4.1 completato - Fix completa_onboarding scrittura profilo (ONB-01). La funzione ora legge profilo_estratto dallo stato_orchestratore, costruisce profilo_sintetizzato (dict piatto con valori), contesto_personale (chi_e/motivo/vissuto_scolastico) e preferenze_tutor (stile_cognitivo/tempo_disponibile). Parametri payload hanno priorita'. onboarding_stato aggiornato a COMPLETED. 16 nuovi test. 540 backend verdi, 10 skipped.
+---
