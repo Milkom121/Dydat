@@ -169,6 +169,14 @@
 - **Gate di uscita**: Transizione animata funziona, recap narrativo+numeri, scelta obiettivo funziona, analyze 0, test verdi
 - **Note**: StudioTransitionOverlay (singolo AnimationController 1150ms, Interval): scale-in mascotte + fade-out overlay. HomeScreen usa Stack+Positioned.fill per l'overlay prima della navigazione. SessionGoalPicker (dialog): 3 opzioni Veloce/Normale/Approfondita, restituisce durataMsMin passato a startSessionStream. recap_session_screen: narrativa tutor in cima (recapBuildNarrativa), poi stats. Notifica snackbar quando si supera l'obiettivo. app_router.dart: CustomTransitionPage slide-up+fade per route /studio. 47 nuovi test (343 totale), analyze 0.
 
+### Blocco B33.5 — Primo Turno Caldo del Tutor (UX-01)
+- [x] **Stato**: completato (S50)
+- **Complessita'**: media
+- **Descrizione**: Fix del primo messaggio del tutor che partiva freddo (esempio cioccolatini senza saluto ne' contesto). (1) Helper `_preambolo_caldo` riutilizzabile: saluto con nome, riconoscimento profilo parafrasato (chi_e, motivo, stile_cognitivo da profilo_sintetizzato), citazione leggera del ritmo scelto (15/30/60 min). (2) Riscrittura `direttiva_spiegazione` con 3 branch: nodo nuovo (presentazione + micro-indice discorsivo + warm-up), nodo presunto padroneggiato (verifica veloce), fallback classico. (3) Aggiornamento `direttiva_ripresa_sessione` per integrare preambolo caldo. (4) Pass-through in `contesto.py`: nome_utente, profilo_sintetizzato, ritmo_minuti, nodo_presunto (da StatoNodoUtente.presunto).
+- **File toccati**: backend/app/llm/prompts/direttive.py, backend/app/core/contesto.py, backend/tests/test_contesto.py, nuovo backend/tests/test_direttive_primo_turno.py
+- **Gate di uscita**: _preambolo_caldo testato, direttiva_spiegazione con 3 branch, direttiva_ripresa aggiornata, contesto.py pass-through, 14 nuovi test, 377 backend verdi (10 skipped), ruff pulito
+- **Note**: Decisioni di design in docs/discussions/ux-01-primo-turno-caldo.md. Tutti i parametri nuovi sono opzionali per retrocompatibilita' con test e codice esistenti. Il preambolo istruisce il tutor a parafrasare il profilo (mai verbatim). Per nodi presunti, il tutor propone domanda-sonda invece di spiegazione.
+
 ---
 
 ## Fase 8 — UX Redesign: I Miei Studi + Quaderno (Fase A.3, B34-B35)
