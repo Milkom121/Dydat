@@ -408,3 +408,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.2.3 completato — Funzione estrai_profilo con chiamata Opus e retry (ca67488). Prossimo: B39.2.4, unit test integrazione estrattore. Catena B39 Onboarding Narrativo in corso, 6 sub-blocchi su 38 completati (B39.1.1, B39.1.2, B39.1.3, B39.2.1, B39.2.2, B39.2.3). Handoff ripristinato dopo stop manuale del runner per patch al meccanismo di commit stato.
 ---
+
+## 2026-04-09 01:03:08 — Blocco F10BB39.2.4
+- **Status**: CONTINUE
+- **Summary**: B39.2.3 completato — Funzione estrai_profilo con chiamata Opus e retry (ca67488). Prossimo: B39.2.4, unit test integrazione estrattore. Catena B39 Onboarding Narrativo in corso, 6 sub-blocchi su 38 completati (B39.1.1, B39.1.2, B39.1.3, B39.2.1, B39.2.2, B39.2.3). Handoff ripristinato dopo stop manuale del runner per patch al meccanismo di commit stato.
+---
