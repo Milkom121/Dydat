@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-04-08 — Runner B39.2.2 — Schema Pydantic estrattore profilo
+- **Status**: CONTINUE
+- **Summary**: CampoConConfidenza (valore+confidenza con model_validator) e ProfiloEstratto (5 campi + helper campi_completi/mancanti/is_completo). 24 nuovi test. 448 backend verdi, 10 skipped.
+---
+
+## 2026-04-08 — Runner B39.1.2 — Modello SQLAlchemy Utente
+- **Status**: CONTINUE
+- **Summary**: Enum OnboardingStato (str, Enum) con 3 valori. Campi onboarding_stato e lingua_preferita nel modello Utente. Export in __init__.py. 9 nuovi test. 386 backend verdi, 10 skipped.
+---
+
 ## 2026-04-08 — Sessione S50 — B36 Impostazione dimensione font in-app
 - **Status**: PHASE_COMPLETE
 - **Summary**: Provider Riverpod con persistenza SharedPreferences (4 opzioni: 0.85/1.0/1.15/1.3). MediaQuery wrapper in main.dart complementare al TextScaler di sistema. Helper LaTeX per flutter_math_fork. Sezione Aspetto in Profilo con anteprima live. FormulaCurriculumCard e EsempioInlineCard convertiti a ConsumerWidget. 8 nuovi test, 588 totale frontend, analyze 0. Fase 9 COMPLETATA.
@@ -342,4 +352,34 @@
 ## 2026-04-08 04:43:40 — Blocco F9BB33.5
 - **Status**: PHASE_COMPLETE
 - **Summary**: Catena notturna completata. B33.5 implementato (primo turno caldo del tutor). Blocco fix-bug-cosmetici skippato: tutti e 5 i bug (BUG-01/02/03/05/07) erano gia stati fixati nel blocco B38.5 (S36). Codice verificato: i fix sono tutti presenti nei file sorgente.
+---
+
+## 2026-04-08 23:39:25 — Blocco F10BB39.1.1
+- **Status**: CONTINUE
+- **Summary**: B39.1.1 completato — Migrazione Alembic a1b2c3d4e5f6 per onboarding_stato (enum not_started/in_progress/completed) e lingua_preferita (varchar 10, default it) sulla tabella utenti. Upgrade, downgrade e re-upgrade verificati via psql. 377 test backend verdi, 10 skipped.
+---
+
+## 2026-04-08 23:44:07 — Blocco F10BB39.1.2
+- **Status**: CONTINUE
+- **Summary**: B39.1.2 completato — Aggiunto enum OnboardingStato (str, Enum) con 3 valori (not_started, in_progress, completed) al modello SQLAlchemy Utente. Campo lingua_preferita String(10) con default 'it'. Entrambi NOT NULL con server_default. Export in __init__.py. 9 nuovi test.
+---
+
+## 2026-04-08 23:47:03 — Blocco F10BB39.1.3
+- **Status**: CONTINUE
+- **Summary**: B39.1.2 completato — Aggiunto enum OnboardingStato (str, Enum) con 3 valori (not_started, in_progress, completed) al modello SQLAlchemy Utente. Campo lingua_preferita String(10) con default 'it'. Entrambi NOT NULL con server_default. Export in __init__.py. 9 nuovi test.
+---
+
+## 2026-04-08 23:48:32 — Blocco F10BB39.1.3
+- **Status**: CONTINUE
+- **Summary**: B39.1.2 completato — Aggiunto enum OnboardingStato (str, Enum) con 3 valori (not_started, in_progress, completed) al modello SQLAlchemy Utente. Campo lingua_preferita String(10) con default 'it'. Entrambi NOT NULL con server_default. Export in __init__.py. 9 nuovi test.
+---
+
+## 2026-04-08 23:52:20 — Blocco F10BB39.1.3
+- **Status**: CONTINUE
+- **Summary**: B39.1.3 completato — Schema Pydantic UtenteResponse già aggiornato in B39.1.2 con campi onboarding_stato (str, default "not_started") e lingua_preferita (str, default "it"). Scritti 9 test di contract: presenza campi, default, serializzazione da dict/enum/mock ORM, model_dump JSON, from_attributes.
+---
+
+## 2026-04-08 23:56:22 — Blocco F10BB39.1.3
+- **Status**: CONTINUE
+- **Summary**: B39.2.1 completato - Prompt estrattore profilo onboarding scritto in onboarding_extractor.py. Il prompt istruisce Opus a estrarre 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico) con confidenze (alta/media/bassa) dalla conversazione onboarding. Output JSON rigido con 2 esempi few-shot (completo e parziale). Costanti CAMPI_PROFILO e CONFIDENZE_VALIDE esportate per riuso dal decisore forma C.
 ---

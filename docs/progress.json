@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.1.1",
-  "total_blocks_run": 91,
+  "current_block": "B39.2.2",
+  "total_blocks_run": 100,
   "status": "CONTINUE",
-  "last_run": "2026-04-08T15:30:00Z",
-  "last_summary": "Predisposizione catena B39 Onboarding Narrativo - 38 sub-blocchi in 11 fasi. Design doc completo in docs/discussions/b39-onboarding-narrativo.md. Primo sub-blocco: migrazione Alembic per campi onboarding_stato e lingua_preferita. Baseline verde."
+  "last_run": "2026-04-08T22:30:00Z",
+  "last_summary": "B39.2.2 completato - Schema Pydantic CampoConConfidenza e ProfiloEstratto per estrattore profilo onboarding. 24 nuovi test, 448 backend verdi."
 }
