@@ -1,13 +1,22 @@
 """Gruppo 3 — Utenti, sessioni, conversazioni."""
 
+import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Float, ForeignKey, Index, Integer, Text, text
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import Float, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
+
+class OnboardingStato(str, enum.Enum):
+    """Stato dell'onboarding utente — mappato al tipo PostgreSQL onboarding_stato_enum."""
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
 
 
 class Utente(Base):
@@ -27,6 +36,20 @@ class Utente(Base):
     materie_attive: Mapped[list | None] = mapped_column(ARRAY(Text))
     obiettivo_giornaliero_min: Mapped[int] = mapped_column(Integer, server_default=text("20"))
     impostazioni_promemoria: Mapped[dict | None] = mapped_column(JSONB)
+
+    onboarding_stato: Mapped[OnboardingStato] = mapped_column(
+        SAEnum(
+            OnboardingStato,
+            name="onboarding_stato_enum",
+            create_constraint=False,
+            native_enum=True,
+        ),
+        nullable=False,
+        server_default=text("'not_started'"),
+    )
+    lingua_preferita: Mapped[str] = mapped_column(
+        String(10), nullable=False, server_default=text("'it'"),
+    )
 
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("now()"))

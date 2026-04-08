@@ -1,6 +1,6 @@
 from app.db.models.grafo import Esercizio, Nodo, NodoTema, Relazione, Tema
 from app.db.models.stato_utente import StoricoErrori, StoricoEsercizi, StatoNodoUtente
-from app.db.models.utenti import PercorsoUtente, Sessione, TurnoConversazione, Utente
+from app.db.models.utenti import OnboardingStato, PercorsoUtente, Sessione, TurnoConversazione, Utente
 from app.db.models.gamification import (
     AchievementDefinizione,
     AchievementUtente,
@@ -18,6 +18,7 @@ __all__ = [
     "StatoNodoUtente",
     "StoricoEsercizi",
     "StoricoErrori",
+    "OnboardingStato",
     "Utente",
     "PercorsoUtente",
     "Sessione",
