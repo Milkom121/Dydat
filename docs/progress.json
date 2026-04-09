@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.9.2",
-  "total_blocks_run": 140,
+  "total_blocks_run": 142,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T04:15:00Z",
-  "last_summary": "B39.9.1 completato. Creato widget OnboardingPendingBanner con enum OnboardingBannerStato (nonIniziato/inCorso). Card con DydatSurface.glowCard, icona waving_hand, testi caldi italiani contestuali, CTA Inizia/Riprendi, Semantics accessibilita. 11 nuovi test. 703 frontend verdi, analyze 0."
+  "last_run": "2026-04-09T04:00:00Z",
+  "last_summary": "B39.9.2 completato. Integrato OnboardingPendingBanner in HomeScreen condizionale su onboarding_stato. 712 frontend verdi."
 }

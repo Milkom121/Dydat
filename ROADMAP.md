@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (14/38 sub-blocchi completati)
+- [>] **Stato**: in corso (15/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -623,11 +623,12 @@
 - **Note**: OnboardingBannerStato enum (nonIniziato/inCorso). DydatSurface.glowCard con primary glow. Semantics accessibilita. Icona waving_hand. Testi caldi italiani. 11 nuovi test. 703 frontend verdi, analyze 0.
 
 #### Blocco B39.9.2 — Integrazione banner in home_screen
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S72)
 - **Complessita'**: bassa
 - **Descrizione**: Il banner compare condizionale su `onboarding_stato != completato`. Nascosto quando l'onboarding e completo.
 - **File da toccare**: `frontend/lib/presentation/home_screen/home_screen.dart`
 - **Gate**: widget test con stati vari (not_started, in_progress, completed)
+- **Note**: Aggiunto campo onboardingStato al modello Utente Dart (deserializza onboarding_stato dal backend). HomeScreen: watch userProvider, banner condizionale tra WelcomeHeader e bottone CTA. Tap naviga a /onboarding via context.push. Fix test b35_7 (aggiunto userProvider override). 9 nuovi test (5 widget + 4 modello). 712 frontend verdi, analyze 0.
 
 #### Blocco B39.9.3 — Logica "Riprendi" con stato preservato
 - [ ] **Stato**: da fare

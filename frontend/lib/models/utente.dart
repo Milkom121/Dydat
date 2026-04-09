@@ -15,6 +15,8 @@ class Utente {
   final List<String>? materieAttive;
   @JsonKey(name: 'obiettivo_giornaliero_min')
   final int obiettvoGiornalieroMin;
+  @JsonKey(name: 'onboarding_stato')
+  final String onboardingStato;
 
   const Utente({
     required this.id,
@@ -24,6 +26,7 @@ class Utente {
     this.contestoPersonale,
     this.materieAttive,
     this.obiettvoGiornalieroMin = 20,
+    this.onboardingStato = 'not_started',
   });
 
   factory Utente.fromJson(Map<String, dynamic> json) => _$UtenteFromJson(json);

@@ -17,6 +17,8 @@ Utente _$UtenteFromJson(Map<String, dynamic> json) => Utente(
       .toList(),
   obiettvoGiornalieroMin:
       (json['obiettivo_giornaliero_min'] as num?)?.toInt() ?? 20,
+  onboardingStato:
+      json['onboarding_stato'] as String? ?? 'not_started',
 );
 
 Map<String, dynamic> _$UtenteToJson(Utente instance) => <String, dynamic>{
@@ -27,6 +29,7 @@ Map<String, dynamic> _$UtenteToJson(Utente instance) => <String, dynamic>{
   'contesto_personale': instance.contestoPersonale,
   'materie_attive': instance.materieAttive,
   'obiettivo_giornaliero_min': instance.obiettvoGiornalieroMin,
+  'onboarding_stato': instance.onboardingStato,
 };
 
 PreferenzeStudio _$PreferenzeStudioFromJson(Map<String, dynamic> json) =>

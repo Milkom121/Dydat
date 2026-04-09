@@ -1,27 +1,27 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.9.1
-SUMMARY: B39.8.4 completato. Scritti 15 test di integrazione widget per il flusso onboarding completo in b39_8_4_onboarding_integration_test.dart. Scenari coperti: (1) utente collaborativo, (2) utente taciturno con forza_chiusura_tetto_turni, (3) skip (4 varianti), (4) errori (SSE, ErroreEvent, complete fallito), (5) domande strutturate, (6) progresso fasi, (7) streaming testo.
-NEXT: B39.9.1 - Widget OnboardingPendingBanner
+BLOCK: B39.9.2
+SUMMARY: B39.9.2 completato. Integrato OnboardingPendingBanner in HomeScreen condizionale su onboarding_stato. Aggiunto campo onboardingStato al modello Utente Dart.
+NEXT: B39.9.3 - Logica Riprendi con stato preservato
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: frontend/test/widgets/b39_8_4_onboarding_integration_test.dart (nuovo)
-TESTS: PASS (692 frontend verdi, analyze 0)
-VERIFICATION: 692 passed, 0 errori analyze. 15 nuovi test tutti verdi.
+FILES_MODIFIED: frontend/lib/models/utente.dart, frontend/lib/models/utente.g.dart, frontend/lib/presentation/home_screen/home_screen.dart, frontend/test/widgets/b39_9_2_banner_home_test.dart (nuovo), frontend/test/widgets/b35_7_pull_to_refresh_test.dart (fix override)
+TESTS: PASS (712 frontend verdi, analyze 0)
+VERIFICATION: 712 passed, 0 errori analyze. 9 nuovi test tutti verdi. 0 regressioni.
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto (B39.8.4)
-- 30/38 sub-blocchi B39 completati totali
+### Cosa e stato fatto (B39.9.2)
+- 15/38 sub-blocchi B39 completati totali
+- Aggiunto onboardingStato al modello Utente (String, default not_started, JsonKey onboarding_stato)
+- HomeScreen: watch userProvider, banner condizionale tra WelcomeHeader e bottone CTA
+- Tap su banner naviga a /onboarding via context.push
+- Fix test b35_7 (aggiunto userProvider override)
+- 9 nuovi test (5 widget + 4 modello)
 
-### Nuovo file: frontend/test/widgets/b39_8_4_onboarding_integration_test.dart
-- _MockOnboardingService con turn controller multipli sequenziali
-- 15 test widget in 7 gruppi tematici
-- Helper: _emitFirstTurnAndSettle, _sendUserMessage (via provider)
-- Pattern: ProviderContainer + UncontrolledProviderScope per accesso diretto allo stato
-
-### Prossimo: B39.9.1
-- Widget OnboardingPendingBanner
-- Card persistente, non dismissibile, con messaggio caldo + CTA Riprendi/Inizia
-- Condizionale su onboarding_stato (not_started, in_progress, completed)
+### Prossimo: B39.9.3
+- Logica Riprendi con stato preservato
+- Tap su Riprendi riapre /onboarding con conversazione precedente intatta
+- Backend deve supportare retrieval sessione onboarding esistente
+- File da toccare: onboarding_provider.dart, onboarding_screen.dart, backend /onboarding/inizia

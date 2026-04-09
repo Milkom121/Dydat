@@ -9,9 +9,11 @@ import '../../providers/path_provider.dart';
 import '../../providers/ripasso_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../providers/stats_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../routes/app_router.dart';
 import '../../theme/surface_decorations.dart';
 import '../../widgets/custom_icon_widget.dart';
+import '../../widgets/onboarding_pending_banner.dart';
 import '../studio_screen/widgets/session_history_widget.dart';
 import 'widgets/mini_percorso_widget.dart';
 import 'widgets/ripasso_section.dart';
@@ -42,6 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(sessionProvider.notifier).loadSessionHistory();
       ref.read(ripassoProvider.notifier).carica();
       ref.read(statsProvider.notifier).load();
+      ref.read(userProvider.notifier).loadProfile();
       _loadPercorso();
     });
   }
@@ -52,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(sessionProvider.notifier).loadSessionHistory(),
       ref.read(ripassoProvider.notifier).carica(),
       ref.read(statsProvider.notifier).load(),
+      ref.read(userProvider.notifier).loadProfile(),
       _loadPercorso(),
     ]);
   }
@@ -92,6 +96,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     context.push(_transitionDestination);
   }
 
+  void _navigaOnboarding() {
+    HapticFeedback.lightImpact();
+    context.push(AppPaths.onboarding);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -99,9 +108,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final ripassoState = ref.watch(ripassoProvider);
     final statsState = ref.watch(statsProvider);
     final pathState = ref.watch(pathProvider);
+    final userState = ref.watch(userProvider);
 
     final hasActiveSession = sessionState.activeSession?.stato == 'attiva';
     final lastNodeName = _ultimoNodoFormattato(sessionState.sessionHistory);
+
+    // Determina se mostrare il banner onboarding
+    final onboardingStato = userState.profile?.onboardingStato;
+    final mostraBannerOnboarding = onboardingStato != null &&
+        onboardingStato != 'completed';
 
     return Stack(
       children: [
@@ -143,6 +158,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       hasActiveSession: hasActiveSession,
                       lastNodeName: lastNodeName,
                     ),
+
+                    // Banner onboarding (se non completato)
+                    if (mostraBannerOnboarding) ...[
+                      SizedBox(height: 2.h),
+                      OnboardingPendingBanner(
+                        stato: onboardingStato == 'in_progress'
+                            ? OnboardingBannerStato.inCorso
+                            : OnboardingBannerStato.nonIniziato,
+                        onTap: _navigaOnboarding,
+                      ),
+                    ],
 
                     SizedBox(height: 3.h),
 

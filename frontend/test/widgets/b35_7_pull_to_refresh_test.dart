@@ -15,6 +15,7 @@ import 'package:dydat/providers/path_provider.dart';
 import 'package:dydat/providers/ripasso_provider.dart';
 import 'package:dydat/providers/session_provider.dart';
 import 'package:dydat/providers/stats_provider.dart';
+import 'package:dydat/providers/user_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Fake notifiers — non fanno chiamate reali
@@ -47,6 +48,15 @@ class _FakeStatsNotifier extends StateNotifier<StatsState>
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _FakeUserNotifier extends StateNotifier<UserState>
+    implements UserNotifier {
+  _FakeUserNotifier() : super(const UserState());
+  @override
+  Future<void> loadProfile() async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _FakePathNotifier extends StateNotifier<PathState>
     implements PathNotifier {
   _FakePathNotifier([PathState? initial]) : super(initial ?? const PathState());
@@ -71,6 +81,7 @@ Widget _wrapHome() {
       ripassoProvider.overrideWith((_) => _FakeRipassoNotifier()),
       statsProvider.overrideWith((_) => _FakeStatsNotifier()),
       pathProvider.overrideWith((_) => _FakePathNotifier()),
+      userProvider.overrideWith((_) => _FakeUserNotifier()),
     ],
     child: MaterialApp(
       home: const HomeScreen(),
