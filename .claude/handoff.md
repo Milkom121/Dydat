@@ -1,19 +1,19 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.10.1
-SUMMARY: B39.9.3 completato (commit cc255bb). Logica Riprendi onboarding con stato preservato. Endpoint backend GET /onboarding/riprendi/{utente_temp_id} + provider resumeOnboarding + parametro resume in onboarding_screen + tap banner home naviga con resume=true + storage service salva utenteTempId. 10 test backend + 13 test frontend. 768 backend (13 skipped), frontend 712+ verdi, analyze 0. Fase 9 chiusa al 100%.
-NEXT: B39.10.1 - VoiceInputField in chat di sessione studio
+BLOCK: B39.10.2
+SUMMARY: B39.10.1 completato (commit d990152). VoiceInputField integrato nella chat della sessione studio (session_input_bar_widget + studio_screen). Inoltre fix test hang in b39_8_4 (commit 25255d4): il _MockOnboardingService ora sovrascrive getResumeState, eliminando l'hang che causava i timeout runner. Suite frontend intera: 725 verdi in 21s (prima appesa indefinitamente). analyze 0.
+NEXT: B39.10.2 - VoiceInputField nella ricerca "I miei studi"
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: backend/app/api/onboarding.py, backend/app/schemas/onboarding.py, backend/tests/test_b39_9_3_riprendi_onboarding.py (nuovo), 10 file frontend lib e test
-TESTS: PASS (768 backend + frontend 712+, analyze 0)
-VERIFICATION: Blocco chiuso manualmente al risveglio dopo timeout runner di 45min durante la sessione notturna. Codice era gia completo sul disco, solo non committato. Tutti i test verdi, nessuna regressione.
+FILES_MODIFIED: frontend/lib/presentation/studio_screen/widgets/session_input_bar_widget.dart, frontend/lib/presentation/studio_screen/studio_screen.dart, frontend/test/widgets/b39_8_4_onboarding_integration_test.dart (fix hang)
+TESTS: PASS (725 frontend verdi in 21s, 768 backend verdi, analyze 0)
+VERIFICATION: Commit manuale al risveglio dopo timeout runner B39.10.1 causato da test hang pre-esistente in b39_8_4 (risolto anch'esso). Flutter test suite intera ora passa in 21s, confermando che il bug era quel singolo test rotto.
 
 ---
 
 ## Contesto dettagliato
 
 ### Stato avanzamento catena B39
-- 33/38 sub-blocchi completati (87%)
+- 34/38 sub-blocchi completati (89%)
 - Fase 1 (DB): 3/3 ✅
 - Fase 2 (Estrattore): 4/4 ✅
 - Fase 3 (Decisore): 2/2 ✅
@@ -23,25 +23,25 @@ VERIFICATION: Blocco chiuso manualmente al risveglio dopo timeout runner di 45mi
 - Fase 7 (VoiceInputField): 6/6 ✅
 - Fase 8 (Integrazione onboarding): 4/4 ✅
 - Fase 9 (Banner Home): 3/3 ✅
-- Fase 10 (Voce trasversale): 0/3 — PROSSIMA
+- Fase 10 (Voce trasversale): 1/3 — IN CORSO
 - Fase 11 (Test manuale finale): 0/1
 
 ### Stato del progetto
 - Backend: 768 test verdi, 13 skipped
-- Frontend: 712+ test verdi, analyze 0
+- Frontend: 725 test verdi, analyze 0
 - Ruff pulito
 - Branch: develop (pushato)
 
 ### Prossimo passo concreto
-- B39.10.1 — VoiceInputField in chat di sessione studio
-- Sostituire il campo input della chat tutor nelle schermate di sessione con il widget VoiceInputField gia costruito in Fase 7
-- Specs complete in ROADMAP.md alla voce B39.10.1
-- Dopo questo: B39.10.2 (ricerca I miei studi), B39.10.3 (test integrazione trasversale), B39.11.1 (checklist test manuale finale)
+- B39.10.2 — VoiceInputField nella ricerca "I miei studi"
+- Sostituire il campo di ricerca in learning_path_screen (o widget search correlato) con VoiceInputField
+- Dovrebbe essere simile a B39.10.1 come scope (widget drop-in)
+- Specs complete in ROADMAP.md alla voce B39.10.2
 
 ### File da leggere per la prossima sessione
 1. CLAUDE.md
 2. PROJECT_CONFIG.md
-3. ROADMAP.md (cerca B39.10.1)
+3. ROADMAP.md (cerca B39.10.2)
 4. .claude/handoff.md (questo file)
-5. frontend/lib/widgets/voice_input_field.dart (widget pronto da Fase 7)
-6. Schermata di sessione studio dove c'e il campo input (da individuare)
+5. frontend/lib/widgets/voice_input_field.dart (widget pronto)
+6. frontend/lib/presentation/learning_path_screen/ (trova il campo search da sostituire)
