@@ -568,3 +568,18 @@
 - **Status**: CONTINUE
 - **Summary**: B39.10.1 completato (commit d990152). VoiceInputField integrato nella chat della sessione studio (session_input_bar_widget + studio_screen). Inoltre fix test hang in b39_8_4 (commit 25255d4): il _MockOnboardingService ora sovrascrive getResumeState, eliminando l'hang che causava i timeout runner. Suite frontend intera: 725 verdi in 21s (prima appesa indefinitamente). analyze 0.
 ---
+
+## 2026-04-09 15:54:13 — Blocco F10BB39.10.2
+- **Status**: CONTINUE
+- **Summary**: B39.10.3 completato. 19 nuovi test di integrazione trasversale per VoiceInputField in 4 gruppi: Onboarding (submit, voce+STT, disabled), Sessione Studio (hint dinamico, enabled/disabled, errore STT, controller esterno), Ricerca (prefixIcon, suffixIcon, onChanged live, clear), Comportamento comune (vuoto, spazi, permesso negato, trascrizione, errore recovery). 753 frontend verdi, analyze 0.
+---
+
+## 2026-04-09 15:58:43 — Blocco F10BB39.11.1
+- **Status**: CONTINUE
+- **Summary**: B39.10.3 completato. 19 nuovi test di integrazione trasversale per VoiceInputField in 4 gruppi: Onboarding (submit, voce+STT, disabled), Sessione Studio (hint dinamico, enabled/disabled, errore STT, controller esterno), Ricerca (prefixIcon, suffixIcon, onChanged live, clear), Comportamento comune (vuoto, spazi, permesso negato, trascrizione, errore recovery). 753 frontend verdi, analyze 0.
+---
+
+## 2026-04-09 15:59:24 — Blocco F10BB39.11.1
+- **Status**: CONTINUE
+- **Summary**: B39.10.3 completato. 19 nuovi test di integrazione trasversale per VoiceInputField in 4 gruppi: Onboarding (submit, voce+STT, disabled), Sessione Studio (hint dinamico, enabled/disabled, errore STT, controller esterno), Ricerca (prefixIcon, suffixIcon, onChanged live, clear), Comportamento comune (vuoto, spazi, permesso negato, trascrizione, errore recovery). 753 frontend verdi, analyze 0.
+---

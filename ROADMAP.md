@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (37/38 sub-blocchi completati, resta B39.9.3)
+- [x] **Stato**: completato — 38/38 sub-blocchi completati (pronto per test manuale del fondatore)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -631,18 +631,20 @@
 - **Note**: Aggiunto campo onboardingStato al modello Utente Dart (deserializza onboarding_stato dal backend). HomeScreen: watch userProvider, banner condizionale tra WelcomeHeader e bottone CTA. Tap naviga a /onboarding via context.push. Fix test b35_7 (aggiunto userProvider override). 9 nuovi test (5 widget + 4 modello). 712 frontend verdi, analyze 0.
 
 #### Blocco B39.9.3 — Logica "Riprendi" con stato preservato
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S72)
 - **Complessita'**: media
 - **Descrizione**: Il tap su "Riprendi" riapre `/onboarding` con la conversazione precedente intatta. Il backend deve supportare il retrieval della sessione esistente.
-- **File da toccare**: `onboarding_provider.dart`, `onboarding_screen.dart`, modifica backend `/onboarding/inizia`
+- **File da toccare**: `onboarding_provider.dart`, `onboarding_screen.dart`, backend `/onboarding/riprendi`
 - **Gate**: integration test ripresa onboarding dopo skip
+- **Note**: commit cc255bb. Schema ConversazioneRipresaResponse + endpoint GET /onboarding/riprendi/{utente_temp_id} (recupera conversazione e stato placement). Frontend: onboarding_provider.resumeOnboarding carica conversazione esistente, onboarding_screen accetta parametro resume=true/false, home_screen tap su OnboardingPendingBanner naviga con resume=true, storage_service salva/recupera utenteTempId. 10 test backend + 13 test frontend.
 
 #### Blocco B39.10.1 — VoiceInputField in chat di sessione studio
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S72)
 - **Complessita'**: bassa
 - **Descrizione**: Sostituire il campo input della chat tutor in sessione di studio con il nuovo widget `VoiceInputField`.
-- **File da toccare**: schermata session screen dove e il campo input
+- **File da toccare**: `session_input_bar_widget.dart`, `studio_screen.dart`
 - **Gate**: widget test integrazione, microfono visibile e funzionante
+- **Note**: commit d990152. SessionInputBarWidget riscritto come StatelessWidget che incapsula VoiceInputField. onSend cambia firma da VoidCallback a ValueChanged<String>. Aggiunta callback onTranscriptionError con SnackBar. studio_screen: rimosso _messageFocusNode, _sendMessage compatibile con nuova firma. 725 frontend verdi, analyze 0. Questo blocco e stato chiuso insieme al fix 25255d4 (mock getResumeState in b39_8_4) che risolveva un hang di test che bloccava il runner per 5 minuti.
 
 #### Blocco B39.10.2 — VoiceInputField in ricerca "I miei studi"
 - [x] **Stato**: completato (S73)

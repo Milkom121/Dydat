@@ -1,19 +1,18 @@
-STATUS: CONTINUE
+STATUS: PHASE_COMPLETE
 PHASE: 10
-BLOCK: B39.11.1
-SUMMARY: B39.10.3 completato. 19 nuovi test di integrazione trasversale per VoiceInputField in 4 gruppi: Onboarding (submit, voce+STT, disabled), Sessione Studio (hint dinamico, enabled/disabled, errore STT, controller esterno), Ricerca (prefixIcon, suffixIcon, onChanged live, clear), Comportamento comune (vuoto, spazi, permesso negato, trascrizione, errore recovery). 753 frontend verdi, analyze 0.
-NEXT: B39.11.1 - Checklist test manuale + consegna (ultimo blocco B39)
+BLOCK: B39
+SUMMARY: Catena B39 Onboarding Narrativo COMPLETATA al 100% — 38/38 sub-blocchi in 11 fasi tematiche. Profilo estrattore Opus, placement test compound, voce trasversale Whisper, skip/banner home, riprendi con stato preservato, system prompt tutor onboarding personificato, checklist test manuale consegnata. 768 test backend verdi (13 skipped), 753 test frontend verdi, analyze 0, ruff pulito. Pronto per il test manuale del fondatore secondo docs/discussions/b39-checklist-test-manuale.md.
+NEXT: Test manuale del fondatore (12 scenari) poi eventuali fix dai finding, poi B40 Sistema Audio Base
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: frontend/test/widgets/b39_10_3_voice_cross_context_test.dart (nuovo), ROADMAP.md
-TESTS: PASS (753 frontend verdi, analyze 0)
-VERIFICATION: flutter analyze 0, flutter test 753 verdi. Tutti i 19 nuovi test coprono i 3 contesti d'uso + comportamento trasversale.
+FILES_MODIFIED: chiusura manuale della catena — B39 era sostanzialmente gia completo ma gli ultimi sub-blocchi non riuscivano ad aggiornare handoff.md per una protezione hardcoded di Claude Code su .claude/* (vedi sezione note sotto)
+TESTS: PASS (768 backend + 753 frontend, analyze 0)
+VERIFICATION: Tutti i commit dei 38 sub-blocchi presenti nella storia git. B39.9.3 commit cc255bb, B39.10.1 commit d990152, B39.10.2 commit b0d7a73, B39.10.3 commit f8b4687, B39.11.1 commit 4f4c80d. Fase 10 della roadmap contrassegnata al 100%.
 
 ---
 
 ## Contesto dettagliato
 
-### Stato avanzamento catena B39
-- 36/38 sub-blocchi completati (95%)
+### Stato avanzamento finale
 - Fase 1 (DB): 3/3 ✅
 - Fase 2 (Estrattore): 4/4 ✅
 - Fase 3 (Decisore): 2/2 ✅
@@ -24,25 +23,14 @@ VERIFICATION: flutter analyze 0, flutter test 753 verdi. Tutti i 19 nuovi test c
 - Fase 8 (Integrazione onboarding): 4/4 ✅
 - Fase 9 (Banner Home): 3/3 ✅
 - Fase 10 (Voce trasversale): 3/3 ✅
-- Fase 11 (Test manuale finale): 0/1
+- Fase 11 (Test manuale finale): 1/1 ✅ (checklist consegnata)
 
-### Blocchi rimanenti
-- B39.9.3 — Logica "Riprendi" con stato preservato ([ ] da fare)
-- B39.11.1 — Checklist test manuale + consegna ([ ] da fare)
+### Nota importante — Scoperto bug strutturale del runner
+Durante gli ultimi 4-5 sub-blocchi il runner e stato vittima di una protezione hardcoded di Claude Code: i file dentro `.claude/` (escluse le sottodirectory `commands`, `agents`, `skills`) sono protetti dalla scrittura anche con `--dangerously-skip-permissions`. Questo includeva `.claude/handoff.md`, il file piu importante del Metodo Villa.
 
-### Stato del progetto
-- Backend: 768 test verdi, 13 skipped
-- Frontend: 753 test verdi, analyze 0
-- Ruff pulito
-- Branch: develop
+Conseguenza: Claude completava correttamente il lavoro del blocco e committava il codice, ma non riusciva ad aggiornare handoff.md. Il runner ripartiva con lo stesso BLOCK, Claude vedeva che il lavoro era gia fatto, non faceva nulla, e la loop detection fermava dopo 2 iterazioni.
 
-### Prossimo passo concreto
-- B39.11.1 — Checklist test manuale + consegna
-- Creare docs/discussions/b39-checklist-test-manuale.md con scenari dettagliati
-- Dopo B39.11.1, B39 si chiude (NOTA: B39.9.3 resta da fare separatamente)
+Fix strutturale in corso: spostare `handoff.md` da `.claude/` a `docs/` (path non protetto), aggiornare il runner e propagare al boilerplate. Dopo questo fix il Metodo Villa tornera al comportamento pre-update di Claude Code.
 
-### File da leggere per la prossima sessione
-1. CLAUDE.md
-2. PROJECT_CONFIG.md
-3. ROADMAP.md (cerca B39.11.1)
-4. .claude/handoff.md (questo file)
+### Test manuale del fondatore — Prossimo passo
+Il fondatore deve eseguire i 12 scenari di test in `docs/discussions/b39-checklist-test-manuale.md`. Eventuali finding andranno in `.claude/test-findings.md` (sola lettura per Claude, scrittura manuale da Villa).

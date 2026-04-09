@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.10.2",
-  "total_blocks_run": 147,
-  "status": "CONTINUE",
-  "last_run": "2026-04-09T13:47:47Z",
-  "last_summary": "B39.10.1 completato (commit d990152). VoiceInputField integrato nella chat della sessione studio (session_input_bar_widget + studio_screen). Inoltre fix test hang in b39_8_4 (commit 25255d4): il _MockOnboardingService ora sovrascrive getResumeState, eliminando l'hang che causava i timeout runner. Suite frontend intera: 725 verdi in 21s (prima appesa indefinitamente). analyze 0."
+  "current_block": "B39",
+  "total_blocks_run": 152,
+  "status": "PHASE_COMPLETE",
+  "last_run": "2026-04-09T16:00:00Z",
+  "last_summary": "Catena B39 Onboarding Narrativo COMPLETATA al 100% — 38/38 sub-blocchi. Chiusura manuale dopo scoperta bug strutturale: Claude Code protegge hardcoded .claude/handoff.md dalla scrittura anche con --dangerously-skip-permissions. Il lavoro era completo, serviva solo sbloccare lo stato. Fix strutturale in corso: spostare handoff in docs/."
 }
