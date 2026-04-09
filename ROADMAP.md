@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (11/38 sub-blocchi completati)
+- [>] **Stato**: in corso (14/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -559,25 +559,28 @@
 - **Note**: Wave sinusoidale con _WavePainter (CustomPainter, ampiezza da stream, envelope bordi). Timer mm:ss con fontFeature tabularFigures. Pallino rosso pulsante. Stop button con Transform.scale pulsante (AnimationController repeat). Indicatore registrazione con sfondo errorContainer. amplitudeStream aggiunto ad AudioRecorderService (normalizzato 0-1 da dBFS). 11 nuovi test (38 totale file). 626 frontend verdi, analyze 0.
 
 #### Blocco B39.7.4 — Chiamata endpoint /stt/transcribe
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S66)
 - **Complessita'**: media
 - **Descrizione**: Dopo lo stop della registrazione, upload dell'audio al backend, gestione spinner durante la trascrizione.
 - **File da toccare**: `voice_input_field.dart`, nuovo `frontend/lib/services/stt_service.dart`
 - **Gate**: widget test con mock service, upload funzionante, spinner visibile
+- **Note**: Nuovo SttService astratto + RealSttService (POST multipart /stt/transcribe, mapping errori Dio user-friendly). RecordingState.transcribing aggiunto. VoiceInputField: spinner CircularProgressIndicator + "Trascrizione in corso..." durante upload, testo trascritto popola campo (B39.7.5 incluso), errori gestiti con onTranscriptionError callback (B39.7.6 incluso). ApiConfig.sttTranscribe. 11 nuovi test (49 totale file). 637 frontend verdi, analyze 0.
 
 #### Blocco B39.7.5 — Popolamento campo testo trascritto modificabile
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S66, incluso in B39.7.4)
 - **Complessita'**: bassa
 - **Descrizione**: Il testo trascritto popola il campo input, l'utente lo puo modificare a tastiera prima di inviare. NO auto-invio.
 - **File da toccare**: `voice_input_field.dart`
 - **Gate**: widget test flusso completo registrazione → trascrizione → modifica → invio
+- **Note**: Implementato in B39.7.4. _transcribeAudio scrive result.testo nel controller + posiziona cursore a fine. Test ciclo completo: registra -> trascrivi -> modifica -> invia.
 
 #### Blocco B39.7.6 — Gestione errori + widget test
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S66, incluso in B39.7.4)
 - **Complessita'**: bassa
 - **Descrizione**: Gestione fallimenti: mic denied, rete assente, API STT down, audio troppo corto. Fallback silenzioso con messaggio breve "La voce non e disponibile — puoi continuare a scrivere".
 - **File da toccare**: `voice_input_field.dart`
 - **Gate**: widget test su ogni fallimento, utente puo sempre scrivere a mano
+- **Note**: Implementato in B39.7.4. SttException catturata con messaggio user-friendly, errori generici con fallback. onTranscriptionError callback per snackbar. Utente torna sempre a idle e puo scrivere. Test errore STT verde.
 
 #### Blocco B39.8.1 — Aggiorna onboarding_provider.dart
 - [ ] **Stato**: da fare

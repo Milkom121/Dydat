@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/sizer_extensions.dart';
 import '../services/audio_recorder_service.dart';
+import '../services/stt_service.dart';
 
 /// Campo di input testuale riutilizzabile con pulsante microfono.
 ///
@@ -33,6 +34,12 @@ class VoiceInputField extends StatefulWidget {
   /// Servizio recorder iniettabile (per test). Se null, usa RealAudioRecorderService.
   final AudioRecorderService? recorderService;
 
+  /// Servizio STT iniettabile (per test). Se null, la trascrizione non viene eseguita.
+  final SttService? sttService;
+
+  /// Callback per errori di trascrizione (per mostrare snackbar o simili).
+  final ValueChanged<String>? onTranscriptionError;
+
   const VoiceInputField({
     super.key,
     this.hintText = 'Scrivi qui...',
@@ -42,6 +49,8 @@ class VoiceInputField extends StatefulWidget {
     this.controller,
     this.onAudioRecorded,
     this.recorderService,
+    this.sttService,
+    this.onTranscriptionError,
   });
 
   @override
@@ -207,10 +216,20 @@ class VoiceInputFieldState extends State<VoiceInputField>
       HapticFeedback.lightImpact();
       if (mounted) {
         _stopTimerAndAnimations();
-        setState(() => _recordingState = RecordingState.idle);
       }
       if (path != null && widget.onAudioRecorded != null) {
         widget.onAudioRecorded!(path);
+      }
+      // Se c'è un servizio STT, avvia la trascrizione
+      if (path != null && widget.sttService != null) {
+        if (mounted) {
+          setState(() => _recordingState = RecordingState.transcribing);
+        }
+        await _transcribeAudio(path);
+      } else {
+        if (mounted) {
+          setState(() => _recordingState = RecordingState.idle);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -218,6 +237,33 @@ class VoiceInputFieldState extends State<VoiceInputField>
         setState(() => _recordingState = RecordingState.idle);
       }
       debugPrint('Errore stop registrazione: $e');
+    }
+  }
+
+  Future<void> _transcribeAudio(String filePath) async {
+    try {
+      final result = await widget.sttService!.transcribe(filePath);
+      if (mounted) {
+        _controller.text = result.testo;
+        // Posiziona cursore a fine testo
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: result.testo.length),
+        );
+        setState(() => _recordingState = RecordingState.idle);
+      }
+    } on SttException catch (e) {
+      if (mounted) {
+        setState(() => _recordingState = RecordingState.idle);
+        widget.onTranscriptionError?.call(e.message);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _recordingState = RecordingState.idle);
+        widget.onTranscriptionError?.call(
+          'Errore durante la trascrizione. Riprova.',
+        );
+      }
+      debugPrint('Errore trascrizione: $e');
     }
   }
 
@@ -232,34 +278,40 @@ class VoiceInputFieldState extends State<VoiceInputField>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isRecording = _recordingState == RecordingState.recording;
+    final isTranscribing = _recordingState == RecordingState.transcribing;
+    final isBusy = isRecording || isTranscribing;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Campo di testo / indicatore registrazione
+        // Campo di testo / indicatore registrazione / spinner trascrizione
         Expanded(
           child: isRecording
               ? _buildRecordingIndicator(theme)
-              : _buildTextField(theme),
+              : isTranscribing
+                  ? _buildTranscribingIndicator(theme)
+                  : _buildTextField(theme),
         ),
         SizedBox(width: 2.w),
         // Pulsante microfono (registra/ferma) — pulsante durante registrazione
         Semantics(
           label: isRecording
               ? 'Ferma registrazione'
-              : (_permissionDenied
-                  ? 'Microfono — permesso negato'
-                  : 'Registra messaggio vocale'),
+              : isTranscribing
+                  ? 'Trascrizione in corso'
+                  : (_permissionDenied
+                      ? 'Microfono — permesso negato'
+                      : 'Registra messaggio vocale'),
           child: isRecording
               ? _buildPulsingStopButton(theme)
-              : _buildMicButton(theme),
+              : _buildMicButton(theme, disabled: isTranscribing),
         ),
-        // Pulsante invio (disabilitato durante registrazione)
+        // Pulsante invio (disabilitato durante registrazione/trascrizione)
         IconButton(
-          onPressed: widget.enabled && !isRecording ? _handleSubmit : null,
+          onPressed: widget.enabled && !isBusy ? _handleSubmit : null,
           icon: Icon(
             Icons.send_rounded,
-            color: widget.enabled && !isRecording
+            color: widget.enabled && !isBusy
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
@@ -354,14 +406,49 @@ class VoiceInputFieldState extends State<VoiceInputField>
     );
   }
 
-  Widget _buildMicButton(ThemeData theme) {
+  /// Indicatore durante la trascrizione: spinner + testo
+  Widget _buildTranscribingIndicator(ThemeData theme) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+        ),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 3.w),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Text(
+            'Trascrizione in corso...',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMicButton(ThemeData theme, {bool disabled = false}) {
+    final isDisabled = !widget.enabled || disabled;
     return IconButton(
-      onPressed: widget.enabled ? _handleMicTap : null,
+      onPressed: isDisabled ? null : _handleMicTap,
       icon: Icon(
         Icons.mic,
-        color: widget.enabled
-            ? theme.colorScheme.primary
-            : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+        color: isDisabled
+            ? theme.colorScheme.onSurface.withValues(alpha: 0.3)
+            : theme.colorScheme.primary,
       ),
       tooltip: 'Registra voce',
     );

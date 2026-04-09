@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dydat/widgets/voice_input_field.dart';
 import 'package:dydat/services/audio_recorder_service.dart';
+import 'package:dydat/services/stt_service.dart';
 
 /// Mock del servizio di registrazione audio per i test
 class MockAudioRecorderService implements AudioRecorderService {
@@ -60,6 +61,44 @@ class MockAudioRecorderService implements AudioRecorderService {
   }
 }
 
+/// Mock del servizio STT per i test
+class MockSttService implements SttService {
+  /// Testo che verrà ritornato dalla trascrizione
+  String transcribedText = 'Testo trascritto dal mock';
+
+  /// Tracker chiamate
+  bool transcribeCalled = false;
+  String? lastFilePath;
+
+  /// Simula errori
+  bool shouldThrow = false;
+  String errorMessage = 'Errore trascrizione';
+
+  /// Completer per controllare il timing della trascrizione nei test
+  Completer<SttResult>? _completer;
+
+  /// Se impostato, la trascrizione attende questo completer
+  void useCompleter(Completer<SttResult> completer) {
+    _completer = completer;
+  }
+
+  @override
+  Future<SttResult> transcribe(String filePath) async {
+    transcribeCalled = true;
+    lastFilePath = filePath;
+
+    if (_completer != null) {
+      return _completer!.future;
+    }
+
+    if (shouldThrow) {
+      throw SttException(errorMessage);
+    }
+
+    return SttResult(testo: transcribedText);
+  }
+}
+
 void main() {
   late MockAudioRecorderService mockRecorder;
 
@@ -74,6 +113,8 @@ void main() {
     TextEditingController? controller,
     ValueChanged<String>? onAudioRecorded,
     AudioRecorderService? recorderService,
+    SttService? sttService,
+    ValueChanged<String>? onTranscriptionError,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -86,6 +127,8 @@ void main() {
             controller: controller,
             onAudioRecorded: onAudioRecorded,
             recorderService: recorderService,
+            sttService: sttService,
+            onTranscriptionError: onTranscriptionError,
           ),
         ),
       ),
@@ -611,6 +654,262 @@ void main() {
       await tester.tap(find.byIcon(Icons.send_rounded));
       await tester.pump();
       expect(submitted, 'Dopo la voce');
+    });
+  });
+
+  group('VoiceInputField — trascrizione STT', () {
+    late MockSttService mockStt;
+
+    setUp(() {
+      mockStt = MockSttService();
+    });
+
+    testWidgets('dopo stop chiama sttService.transcribe', (tester) async {
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      expect(mockStt.transcribeCalled, true);
+      expect(mockStt.lastFilePath, '/tmp/test_audio.m4a');
+    });
+
+    testWidgets('mostra spinner durante trascrizione', (tester) async {
+      final completer = Completer<SttResult>();
+      mockStt.useCompleter(completer);
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      // Stato transcribing: spinner visibile
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Trascrizione in corso...'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+
+      // Completa la trascrizione
+      completer.complete(SttResult(testo: 'Testo'));
+      await tester.pump();
+      await tester.pump();
+
+      // Torna a idle
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('testo trascritto popola il campo input', (tester) async {
+      mockStt.transcribedText = 'Ciao, sono Mario';
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Ciao, sono Mario'), findsOneWidget);
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.controller.text, 'Ciao, sono Mario');
+    });
+
+    testWidgets('pulsante invio disabilitato durante trascrizione',
+        (tester) async {
+      final completer = Completer<SttResult>();
+      mockStt.useCompleter(completer);
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      final sendButton = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byIcon(Icons.send_rounded),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(sendButton.onPressed, isNull);
+
+      completer.complete(SttResult(testo: 'Ok'));
+      await tester.pump();
+      await tester.pump();
+    });
+
+    testWidgets('pulsante mic disabilitato durante trascrizione',
+        (tester) async {
+      final completer = Completer<SttResult>();
+      mockStt.useCompleter(completer);
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      final micButton = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byIcon(Icons.mic),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(micButton.onPressed, isNull);
+
+      completer.complete(SttResult(testo: 'Ok'));
+      await tester.pump();
+      await tester.pump();
+    });
+
+    testWidgets('errore STT chiama onTranscriptionError e torna idle',
+        (tester) async {
+      mockStt.shouldThrow = true;
+      mockStt.errorMessage = 'Nessun parlato riconosciuto';
+      String? errorMsg;
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+        onTranscriptionError: (msg) => errorMsg = msg,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+      await tester.pump();
+
+      expect(errorMsg, 'Nessun parlato riconosciuto');
+      expect(find.byType(TextField), findsOneWidget);
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.recordingState, RecordingState.idle);
+    });
+
+    testWidgets('senza sttService stopRecording torna direttamente idle',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.recordingState, RecordingState.idle);
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('Semantics label durante trascrizione', (tester) async {
+      final completer = Completer<SttResult>();
+      mockStt.useCompleter(completer);
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      expect(
+        find.bySemanticsLabel('Trascrizione in corso'),
+        findsOneWidget,
+      );
+
+      completer.complete(SttResult(testo: 'Ok'));
+      await tester.pump();
+      await tester.pump();
+    });
+
+    testWidgets('onAudioRecorded chiamato prima della trascrizione',
+        (tester) async {
+      String? recordedPath;
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+        onAudioRecorded: (path) => recordedPath = path,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      // onAudioRecorded chiamato anche quando c'è STT
+      expect(recordedPath, '/tmp/test_audio.m4a');
+      expect(mockStt.transcribeCalled, true);
+    });
+
+    testWidgets('ciclo completo: registra -> trascrivi -> modifica -> invia',
+        (tester) async {
+      mockStt.transcribedText = 'Testo dalla voce';
+      String? submitted;
+
+      await tester.pumpWidget(buildTestWidget(
+        onSubmit: (text) => submitted = text,
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      // 1. Registra
+      await startRecording(tester);
+      expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+
+      // 2. Stop → trascrizione
+      await stopRecording(tester);
+      await tester.pump();
+      await tester.pump();
+
+      // 3. Il testo trascritto è nel campo
+      expect(find.text('Testo dalla voce'), findsOneWidget);
+
+      // 4. L'utente può modificare e inviare
+      // (enterText sostituisce il contenuto)
+      await tester.enterText(find.byType(TextField), 'Testo modificato');
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pump();
+
+      expect(submitted, 'Testo modificato');
+    });
+
+    testWidgets('stopPath null non avvia trascrizione', (tester) async {
+      mockRecorder.stopPath = null;
+
+      await tester.pumpWidget(buildTestWidget(
+        recorderService: mockRecorder,
+        sttService: mockStt,
+      ));
+
+      await startRecording(tester);
+      await stopRecording(tester);
+      await tester.pump();
+
+      expect(mockStt.transcribeCalled, false);
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.recordingState, RecordingState.idle);
     });
   });
 }

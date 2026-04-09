@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 
 /// Stato della registrazione audio
-enum RecordingState { idle, recording }
+enum RecordingState { idle, recording, transcribing }
 
 /// Servizio astratto per la registrazione audio.
 /// Consente di iniettare un mock nei test senza dipendere dal package reale.

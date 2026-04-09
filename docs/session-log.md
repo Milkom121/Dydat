@@ -513,3 +513,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.7.2 completato - Libreria audio + permessi mic. Package record ^5.1.2. AudioRecorderService astratto + RealAudioRecorderService (AAC-LC, 44.1kHz, mono). Permessi Android/iOS. VoiceInputField con registra/ferma. 27 test (13 nuovi). 615 frontend verdi, analyze 0.
 ---
+
+## 2026-04-09 04:29:34 — Blocco F10BB39.7.3
+- **Status**: CONTINUE
+- **Summary**: B39.7.3 completato - UI stato registrazione. Wave sinusoidale animata (CustomPainter con ampiezza da stream), timer mm:ss, pallino rosso pulsante, pulsante stop con animazione scale, sfondo errorContainer. amplitudeStream aggiunto ad AudioRecorderService (dBFS normalizzato 0-1). 11 nuovi test (38 totale). 626 frontend verdi, analyze 0.
+---

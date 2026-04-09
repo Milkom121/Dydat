@@ -50,6 +50,9 @@ class ApiConfig {
   static String quaderno(String nodoId) => '/quaderno/$nodoId';
   static String quadernoNota(String nodoId) => '/quaderno/$nodoId/nota';
 
+  // STT (Speech-to-Text)
+  static const String sttTranscribe = '/stt/transcribe';
+
   // Health
   static const String health = '/health';
 }

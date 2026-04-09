@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-09
-- **Data ultima sessione**: 2026-04-09 (S56 — B39.5.3, Test endpoint STT con audio reale)
-- **Prossima sessione**: S57 — B39.6.1 (Prompt auto-valutazione placement)
+- **Data ultima sessione**: 2026-04-09 (S66 — B39.7.4+7.5+7.6, Chiamata STT + popolamento + errori)
+- **Prossima sessione**: S67 — B39.8.1 (Aggiorna onboarding_provider.dart)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 
