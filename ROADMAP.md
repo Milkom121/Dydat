@@ -487,11 +487,12 @@
 - **Note**: 3 smoke test integration (tono WAV 440Hz, silenzio WAV, formato MP3) + 1 test helper (sempre attivo). WAV generati programmaticamente con modulo wave. Skip automatico se OPENAI_API_KEY non configurata. 569 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.1 — Prompt auto-valutazione placement
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S57)
 - **Complessita'**: bassa
 - **Descrizione**: Prompt in `backend/app/llm/prompts/onboarding_self_assessment.py` che istruisce il tutor a chiedere per ogni area chiave della materia se l'utente si sente `forte` / `incerto` / `digiuno`.
 - **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_self_assessment.py`
 - **Gate**: unit test presenza istruzioni chiave, aree selezionate dal grafo curriculum
+- **Note**: build_self_assessment_prompt (direttiva tutor con aree, livelli, marker strutturato), parse_autovalutazione (parser blocco [AUTOVALUTAZIONE]), seleziona_aree_da_grafo (selezione temi ordinati per importanza). 34 nuovi test. 603 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.2 — Logica selezione aree fondazionali
 - [ ] **Stato**: da fare

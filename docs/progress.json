@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.5.3",
-  "total_blocks_run": 119,
+  "current_block": "B39.6.1",
+  "total_blocks_run": 120,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T01:32:46Z",
-  "last_summary": "B39.5.2 completato - Endpoint POST /stt/transcribe con OpenAI Whisper. Riceve audio multipart, valida formato (7 estensioni), limite 25 MB, chiama Whisper con lingua italiana. Gestione errori: formato invalido, rate limit, API down. Dipendenze openai e python-multipart aggiunte. 13 nuovi test. 553 backend verdi, 10 skipped."
+  "last_run": "2026-04-09T01:35:43Z",
+  "last_summary": "B39.5.3 completato - Test di integrazione endpoint STT con audio reale. 3 smoke test integration (tono WAV 440Hz, silenzio WAV, formato MP3 header) + 1 test helper sempre attivo. WAV generati programmaticamente con modulo wave. Skip automatico senza OPENAI_API_KEY o senza --run-integration. 569 backend verdi, 13 skipped."
 }

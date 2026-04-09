@@ -468,3 +468,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.5.2 completato - Endpoint POST /stt/transcribe con OpenAI Whisper. Riceve audio multipart, valida formato (7 estensioni), limite 25 MB, chiama Whisper con lingua italiana. Gestione errori: formato invalido, rate limit, API down. Dipendenze openai e python-multipart aggiunte. 13 nuovi test. 553 backend verdi, 10 skipped.
 ---
+
+## 2026-04-09 03:35:43 — Blocco F10BB39.5.3
+- **Status**: CONTINUE
+- **Summary**: B39.5.3 completato - Test di integrazione endpoint STT con audio reale. 3 smoke test integration (tono WAV 440Hz, silenzio WAV, formato MP3 header) + 1 test helper sempre attivo. WAV generati programmaticamente con modulo wave. Skip automatico senza OPENAI_API_KEY o senza --run-integration. 569 backend verdi, 13 skipped.
+---
