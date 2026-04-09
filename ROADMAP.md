@@ -551,11 +551,12 @@
 - **Note**: Package `record` ^5.1.2 aggiunto. AudioRecorderService astratto + RealAudioRecorderService (AAC-LC, 44.1kHz, mono). Permesso RECORD_AUDIO in AndroidManifest, NSMicrophoneUsageDescription in Info.plist. VoiceInputField: mic abilitato con toggle registra/ferma, icona stop rossa durante recording, campo testo e invio disabilitati durante recording, gestione permesso negato, try-catch su start/stop. 27 test (13 nuovi). 615 frontend verdi, analyze 0.
 
 #### Blocco B39.7.3 — UI stato registrazione
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S65)
 - **Complessita'**: media
 - **Descrizione**: Feedback visivo durante registrazione: wave animata sul volume della voce, timer secondi, pulsante stop rosso pulsante, sfondo del campo leggermente diverso.
 - **File da toccare**: `voice_input_field.dart`
 - **Gate**: widget test stato registrazione attivo, animazioni renderizzano
+- **Note**: Wave sinusoidale con _WavePainter (CustomPainter, ampiezza da stream, envelope bordi). Timer mm:ss con fontFeature tabularFigures. Pallino rosso pulsante. Stop button con Transform.scale pulsante (AnimationController repeat). Indicatore registrazione con sfondo errorContainer. amplitudeStream aggiunto ad AudioRecorderService (normalizzato 0-1 da dBFS). 11 nuovi test (38 totale file). 626 frontend verdi, analyze 0.
 
 #### Blocco B39.7.4 — Chiamata endpoint /stt/transcribe
 - [ ] **Stato**: da fare

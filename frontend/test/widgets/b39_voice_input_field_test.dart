@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dydat/widgets/voice_input_field.dart';
@@ -20,6 +22,10 @@ class MockAudioRecorderService implements AudioRecorderService {
   bool shouldThrowOnStart = false;
   bool shouldThrowOnStop = false;
 
+  /// Controller per emettere ampiezza nei test
+  final StreamController<double> amplitudeController =
+      StreamController<double>.broadcast();
+
   set hasPermissionResult(bool value) => _hasPermission = value;
 
   @override
@@ -41,11 +47,15 @@ class MockAudioRecorderService implements AudioRecorderService {
   }
 
   @override
+  Stream<double> get amplitudeStream => amplitudeController.stream;
+
+  @override
   RecordingState get state => _state;
 
   @override
   void dispose() {
     disposeCalled = true;
+    amplitudeController.close();
     _state = RecordingState.idle;
   }
 }
@@ -80,6 +90,21 @@ void main() {
         ),
       ),
     );
+  }
+
+  /// Helper: avvia registrazione e pompa un frame per processare lo stato.
+  /// Non usa pumpAndSettle perché le animazioni repeat non si fermano mai.
+  Future<void> startRecording(WidgetTester tester) async {
+    await tester.tap(find.byIcon(Icons.mic));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+
+  /// Helper: ferma registrazione e pompa per processare lo stato.
+  Future<void> stopRecording(WidgetTester tester) async {
+    await tester.tap(find.byIcon(Icons.stop_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
   }
 
   group('VoiceInputField — rendering base', () {
@@ -202,11 +227,9 @@ void main() {
     testWidgets('tap microfono avvia registrazione', (tester) async {
       await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
 
       expect(mockRecorder.startCalled, true);
-      // Icona cambia a stop
       expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
       expect(find.byIcon(Icons.mic), findsNothing);
     });
@@ -219,46 +242,30 @@ void main() {
         onAudioRecorded: (path) => recordedPath = path,
       ));
 
-      // Avvia
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
-
-      // Ferma
-      await tester.tap(find.byIcon(Icons.stop_rounded));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
+      await stopRecording(tester);
 
       expect(mockRecorder.stopCalled, true);
       expect(recordedPath, '/tmp/test_audio.m4a');
-      // Torna icona mic
       expect(find.byIcon(Icons.mic), findsOneWidget);
     });
 
-    testWidgets('hintText cambia durante registrazione', (tester) async {
+    testWidgets('campo testo nascosto durante registrazione', (tester) async {
       await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsOneWidget);
 
-      expect(find.text('Registrazione in corso...'), findsOneWidget);
-    });
+      await startRecording(tester);
 
-    testWidgets('campo testo disabilitato durante registrazione',
-        (tester) async {
-      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
-
-      final textField = tester.widget<TextField>(find.byType(TextField));
-      expect(textField.enabled, false);
+      // Durante registrazione: TextField sostituito dall'indicatore
+      expect(find.byType(TextField), findsNothing);
     });
 
     testWidgets('pulsante invio disabilitato durante registrazione',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
 
       final sendButton = tester.widget<IconButton>(
         find.ancestor(
@@ -277,7 +284,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(mockRecorder.startCalled, false);
-      // Resta icona mic (non passa a stop)
       expect(find.byIcon(Icons.mic), findsOneWidget);
     });
 
@@ -288,23 +294,19 @@ void main() {
       await tester.tap(find.byIcon(Icons.mic));
       await tester.pumpAndSettle();
 
-      // Resta in idle (icona mic)
       expect(find.byIcon(Icons.mic), findsOneWidget);
     });
 
     testWidgets('errore su stop torna in idle', (tester) async {
       await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
 
-      // Avvia con successo
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
 
-      // Stop con errore
       mockRecorder.shouldThrowOnStop = true;
-      await tester.tap(find.byIcon(Icons.stop_rounded));
-      await tester.pumpAndSettle();
+      await stopRecording(tester);
 
-      // Torna in idle
+      // Torna in idle — pumpAndSettle sicuro perché animazioni fermate
+      await tester.pumpAndSettle();
       expect(find.byIcon(Icons.mic), findsOneWidget);
     });
 
@@ -317,12 +319,169 @@ void main() {
         onAudioRecorded: (_) => called = true,
       ));
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.stop_rounded));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
+      await stopRecording(tester);
 
       expect(called, false);
+    });
+  });
+
+  group('VoiceInputField — UI registrazione', () {
+    testWidgets('mostra timer 00:00 all\'avvio registrazione', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      expect(find.text('00:00'), findsOneWidget);
+    });
+
+    testWidgets('timer avanza dopo 1 secondo', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('00:01'), findsOneWidget);
+    });
+
+    testWidgets('timer avanza a 00:05 dopo 5 secondi', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      for (int i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      expect(find.text('00:05'), findsOneWidget);
+    });
+
+    testWidgets('timer mostra formato mm:ss per > 60 secondi',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      for (int i = 0; i < 65; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      expect(find.text('01:05'), findsOneWidget);
+    });
+
+    testWidgets('timer si resetta quando si ferma la registrazione',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('00:03'), findsOneWidget);
+
+      await stopRecording(tester);
+
+      expect(find.text('00:03'), findsNothing);
+      expect(find.text('00:00'), findsNothing);
+    });
+
+    testWidgets('sfondo indicatore registrazione ha bordo arrotondato',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.text('00:00'),
+          matching: find.byType(Container),
+        ).first,
+      );
+
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.borderRadius, BorderRadius.circular(12));
+      expect(decoration.border, isNotNull);
+    });
+
+    testWidgets('wave CustomPaint è presente durante registrazione',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      expect(find.byType(CustomPaint), findsWidgets);
+    });
+
+    testWidgets('pulsante stop ha animazione scale (Transform)',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      expect(
+        find.ancestor(
+          of: find.byIcon(Icons.stop_rounded),
+          matching: find.byType(Transform),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('ampiezza reagisce allo stream', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      mockRecorder.amplitudeController.add(0.7);
+      await tester.pump();
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.currentAmplitude, 0.7);
+    });
+
+    testWidgets('ampiezza si resetta a 0 dopo stop', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      mockRecorder.amplitudeController.add(0.8);
+      await tester.pump();
+
+      await stopRecording(tester);
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.currentAmplitude, 0.0);
+    });
+
+    testWidgets('pallino rosso registrazione è visibile', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      // Il pallino rosso è un Container 8x8 con BoxShape.circle
+      final containers = tester
+          .widgetList<Container>(find.byType(Container))
+          .where((c) {
+        if (c.decoration is BoxDecoration) {
+          final dec = c.decoration as BoxDecoration;
+          return dec.shape == BoxShape.circle;
+        }
+        return false;
+      });
+      expect(containers.isNotEmpty, true);
+    });
+
+    testWidgets('elapsedSeconds esposto correttamente', (tester) async {
+      await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
+
+      await startRecording(tester);
+
+      final state =
+          tester.state<VoiceInputFieldState>(find.byType(VoiceInputField));
+      expect(state.elapsedSeconds, 0);
+
+      await tester.pump(const Duration(seconds: 2));
+      expect(state.elapsedSeconds, 2);
     });
   });
 
@@ -407,8 +566,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(buildTestWidget(recorderService: mockRecorder));
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
 
       expect(
         find.bySemanticsLabel('Ferma registrazione'),
@@ -441,13 +599,11 @@ void main() {
       ));
 
       // 1. Registra audio
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
+      await startRecording(tester);
       expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
 
       // 2. Ferma
-      await tester.tap(find.byIcon(Icons.stop_rounded));
-      await tester.pumpAndSettle();
+      await stopRecording(tester);
       expect(recordedPath, '/tmp/test_audio.m4a');
 
       // 3. Scrivi testo e invia

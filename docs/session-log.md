@@ -493,3 +493,23 @@
 - **Status**: CONTINUE
 - **Summary**: B39.6.4 completato - Funzione genera_esercizi_verifica. Schema Pydantic EsercizioCompound + OpzioneEsercizio in schemas/onboarding.py. Funzione genera_esercizi_verifica(aree_da_verificare, nomi_concetti) in core/onboarding.py con singola chiamata LLM Opus, retry 1x su errore API/parsing, fallback lista vuota su errore inatteso. Helper _costruisci_coppie con scala adattiva: 1-2 aree singole, 3+ compound, cap 6 aree. 29 nuovi test. 689 backend verdi, 13 skipped.
 ---
+
+## 2026-04-09 04:02:52 — Blocco F10BB39.6.5
+- **Status**: CONTINUE
+- **Summary**: B39.6.5 completato - Logica grading deterministico. Schema EsitoVerifica (corretto, concetti_retrocessi, spiegazione_breve) in schemas/onboarding.py. Funzione valuta_risposta(esercizio, risposta_utente) deterministica in core/onboarding.py: normalizzazione case-insensitive + strip, compound sbagliato retrocede tutti i concetti (Decisione 8). 20 nuovi test. 709 backend verdi, 13 skipped.
+---
+
+## 2026-04-09 04:10:29 — Blocco F10BB39.6.6
+- **Status**: CONTINUE
+- **Summary**: B39.6.6 completato - Integrazione stato_orchestratore + path planner. costruisci_mappa_placement() unisce autovalutazione + esiti verifica compound in mappa {area: stato} con 4 stati (forte_confermato/forte_unverified/incerto/digiuno). determina_nodo_partenza_da_mappa() sceglie primo nodo operativo con tema non-forte. _determina_nodo_da_placement aggiornato con priorita mappa > legacy gateway. _inizializza_stato_nodi esteso: nodi di temi forte_confermato marcati presunti. completa_onboarding passa placement_mappa a inizializzazione nodi. 28 nuovi test. 737 backend verdi, 13 skipped.
+---
+
+## 2026-04-09 04:15:16 — Blocco F10BB39.7.1
+- **Status**: CONTINUE
+- **Summary**: B39.7.1 completato - Scheletro widget VoiceInputField. Widget riutilizzabile con TextField + pulsante microfono disabilitato (placeholder) + pulsante invio. Controller esterno opzionale (per B39.7.5). Stato pubblico VoiceInputFieldState. HapticFeedback su invio. Testo trimmed, vuoto/spazi ignorati. Semantics label sul mic. 14 nuovi test. 602 frontend verdi, analyze 0.
+---
+
+## 2026-04-09 04:21:47 — Blocco F10BB39.7.2
+- **Status**: CONTINUE
+- **Summary**: B39.7.2 completato - Libreria audio + permessi mic. Package record ^5.1.2. AudioRecorderService astratto + RealAudioRecorderService (AAC-LC, 44.1kHz, mono). Permessi Android/iOS. VoiceInputField con registra/ferma. 27 test (13 nuovi). 615 frontend verdi, analyze 0.
+---
