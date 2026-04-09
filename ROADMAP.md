@@ -503,11 +503,12 @@
 - **Note**: Fondazionalita' calcolata come posizione media dei nodi del tema nell'ordine topologico (piu' bassa = piu' fondazionale). Costante MAX_AREE_FONDAZIONALI = 6. Ignora nodi contesto, aree non presenti nel grafo, nodi senza tema_id. 21 nuovi test. 624 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.3 — Prompt generatore esercizi compound
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S59)
 - **Complessita'**: media
 - **Descrizione**: Prompt Opus in `backend/app/llm/prompts/onboarding_exercise_generator.py` che genera un esercizio a scelta multipla (3-4 opzioni, 1 risposta corretta) che copre fino a 2 concetti contemporaneamente.
 - **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_exercise_generator.py`
 - **Gate**: unit test presenza istruzioni (max 2 concetti, formato multiple choice), output JSON specificato
+- **Note**: build_exercise_prompt (coppie concetti -> prompt Opus con schema JSON), parse_exercise_response (parser robusto con validazione struttura, gestione markdown wrapper, fallback None). Costanti: MAX_ESERCIZI_VERIFICA=3, MAX_CONCETTI_PER_ESERCIZIO=2, MIN/MAX_OPZIONI=3/4. Schema esempio con testo/concetti/opzioni/risposta_corretta/spiegazione_breve. 36 nuovi test (costanti, prompt, parser con edge case). 660 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.4 — Funzione genera_esercizi_verifica
 - [ ] **Stato**: da fare
