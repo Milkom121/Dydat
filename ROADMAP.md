@@ -535,11 +535,12 @@
 - **Note**: costruisci_mappa_placement() unisce autovalutazione + esiti verifica in mappa {area: stato}. determina_nodo_partenza_da_mappa() sceglie il primo nodo operativo con tema non-forte. _determina_nodo_da_placement aggiornato: priorita' mappa > legacy gateway. _inizializza_stato_nodi esteso: nodi di temi forte_confermato → presunti. completa_onboarding passa placement_mappa. 28 nuovi test. 737 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.7.1 — Scheletro widget VoiceInputField
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S63)
 - **Complessita'**: bassa
 - **Descrizione**: File Flutter con struttura base del widget riutilizzabile: TextFormField + pulsante microfono disabilitato come placeholder. Nessuna funzionalita audio ancora.
 - **File da toccare**: nuovo `frontend/lib/widgets/voice_input_field.dart`
 - **Gate**: widget compila, widget test rendering base
+- **Note**: VoiceInputField con TextField + mic disabilitato + send. Controller esterno opzionale (per B39.7.5). Stato pubblico VoiceInputFieldState. HapticFeedback su invio. Testo trimmed, vuoto ignorato. Semantics label sul mic. 14 nuovi test (rendering, interazione, stato disabilitato, controller esterno, accessibilita). 602 frontend verdi, analyze 0.
 
 #### Blocco B39.7.2 — Libreria audio + permessi mic
 - [ ] **Stato**: da fare
