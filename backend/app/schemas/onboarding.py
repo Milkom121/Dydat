@@ -73,7 +73,6 @@ class AzioneDecisore(str, Enum):
     chiedi_campo_mancante = "chiedi_campo_mancante"
     chiudi_narrativa = "chiudi_narrativa"
     forza_chiusura_tetto_turni = "forza_chiusura_tetto_turni"
-    passa_a_placement = "passa_a_placement"
 
 
 class Decisione(BaseModel):

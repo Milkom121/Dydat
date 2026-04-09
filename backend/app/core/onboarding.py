@@ -2,13 +2,17 @@
 
 Fasi: accoglienza → conoscenza → placement → piano → conclusione.
 - accoglienza: presentazione e prima domanda
-- conoscenza: raccolta info studente (max TURNI_CONOSCENZA_MAX turni)
+- conoscenza: raccolta info studente con estrattore profilo Opus + decisore forma C
 - placement: mini-test diagnostico su nodi gateway
 - piano: proposta piano studio basata sui risultati placement
 - conclusione: riepilogo e avvio percorso
 
-Transizioni guidate da segnali: transizione_fase e placement_esito.
-Al completamento: salva profilo, crea percorso, inizializza stato_nodi_utente.
+Transizioni:
+- accoglienza → conoscenza: automatica dopo 1° risposta utente
+- conoscenza → placement: gestita dal decisore forma C (decidi_prossima_mossa)
+- placement → piano, piano → conclusione: guidate da segnale transizione_fase del LLM
+
+Al completamento: salva profilo estratto, crea percorso, inizializza stato_nodi_utente.
 Punto di partenza personalizzato via placement o segnale punto_partenza_suggerito.
 """
 
@@ -46,9 +50,6 @@ from app.schemas.onboarding import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Dopo quanti turni in "conoscenza" si passa a "placement"
-TURNI_CONOSCENZA_MAX = 6
 
 # Fasi onboarding in ordine
 FASI_ONBOARDING = ("accoglienza", "conoscenza", "placement", "piano", "conclusione")
@@ -362,9 +363,10 @@ async def aggiorna_fase_onboarding(
 
     Logica automatica (senza segnale):
     - Primo turno: accoglienza
-    - Dopo 1° risposta studente: conoscenza
-    - Dopo TURNI_CONOSCENZA_MAX turni in conoscenza: placement
+    - Dopo 1° risposta studente: conoscenza (+ incrementa contatore turni)
 
+    La transizione conoscenza→placement è gestita dal decisore forma C
+    (elabora_decisione_onboarding, chiamato post-turno dall'API).
     Le transizioni placement→piano e piano→conclusione sono guidate
     dal segnale transizione_fase emesso dal LLM.
     """

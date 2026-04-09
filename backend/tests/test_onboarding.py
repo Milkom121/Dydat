@@ -22,7 +22,6 @@ import pytest
 
 from app.core.onboarding import (
     FASI_ONBOARDING,
-    TURNI_CONOSCENZA_MAX,
     _determina_nodo_da_placement,
     _trova_nodo_per_tema,
     aggiorna_fase_onboarding,
@@ -182,13 +181,13 @@ class TestAggiornaFaseOnboarding:
         sessione = _mock_sessione(
             stato_orchestratore={
                 "fase_onboarding": "conoscenza",
-                "turni_conoscenza": TURNI_CONOSCENZA_MAX - 1,
+                "turni_conoscenza": 5,
             }
         )
 
         fase = await aggiorna_fase_onboarding(db, sessione)
         assert fase == "conoscenza"
-        assert sessione.stato_orchestratore["turni_conoscenza"] == TURNI_CONOSCENZA_MAX
+        assert sessione.stato_orchestratore["turni_conoscenza"] == 6
 
     @pytest.mark.asyncio
     async def test_conclusione_resta_conclusione(self):
@@ -472,8 +471,10 @@ class TestSchemas:
 
 
 class TestCostanti:
-    def test_turni_conoscenza_max(self):
-        assert TURNI_CONOSCENZA_MAX == 6
+    def test_tetto_turni_narrativi(self):
+        """Il decisore forma C chiude al turno 7."""
+        from app.core.onboarding import TETTO_TURNI_NARRATIVI
+        assert TETTO_TURNI_NARRATIVI == 7
 
 
 # ===================================================================
@@ -513,7 +514,7 @@ class TestFlussoOnboardingE2E:
 
         # Step 4: Simula turni in conoscenza + decisore che transisce a placement
         # aggiorna_fase incrementa il contatore, il decisore decide la transizione
-        for i in range(TURNI_CONOSCENZA_MAX):
+        for i in range(6):
             fase = await aggiorna_fase_onboarding(db, sessione)
         assert fase == "conoscenza"  # aggiorna_fase non transisce più da sola
 
@@ -724,9 +725,10 @@ class TestFasiOnboarding:
             "accoglienza", "conoscenza", "placement", "piano", "conclusione"
         )
 
-    def test_turni_conoscenza_ridotti(self):
-        """Turni conoscenza ridotti da 8 a 6."""
-        assert TURNI_CONOSCENZA_MAX == 6
+    def test_tetto_turni_narrativi(self):
+        """Il decisore forma C chiude dopo 7 turni narrativi."""
+        from app.core.onboarding import TETTO_TURNI_NARRATIVI
+        assert TETTO_TURNI_NARRATIVI == 7
 
 
 class TestTransizioneFaseOnboarding:
