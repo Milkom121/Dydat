@@ -266,39 +266,6 @@ check_git_branch() {
     local d; d="$(git -C "$PROJECT_DIR" status --porcelain 2>/dev/null)"; if [[ -n "$d" ]]; then log "${YELLOW}Modifiche non committate${NC}"; fi
 }
 
-# Committa handoff.md + progress.json + session-log.md se dirty.
-# Motivazione: Claude a fine blocco committa il CODICE ma scrive handoff.md
-# e progress.json e session-log.md DOPO il commit, quindi questi file restano
-# "modified" nel working tree. Senza un commit intermedio, accumulano modifiche
-# e lo stato del runner si disallinea dai commit di git (come successo nella
-# catena B39 del 2026-04-09: handoff mostrava B39.2.1 anche dopo che il codice
-# di B39.2.3 era gia committato). Questa funzione chiude la falla committando
-# solo i file di stato del runner, e va chiamata PRIMA del push.
-commit_handoff_if_dirty() {
-    git -C "$PROJECT_DIR" rev-parse --git-dir &>/dev/null || return 0
-    local state_files=".claude/handoff.md docs/progress.json docs/session-log.md"
-    local dirty
-    dirty="$(git -C "$PROJECT_DIR" status --porcelain -- $state_files 2>/dev/null)"
-    if [[ -z "$dirty" ]]; then
-        log_verbose "Nessun file di stato dirty, skip commit handoff"
-        return 0
-    fi
-    log "${BLUE}Commit stato runner (handoff+progress+session-log)...${NC}"
-    # Aggiungi solo i file di stato, non altro (protezione da commit accidentali)
-    git -C "$PROJECT_DIR" add .claude/handoff.md docs/progress.json docs/session-log.md 2>/dev/null || true
-    local commit_msg="Runner: aggiorna stato post blocco ($1)"
-    local commit_out commit_ec=0
-    commit_out="$(git -C "$PROJECT_DIR" commit -m "$commit_msg" 2>&1)" || commit_ec=$?
-    if [[ $commit_ec -eq 0 ]]; then
-        log "${GREEN}Commit stato OK${NC}"
-        log_verbose "$commit_out"
-    else
-        log "${YELLOW}Commit stato non eseguito (probabile nothing to commit)${NC}"
-        log_verbose "$commit_out"
-    fi
-    return 0
-}
-
 # Pusha il branch corrente su origin. Usa -u al primo push (upstream non configurato).
 # Protezione: rifiuta main/master. Non fatale in caso di errore (logga e prosegue).
 # Da chiamare SOLO dopo un blocco completato con test verdi (stato stabile).
@@ -498,21 +465,17 @@ main() {
         local el_block; el_block=$(( ($(date +%s) - block_st) / 60 ))
         case "$s" in
             CONTINUE) log "${GREEN}Continuo${NC}"; hc="$(cat "$PROJECT_DIR/$HANDOFF_FILE")"; fb="false"
-                commit_handoff_if_dirty "$bid"
                 push_current_branch
                 send_telegram_report "BLOCCO_OK" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block";;
             CHECKPOINT) log "${YELLOW}CHECKPOINT — decisione umana${NC}"; send_notification "Metodo Villa" "Checkpoint $bid"
-                commit_handoff_if_dirty "$bid"
                 push_current_branch
                 send_telegram_report "CHECKPOINT" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             PHASE_COMPLETE) log "${GREEN}FASE $cp COMPLETATA${NC}"; send_notification "Metodo Villa" "Fase $cp completata!"
-                commit_handoff_if_dirty "$bid"
                 push_current_branch
                 send_telegram_report "PHASE_COMPLETE" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             ERROR) log "${RED}ERRORE $bid${NC}"; send_notification "Metodo Villa" "Errore $bid"
                 send_telegram_report "ERROR" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             BLOCKED) log "${YELLOW}BLOCCATO${NC}"; send_notification "Metodo Villa" "Bloccato $bid"
-                commit_handoff_if_dirty "$bid"
                 push_current_branch
                 send_telegram_report "BLOCKED" "$bid" "$br" "$el_now" "$sm" "$sn" "$el_block"; break;;
             MISSING) log "${RED}Handoff mancante${NC}"; send_notification "Metodo Villa" "Handoff mancante"
