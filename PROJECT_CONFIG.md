@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-09
-- **Data ultima sessione**: 2026-04-09 (S54 — B39.5.1, Configurazione OPENAI_API_KEY)
-- **Prossima sessione**: S55 — B39.5.2 (Endpoint POST /stt/transcribe)
+- **Data ultima sessione**: 2026-04-09 (S55 — B39.5.2, Endpoint POST /stt/transcribe)
+- **Prossima sessione**: S56 — B39.5.3 (Test endpoint STT con audio reale)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

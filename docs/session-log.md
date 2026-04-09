@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-04-09 — S55 B39.5.2 — Endpoint POST /stt/transcribe
+- **Status**: CONTINUE
+- **Summary**: Nuovo endpoint POST /stt/transcribe con OpenAI Whisper. Validazione formato audio (7 estensioni), limite 25 MB, lingua italiana. Gestione errori completa (400/422/429/502/503). Dipendenze: openai, python-multipart. 13 nuovi test. 568 backend verdi, 10 skipped.
+---
+
 ## 2026-04-09 — Runner B39.2.3 — Funzione estrai_profilo con Opus
 - **Status**: CONTINUE
 - **Summary**: estrai_profilo() con chiamata Opus, parser JSON robusto, retry 1x, fallback profilo vuoto. chiama_llm_singolo() non-streaming. LLM_MODEL_ONBOARDING. 22 nuovi test. 470 backend verdi, 10 skipped.
@@ -447,4 +452,9 @@
 ## 2026-04-09 02:11:48 — Blocco F10BB39.4.2
 - **Status**: CONTINUE
 - **Summary**: B39.4.1 completato - Fix completa_onboarding scrittura profilo (ONB-01). La funzione ora legge profilo_estratto dallo stato_orchestratore, costruisce profilo_sintetizzato (dict piatto con valori), contesto_personale (chi_e/motivo/vissuto_scolastico) e preferenze_tutor (stile_cognitivo/tempo_disponibile). Parametri payload hanno priorita'. onboarding_stato aggiornato a COMPLETED. 16 nuovi test. 540 backend verdi, 10 skipped.
+---
+
+## 2026-04-09 03:06:40 — Blocco F10BB39.5.1
+- **Status**: CONTINUE
+- **Summary**: B39.4.3 completato - Pulizia codice onboarding legacy. Rimosso TURNI_CONOSCENZA_MAX (non piu usato, il decisore forma C usa TETTO_TURNI_NARRATIVI). Rimosso AzioneDecisore.passa_a_placement (mai generato dal decisore). Aggiornate docstring modulo e aggiorna_fase_onboarding per riflettere il flusso attuale. 540 backend verdi, 10 skipped. Fase 4 chiusa al 100%.
 ---

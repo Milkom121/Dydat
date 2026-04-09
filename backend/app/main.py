@@ -3,7 +3,18 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api import achievement, auth, onboarding, percorsi, quaderno, ripasso, sessione, temi, utente
+from app.api import (
+    achievement,
+    auth,
+    onboarding,
+    percorsi,
+    quaderno,
+    ripasso,
+    sessione,
+    stt,
+    temi,
+    utente,
+)
 from app.db.engine import async_session
 from app.grafo.struttura import grafo_knowledge
 
@@ -37,6 +48,7 @@ app.include_router(temi.router)
 app.include_router(achievement.router)
 app.include_router(ripasso.router)
 app.include_router(quaderno.router)
+app.include_router(stt.router)
 
 
 @app.get("/health")

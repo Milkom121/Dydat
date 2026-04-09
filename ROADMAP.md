@@ -471,11 +471,12 @@
 - **Note**: OPENAI_API_KEY aggiunta a Settings con default vuoto. validate_secrets_for_startup estesa (warning in DEBUG, errore in produzione). docker-compose.yml non modificato (env_file: .env gia passa tutte le variabili). Registrata in dev-shortcuts.md. 5 nuovi test, 2 aggiornati. 555 backend verdi (10 skipped).
 
 #### Blocco B39.5.2 — Endpoint POST /stt/transcribe
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S55)
 - **Complessita'**: media
 - **Descrizione**: Nuovo endpoint che riceve audio multipart, chiama OpenAI Whisper via client Python, restituisce il testo trascritto. Gestione errori (formato invalido, API down, rate limit).
 - **File da toccare**: nuovo `backend/app/api/stt.py`, registrare router in `backend/app/main.py`
 - **Gate**: unit test con mock client OpenAI, test formato invalido, test API down
+- **Note**: Endpoint POST /stt/transcribe con validazione formato (7 estensioni audio), limite 25 MB, lingua italiana. Gestione errori: 400 formato/vuoto/grande, 422 nessun parlato, 429 rate limit, 502 API down, 503 chiave mancante/invalida. Dipendenze aggiunte: openai, python-multipart. 13 nuovi test. 568 backend verdi (10 skipped).
 
 #### Blocco B39.5.3 — Test endpoint STT con audio reale
 - [ ] **Stato**: da fare
