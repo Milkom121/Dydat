@@ -519,11 +519,12 @@
 - **Note**: Schema Pydantic EsercizioCompound + OpzioneEsercizio con validatore risposta_corretta. Funzione genera_esercizi_verifica con singola chiamata LLM, retry 1x, fallback lista vuota. Helper _costruisci_coppie con scala adattiva (1-2 singoli, 3+ compound, cap 6 aree). 29 nuovi test (schema, coppie, mock LLM, retry, fallimenti). 689 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.5 — Logica grading deterministico
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S61)
 - **Complessita'**: bassa
 - **Descrizione**: Funzione `valuta_risposta(esercizio, risposta_utente)` deterministica che confronta la scelta dell'utente con la risposta corretta. Ritorna bool + lista concetti retroceduti in caso di fail (entrambi i concetti dell'esercizio compound → incerto).
 - **File da toccare**: `backend/app/core/onboarding.py`
 - **Gate**: unit test con risposte corrette e sbagliate, verifica retrocessione concetti
+- **Note**: Schema EsitoVerifica (corretto, concetti_retrocessi, spiegazione_breve) in schemas/onboarding.py. Funzione valuta_risposta deterministica con normalizzazione case-insensitive + strip. Compound sbagliato retrocede tutti i concetti (Decisione 8). 20 nuovi test (4 schema + 9 corrette/sbagliate + 4 edge case + 3 tipo ritorno). 709 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.6 — Integrazione stato_orchestratore + path planner
 - [ ] **Stato**: da fare

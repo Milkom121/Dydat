@@ -488,3 +488,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.6.2 completato - Logica selezione aree fondazionali. Funzione seleziona_aree_fondazionali(aree_forte, grafo) in onboarding_self_assessment.py. Fondazionalita = posizione media dei nodi del tema nell ordine topologico. Cap a MAX_AREE_FONDAZIONALI (6). Ignora nodi contesto, aree non presenti nel grafo. 21 nuovi test deterministici con grafi mockati (lineare + ramificato). 624 backend verdi, 13 skipped.
 ---
+
+## 2026-04-09 03:58:38 — Blocco F10BB39.6.3
+- **Status**: CONTINUE
+- **Summary**: B39.6.4 completato - Funzione genera_esercizi_verifica. Schema Pydantic EsercizioCompound + OpzioneEsercizio in schemas/onboarding.py. Funzione genera_esercizi_verifica(aree_da_verificare, nomi_concetti) in core/onboarding.py con singola chiamata LLM Opus, retry 1x su errore API/parsing, fallback lista vuota su errore inatteso. Helper _costruisci_coppie con scala adattiva: 1-2 aree singole, 3+ compound, cap 6 aree. 29 nuovi test. 689 backend verdi, 13 skipped.
+---

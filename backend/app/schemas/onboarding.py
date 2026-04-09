@@ -135,6 +135,19 @@ class EsercizioCompound(BaseModel):
         return self
 
 
+class EsitoVerifica(BaseModel):
+    """Esito della valutazione di una risposta a un esercizio compound.
+
+    corretto=True → concetti confermati forti.
+    corretto=False → tutti i concetti dell'esercizio retrocedono a incerto
+    (Decisione 8: compound sbagliato = entrambi i concetti retrocessi).
+    """
+
+    corretto: bool
+    concetti_retrocessi: list[str] = []
+    spiegazione_breve: str = ""
+
+
 class OnboardingCompletaResponse(BaseModel):
     percorso_id: int
     nodo_iniziale: str | None = None

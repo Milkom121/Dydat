@@ -52,6 +52,7 @@ from app.schemas.onboarding import (
     CampoConConfidenza,
     Decisione,
     EsercizioCompound,
+    EsitoVerifica,
     ProfiloEstratto,
 )
 
@@ -461,6 +462,43 @@ def _costruisci_coppie(aree: list[str]) -> list[list[str]]:
             i += 1
 
     return coppie
+
+
+def valuta_risposta(
+    esercizio: EsercizioCompound,
+    risposta_utente: str,
+) -> EsitoVerifica:
+    """Valuta la risposta dell'utente a un esercizio compound (deterministico).
+
+    Confronto case-insensitive tra la lettera scelta e la risposta corretta.
+    Se sbagliato, TUTTI i concetti dell'esercizio retrocedono a 'incerto'
+    (Decisione 8 — compound sbagliato = entrambi retrocessi).
+
+    Args:
+        esercizio: l'esercizio compound con risposta_corretta e concetti.
+        risposta_utente: la lettera scelta dall'utente (es. "A", "b").
+
+    Returns:
+        EsitoVerifica con corretto, concetti_retrocessi, spiegazione_breve.
+    """
+    risposta_normalizzata = risposta_utente.strip().upper()
+    corretta_normalizzata = esercizio.risposta_corretta.strip().upper()
+
+    corretto = risposta_normalizzata == corretta_normalizzata
+
+    if corretto:
+        return EsitoVerifica(
+            corretto=True,
+            concetti_retrocessi=[],
+            spiegazione_breve=esercizio.spiegazione_breve,
+        )
+
+    # Sbagliato → tutti i concetti retrocedono a incerto
+    return EsitoVerifica(
+        corretto=False,
+        concetti_retrocessi=list(esercizio.concetti),
+        spiegazione_breve=esercizio.spiegazione_breve,
+    )
 
 
 async def crea_utente_temporaneo(db: AsyncSession) -> Utente:
