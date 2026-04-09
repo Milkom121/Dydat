@@ -455,11 +455,12 @@
 - **Note**: Accumulo testo indipendente (`testo_accumulato_locale`) in `esegui_turno` come rete di sicurezza. Se `risultato_llm.testo_completo` e vuoto ma `text_delta` ricevuti, usa il testo locale come fallback. Logging diagnostico per fallback (warning) e turno solo tool-use (info). 10 nuovi test. 550 backend verdi (10 skipped).
 
 #### Blocco B39.4.3 — Pulizia codice onboarding legacy
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S53)
 - **Complessita'**: bassa
 - **Descrizione**: Rimuovere codice dell'onboarding vecchio non piu utilizzato dopo il refactor di B39.3.2 e B39.4.1.
 - **File da toccare**: vari in `backend/app/core/onboarding.py` e `backend/app/api/onboarding.py`
 - **Gate**: tutti i test esistenti continuano a passare, nessuna regressione
+- **Note**: Rimosso TURNI_CONOSCENZA_MAX (sostituito da TETTO_TURNI_NARRATIVI nel decisore). Rimosso AzioneDecisore.passa_a_placement (mai usato). Aggiornate docstring e test. 550 backend verdi, 10 skipped.
 
 #### Blocco B39.5.1 — Configurazione OPENAI_API_KEY
 - [ ] **Stato**: da fare
