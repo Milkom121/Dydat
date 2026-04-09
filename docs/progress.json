@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.4.3",
-  "total_blocks_run": 114,
+  "current_block": "B39.4.2",
+  "total_blocks_run": 115,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T12:00:00Z",
-  "last_summary": "Pulizia codice onboarding legacy (B39.4.3). Rimosso TURNI_CONOSCENZA_MAX e AzioneDecisore.passa_a_placement. Aggiornate docstring e test. 550 backend verdi, 10 skipped."
+  "last_run": "2026-04-09T00:11:48Z",
+  "last_summary": "B39.4.1 completato - Fix completa_onboarding scrittura profilo (ONB-01). La funzione ora legge profilo_estratto dallo stato_orchestratore, costruisce profilo_sintetizzato (dict piatto con valori), contesto_personale (chi_e/motivo/vissuto_scolastico) e preferenze_tutor (stile_cognitivo/tempo_disponibile). Parametri payload hanno priorita'. onboarding_stato aggiornato a COMPLETED. 16 nuovi test. 540 backend verdi, 10 skipped."
 }
