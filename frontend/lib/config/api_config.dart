@@ -3,8 +3,10 @@ import 'dart:io' show Platform;
 class ApiConfig {
   ApiConfig._();
 
+  // Porta host 18000 -> porta container backend 8000.
+  // 8000/8001 erano occupate da altri software sul sistema di sviluppo (es. Whisper for Windows).
   static String get baseUrl =>
-      Platform.isAndroid ? 'http://10.0.2.2:8001' : 'http://localhost:8001';
+      Platform.isAndroid ? 'http://10.0.2.2:18000' : 'http://localhost:18000';
 
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 30);

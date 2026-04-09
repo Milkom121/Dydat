@@ -32,7 +32,12 @@ dependencies:
   json_annotation: ^4.10.0
   flutter_markdown: ^0.7.7+1
   flutter_math_fork: ^0.7.4
-  record: ^5.1.2
+  # record ^6.x: major bump necessario per far convivere record_linux 1.3.0
+  # con record_platform_interface 1.5.0. In ^5.x, record_linux era fermo a
+  # 0.7.2 e non implementava startStream ne la nuova firma di hasPermission:
+  # il build Android falliva in compilazione anche se record_linux non viene
+  # usato su Android. Zero breaking changes sull'API che usiamo.
+  record: ^6.2.0
 dev_dependencies:
   flutter_test:    # CRITICAL: Required for Flutter project testing - DO NOT REMOVE
     sdk: flutter   # CRITICAL: Required for Flutter project testing - DO NOT REMOVE

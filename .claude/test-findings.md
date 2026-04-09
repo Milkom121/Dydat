@@ -19,6 +19,30 @@
 - **Verifica post-fix**: la query `SELECT * FROM utenti` torna `OnboardingStato.NOT_STARTED` correttamente. 768 test backend verdi, nessuna regressione.
 - **Lesson learned**: aggiungere un test di smoke che fa create + read round-trip di Utente con tutti i campi enum valorizzati, per catturare subito questa classe di bug.
 
+### BUG-B39-02 — CRITICO — Package `record` v5.x con sotto-dip `record_linux` incompatibile (risolto)
+- **Severita**: CRITICA (build Android fallisce in compilazione, impossibile lanciare l'app su emulatore)
+- **Scoperto durante**: primo `flutter run` dopo fix enum + cambio porta backend, 2026-04-09
+- **File**: `frontend/pubspec.yaml:35`
+- **Sintomo**: `flutter run` su emulatore Android fallisce con errore Kotlin/Dart compilation:
+  ```
+  record_linux-0.7.2/lib/record_linux.dart:12: The non-abstract class 'RecordLinux' is missing implementations for these members:
+    - RecordMethodChannelPlatformInterface.startStream
+  record_linux-0.7.2/lib/record_linux.dart:36: The method 'RecordLinux.hasPermission' has fewer named arguments than those of overridden method
+  ```
+- **Causa**: `record ^5.1.2` (pinnato in B39.7.2) risolveva nel lock `record 5.2.1` + `record_linux 0.7.2` + `record_platform_interface 1.5.0`. La versione 0.7.2 di `record_linux` era ferma alla vecchia interfaccia (`hasPermission(String)`), mentre `record_platform_interface 1.5.0` richiedeva la nuova firma (`hasPermission(String, {bool request = true})`) e un nuovo metodo `startStream(...)`. Dart compile-time crasha perche la subclass non implementa i metodi astratti.
+- **Ironia**: `record_linux` non viene usato su Android (e esclusivo per Linux desktop), ma il resolver Dart lo include comunque nel dependency graph per tutte le piattaforme, quindi il build fallisce ovunque.
+- **Perche i test unitari non l'hanno beccato**: `flutter test` gira su host Windows e NON compila il codice platform-specific Android/iOS/Linux — usa mock delle piattaforme. Gli analyze passano perche record_linux ha comunque sintassi valida, e la classe astratta del platform_interface non e checked in staticamente per la VM host. Solo `flutter run` (build reale) trigera la compilazione Dart del graph completo per il target, che scopre l'incompatibilita.
+- **Fix**: aggiornato `record` da `^5.1.2` a `^6.2.0` in `pubspec.yaml`. La v6 aggiorna automaticamente `record_linux` a 1.3.0 (compatibile con platform_interface 1.5.0). Zero breaking changes sull'API usata da Dydat (`AudioRecorder`, `start/stop`, `onAmplitudeChanged`, `dispose`, `RecordConfig`, `AudioEncoder.aacLc` — verificato dal changelog v6.0.0).
+- **Verifica post-fix**: `flutter pub get` ok, `flutter analyze` 0 issues, `flutter test` 753 verdi (zero regressioni).
+- **Lesson learned**: quando si pinna un package con sotto-dipendenze specifiche per piattaforma (record_*, path_provider_*, ecc.), non basta eseguire `flutter test` su host per garantire la compatibilita. Serve anche almeno un `flutter build apk --debug` o `flutter run` su un target reale per testare la compilazione del graph completo. Questo e stato il secondo "bug verde nei test ma rotto in produzione" della giornata — fa il paio con BUG-B39-01 dell'enum SQLAlchemy.
+
+### BUG-B39-03 — MINORE — Porta backend 8001 in conflitto con software esterni (workaround)
+- **Severita**: BASSA (workaround ambientale, non bug di codice)
+- **File**: `backend/docker-compose.yml` + `frontend/lib/config/api_config.dart`
+- **Sintomo**: Villa ha altri software in esecuzione sul sistema (Whisper for Windows, altro) che occupano sia la porta 8000 che la 8001. Il backend Dydat non puo avviarsi sulla porta che aveva di default (8001).
+- **Fix**: spostata la porta host del backend a **18000** (porta container interna resta 8000, mapping `18000:8000`). Aggiornato anche `ApiConfig.baseUrl` del frontend (`10.0.2.2:18000` per Android emulator, `localhost:18000` per altri).
+- **Nota**: questo non e un bug vero di Dydat, e un conflitto ambientale dovuto ad altri software sul sistema del fondatore. Pero il default di 8001 era comunque una scelta discutibile visto che 8000/8001 sono porte molto comuni. Porta 18000 (mnemonica 8000+10000) e piu sicura come default.
+
 ---
 
 ## Scenario 1 — Home
