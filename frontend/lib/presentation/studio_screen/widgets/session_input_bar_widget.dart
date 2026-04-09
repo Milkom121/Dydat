@@ -1,52 +1,48 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/sizer_extensions.dart';
-import '../../../widgets/custom_icon_widget.dart';
+import '../../../services/audio_recorder_service.dart';
+import '../../../services/stt_service.dart';
+import '../../../widgets/voice_input_field.dart';
 
 /// Barra di input per inviare messaggi al tutor durante la sessione.
-class SessionInputBarWidget extends StatefulWidget {
+/// Usa VoiceInputField per supportare testo e dettatura vocale.
+class SessionInputBarWidget extends StatelessWidget {
   final bool isActive;
   final bool isStreaming;
   final TextEditingController messageController;
-  final FocusNode messageFocusNode;
-  final VoidCallback onSend;
+  final ValueChanged<String> onSend;
+
+  /// Servizio recorder iniettabile (per test). Se null, usa quello di default.
+  final AudioRecorderService? recorderService;
+
+  /// Servizio STT iniettabile (per test). Se null, trascrizione non disponibile.
+  final SttService? sttService;
+
+  /// Callback per errori di trascrizione (es. mostrare snackbar).
+  final ValueChanged<String>? onTranscriptionError;
 
   const SessionInputBarWidget({
     super.key,
     required this.isActive,
     required this.isStreaming,
     required this.messageController,
-    required this.messageFocusNode,
     required this.onSend,
+    this.recorderService,
+    this.sttService,
+    this.onTranscriptionError,
   });
 
-  @override
-  State<SessionInputBarWidget> createState() => _SessionInputBarWidgetState();
-}
-
-class _SessionInputBarWidgetState extends State<SessionInputBarWidget> {
-  @override
-  void initState() {
-    super.initState();
-    // Ascolta i cambi testo per aggiornare il colore del bottone send
-    widget.messageController.addListener(_onTextChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.messageController.removeListener(_onTextChanged);
-    super.dispose();
-  }
-
-  void _onTextChanged() {
-    setState(() {});
+  String get _hintText {
+    if (isStreaming) return 'Il tutor sta rispondendo...';
+    if (isActive) return 'Scrivi o detta un messaggio...';
+    return 'Inizia la sessione per chattare';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasText = widget.messageController.text.isNotEmpty;
-    final canSend = widget.isActive && !widget.isStreaming;
+    final canInteract = isActive && !isStreaming;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -61,55 +57,14 @@ class _SessionInputBarWidgetState extends State<SessionInputBarWidget> {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: widget.messageController,
-              focusNode: widget.messageFocusNode,
-              enabled: canSend,
-              decoration: InputDecoration(
-                hintText: widget.isStreaming
-                    ? 'Il tutor sta rispondendo...'
-                    : widget.isActive
-                        ? 'Scrivi un messaggio...'
-                        : 'Inizia la sessione per chattare',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 4.w,
-                  vertical: 1.5.h,
-                ),
-              ),
-              maxLines: null,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => widget.onSend(),
-            ),
-          ),
-          SizedBox(width: 2.w),
-          Container(
-            decoration: BoxDecoration(
-              color: canSend && hasText
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.surface,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: CustomIconWidget(
-                iconName: 'send',
-                color: canSend && hasText
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
-              onPressed: canSend ? widget.onSend : null,
-            ),
-          ),
-        ],
+      child: VoiceInputField(
+        controller: messageController,
+        hintText: _hintText,
+        enabled: canInteract,
+        onSubmit: onSend,
+        recorderService: recorderService,
+        sttService: sttService,
+        onTranscriptionError: onTranscriptionError,
       ),
     );
   }

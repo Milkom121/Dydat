@@ -45,7 +45,6 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final FocusNode _messageFocusNode = FocusNode();
 
   bool _isToolsTrayVisible = false;
   bool _isTutorPanelVisible = false;
@@ -120,7 +119,6 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
     WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
-    _messageFocusNode.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -557,8 +555,14 @@ class _StudioScreenState extends ConsumerState<StudioScreen>
                     isActive: isActive,
                     isStreaming: isStreaming,
                     messageController: _messageController,
-                    messageFocusNode: _messageFocusNode,
                     onSend: _sendMessage,
+                    onTranscriptionError: (msg) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(msg)),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
