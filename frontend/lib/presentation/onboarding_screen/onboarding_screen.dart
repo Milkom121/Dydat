@@ -6,15 +6,17 @@ import '../../core/sizer_extensions.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../widgets/custom_icon_widget.dart';
 import '../../widgets/markdown_text.dart';
+import '../../widgets/voice_input_field.dart';
 import './widgets/mascotte_widget.dart';
 import './widgets/message_bubble_widget.dart';
 import './widgets/progress_indicator_widget.dart';
 import './widgets/scelta_singola_widget.dart';
 import './widgets/scala_widget.dart';
-import './widgets/testo_libero_widget.dart';
 
-/// Onboarding screen that introduces new users to AI-powered tutoring
-/// through conversational interaction with SSE streaming.
+/// Schermata onboarding narrativa con VoiceInputField e bottone skip.
+///
+/// L'utente si racconta liberamente (anche a voce), il tutor adatta il flusso
+/// tramite il decisore forma C. "Salta per ora" è visibile fin dall'inizio.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -23,20 +25,22 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final FocusNode _messageFocusNode = FocusNode();
 
-  // Local list of chat items: user messages + finalized tutor messages.
+  // Chiave per accedere allo stato di VoiceInputField (controller testo)
+  final GlobalKey<VoiceInputFieldState> _voiceInputKey =
+      GlobalKey<VoiceInputFieldState>();
+
+  // Lista locale messaggi: utente + tutor finalizzati
   final List<Map<String, dynamic>> _messages = [];
 
-  // Track how many tutor messages we've already synced from the provider.
+  // Quanti messaggi tutor abbiamo già sincronizzato dal provider
   int _prevTutorMessagesCount = 0;
 
   @override
   void initState() {
     super.initState();
-    // Start onboarding SSE stream after the first frame.
+    // Avvia stream SSE onboarding dopo il primo frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(onboardingProvider.notifier).startOnboarding();
     });
@@ -44,13 +48,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   void dispose() {
-    _messageController.dispose();
     _scrollController.dispose();
-    _messageFocusNode.dispose();
     super.dispose();
   }
 
-  /// Scroll to bottom of message list.
+  /// Scrolla in fondo alla lista messaggi
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -63,15 +65,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     });
   }
 
-  /// Handle sending a user message.
-  Future<void> _sendMessage() async {
-    final message = _messageController.text.trim();
-    if (message.isEmpty) return;
-
+  /// Invia messaggio utente (da VoiceInputField)
+  Future<void> _sendMessage(String message) async {
     final onboardingState = ref.read(onboardingProvider);
     if (onboardingState.isStreaming || onboardingState.isLoading) return;
 
-    // Add user message to local list.
+    // Aggiungi alla lista locale
     setState(() {
       _messages.add({
         'text': message,
@@ -79,25 +78,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         'timestamp': DateTime.now(),
       });
     });
-    _messageController.clear();
     _scrollToBottom();
 
-    // Send via provider (triggers SSE stream).
+    // Invia via provider (trigger SSE)
     ref.read(onboardingProvider.notifier).sendMessage(message);
   }
 
-  /// Handle answering a structured question (choice/text/scale).
+  /// Risposta a domanda strutturata (scelta singola, scala)
   void _answerQuestion(String answer) {
     final onboardingState = ref.read(onboardingProvider);
     if (onboardingState.isStreaming || onboardingState.isLoading) return;
 
-    // Capture the question text before clearing.
+    // Cattura la domanda prima di pulirla
     final question = onboardingState.currentQuestion;
 
-    // Clear question in provider FIRST — so the card disappears immediately.
+    // Pulisce la domanda nel provider — la card sparisce subito
     ref.read(onboardingProvider.notifier).answerQuestion(answer);
 
-    // Then add question + answer to local chat history.
+    // Aggiunge domanda + risposta alla cronologia locale
     setState(() {
       if (question != null) {
         _messages.add({
@@ -115,7 +113,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _scrollToBottom();
   }
 
-  /// Syncs finalized tutor messages from the provider into the local _messages list.
+  /// Sincronizza messaggi tutor finalizzati dal provider nella lista locale
   void _syncTutorMessages(OnboardingScreenState onboardingState) {
     final tutorMessages = onboardingState.tutorMessages;
     if (tutorMessages.length > _prevTutorMessagesCount) {
@@ -131,7 +129,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  /// Handle retry on error.
+  /// Riprova in caso di errore
   void _retryConnection() {
     ref.read(onboardingProvider.notifier).startOnboarding();
     setState(() {
@@ -140,7 +138,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     });
   }
 
-  /// Handle completing the onboarding and navigating to registration.
+  /// Completa l'onboarding e naviga a registrazione
   Future<void> _completeOnboarding() async {
     await ref.read(onboardingProvider.notifier).completeOnboarding();
 
@@ -152,12 +150,38 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
+  /// L'utente salta l'onboarding
+  void _skipOnboarding() {
+    ref.read(onboardingProvider.notifier).skipOnboarding();
+
+    if (!mounted) return;
+
+    final onboardingState = ref.read(onboardingProvider);
+    // Se ha già un utenteTempId, va a registrazione. Altrimenti login.
+    if (onboardingState.utenteTempId != null) {
+      context.go('/registration');
+    } else {
+      context.go('/login');
+    }
+  }
+
+  /// Etichetta fase per l'indicatore di progresso
+  String _faseLabel(OnboardingFase fase) {
+    return switch (fase) {
+      OnboardingFase.accoglienza => 'Benvenuto',
+      OnboardingFase.conoscenza => 'Conosciamoci',
+      OnboardingFase.placement => 'Valutazione',
+      OnboardingFase.piano => 'Il tuo percorso',
+      OnboardingFase.conclusione => 'Pronti a partire',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onboardingState = ref.watch(onboardingProvider);
 
-    // Sync finalized tutor messages from provider state.
+    // Sincronizza messaggi tutor
     _syncTutorMessages(onboardingState);
 
     final isStreaming = onboardingState.isStreaming;
@@ -166,55 +190,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final currentStreamText = onboardingState.currentTutorText;
     final progress = onboardingState.progress;
 
-    // Check if onboarding conversation seems complete (~10 turns).
-    final showCompleteButton =
-        !isStreaming && !isLoading && onboardingState.turnsCompleted >= 8;
+    // Il bottone completa appare nella fase conclusione (non più basato su turni)
+    final showCompleteButton = !isStreaming &&
+        !isLoading &&
+        onboardingState.faseCorrente == OnboardingFase.conclusione;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // Progress bar
-            ProgressIndicatorWidget(progress: progress),
+            // Barra progresso + fase + skip
+            _buildTopBar(theme, onboardingState, progress),
 
-            // Error banner
-            if (hasError)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
-                color: theme.colorScheme.error,
-                child: Row(
-                  children: [
-                    CustomIconWidget(
-                      iconName: 'error_outline',
-                      color: theme.colorScheme.onError,
-                      size: 20,
-                    ),
-                    SizedBox(width: 2.w),
-                    Expanded(
-                      child: Text(
-                        onboardingState.error!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onError,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _retryConnection,
-                      child: Text(
-                        'Riprova',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onError,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            // Banner errore
+            if (hasError) _buildErrorBanner(theme, onboardingState),
 
-            // Main content
+            // Contenuto principale
             Expanded(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -223,11 +215,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     SizedBox(height: 2.h),
 
                     // Mascotte
-                    MascotteWidget(),
+                    const MascotteWidget(),
 
                     SizedBox(height: 3.h),
 
-                    // Messages area
+                    // Area messaggi
                     Expanded(
                       child: (_messages.isEmpty &&
                               currentStreamText.isEmpty &&
@@ -243,7 +235,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               itemCount: _messages.length +
                                   (currentStreamText.isNotEmpty ? 1 : 0),
                               itemBuilder: (context, index) {
-                                // Streaming bubble at the end
+                                // Bolla streaming in fondo
                                 if (index == _messages.length &&
                                     currentStreamText.isNotEmpty) {
                                   return _buildStreamingBubble(
@@ -263,47 +255,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ),
                     ),
 
-                    // Typing indicator (when waiting for first text_delta)
+                    // Indicatore digitazione (in attesa del primo text_delta)
                     if (isStreaming && currentStreamText.isEmpty)
                       _buildTypingIndicator(theme),
 
-                    // Bottom area: complete button OR question widget OR text input
+                    // Area inferiore: completa / domanda strutturata / VoiceInputField
                     if (showCompleteButton)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 1.h),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed:
-                                isLoading ? null : _completeOnboarding,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              padding: EdgeInsets.symmetric(vertical: 1.5.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: isLoading
-                                ? SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: theme.colorScheme.onPrimary,
-                                    ),
-                                  )
-                                : Text(
-                                    'Inizia il tuo percorso!',
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      color: theme.colorScheme.onPrimary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      )
+                      _buildCompleteButton(theme, isLoading)
                     else
                       _buildBottomArea(theme, onboardingState),
                   ],
@@ -316,131 +274,82 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  /// Builds the dynamic bottom area based on current state.
-  /// Shows: nothing (streaming), question widget, or default text input.
-  Widget _buildBottomArea(
+  /// Barra superiore: progresso, etichetta fase, bottone salta
+  Widget _buildTopBar(
+    ThemeData theme,
+    OnboardingScreenState onboardingState,
+    double progress,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Barra progresso
+        ProgressIndicatorWidget(progress: progress),
+
+        // Riga fase + salta
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.5.h),
+          child: Row(
+            children: [
+              // Etichetta fase
+              Text(
+                _faseLabel(onboardingState.faseCorrente),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              // Bottone salta — sempre visibile (tranne se completato)
+              if (!onboardingState.isCompleted)
+                TextButton(
+                  onPressed: _skipOnboarding,
+                  child: Text(
+                    'Salta per ora',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Banner errore
+  Widget _buildErrorBanner(
     ThemeData theme,
     OnboardingScreenState onboardingState,
   ) {
-    final isStreaming = onboardingState.isStreaming;
-    final isLoading = onboardingState.isLoading;
-    final question = onboardingState.currentQuestion;
-
-    // While streaming or loading, show nothing (typing indicator is separate)
-    if (isStreaming || isLoading) {
-      return const SizedBox.shrink();
-    }
-
-    // If there's an active question, show the appropriate widget
-    if (question != null) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: 1.h),
-        child: switch (question.tipoInput) {
-          'scelta_singola' => SceltaSingolaWidget(
-              question: question,
-              onAnswer: _answerQuestion,
-            ),
-          'testo_libero' => TestoLiberoWidget(
-              question: question,
-              onAnswer: _answerQuestion,
-            ),
-          'scala' => ScalaWidget(
-              question: question,
-              onAnswer: _answerQuestion,
-            ),
-          _ => _buildDefaultTextInput(theme),
-        },
-      );
-    }
-
-    // Default: show the standard text input
-    return _buildDefaultTextInput(theme);
-  }
-
-  /// Builds the default free-text input area (fallback when no structured question).
-  Widget _buildDefaultTextInput(ThemeData theme) {
-    final onboardingState = ref.read(onboardingProvider);
-    final isStreaming = onboardingState.isStreaming;
-    final isLoading = onboardingState.isLoading;
-
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 4.w,
-        vertical: 1.5.h,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outline,
-            width: 1,
-          ),
-        ),
-      ),
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
+      color: theme.colorScheme.error,
       child: Row(
         children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              focusNode: _messageFocusNode,
-              enabled: !isStreaming && !isLoading,
-              decoration: InputDecoration(
-                hintText: 'Scrivi un messaggio...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color:
-                        theme.colorScheme.outline.withValues(alpha: 0.5),
-                  ),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 4.w,
-                  vertical: 1.5.h,
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-              ),
-              style: theme.textTheme.bodyLarge,
-              maxLines: null,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendMessage(),
-            ),
+          CustomIconWidget(
+            iconName: 'error_outline',
+            color: theme.colorScheme.onError,
+            size: 20,
           ),
           SizedBox(width: 2.w),
-          Material(
-            color: (isStreaming || isLoading)
-                ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                : theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: (isStreaming || isLoading) ? null : _sendMessage,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: EdgeInsets.all(1.5.h),
-                child: CustomIconWidget(
-                  iconName: 'send',
-                  color: theme.colorScheme.onPrimary,
-                  size: 24,
-                ),
+          Expanded(
+            child: Text(
+              onboardingState.error!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onError,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _retryConnection,
+            child: Text(
+              'Riprova',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onError,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -449,7 +358,108 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  /// Build a streaming tutor bubble with amber pulsating cursor.
+  /// Area inferiore dinamica: nulla (streaming), domanda strutturata, o VoiceInputField
+  Widget _buildBottomArea(
+    ThemeData theme,
+    OnboardingScreenState onboardingState,
+  ) {
+    final isStreaming = onboardingState.isStreaming;
+    final isLoading = onboardingState.isLoading;
+    final question = onboardingState.currentQuestion;
+
+    // Durante streaming/loading non mostrare nulla
+    if (isStreaming || isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    // Se c'è una domanda strutturata, mostra il widget appropriato
+    if (question != null) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 1.h),
+        child: switch (question.tipoInput) {
+          'scelta_singola' => SceltaSingolaWidget(
+              question: question,
+              onAnswer: _answerQuestion,
+            ),
+          'scala' => ScalaWidget(
+              question: question,
+              onAnswer: _answerQuestion,
+            ),
+          // testo_libero e qualsiasi altro tipo → VoiceInputField
+          _ => _buildVoiceInput(theme),
+        },
+      );
+    }
+
+    // Default: VoiceInputField
+    return _buildVoiceInput(theme);
+  }
+
+  /// Campo input con VoiceInputField (testo + voce)
+  Widget _buildVoiceInput(ThemeData theme) {
+    final onboardingState = ref.read(onboardingProvider);
+    final isEnabled = !onboardingState.isStreaming && !onboardingState.isLoading;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.h),
+      child: VoiceInputField(
+        key: _voiceInputKey,
+        hintText: 'Scrivi o parla...',
+        onSubmit: _sendMessage,
+        enabled: isEnabled,
+        maxLines: null,
+        onTranscriptionError: (error) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(error),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  /// Bottone "Inizia il tuo percorso!" (fase conclusione)
+  Widget _buildCompleteButton(ThemeData theme, bool isLoading) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.h),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: isLoading ? null : _completeOnboarding,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+            padding: EdgeInsets.symmetric(vertical: 1.5.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                )
+              : Text(
+                  'Inizia il tuo percorso!',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  /// Bolla streaming tutor con cursore ambra pulsante
   Widget _buildStreamingBubble(ThemeData theme, String text) {
     _scrollToBottom();
     return Padding(
@@ -505,7 +515,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  /// Build typing indicator (before any text arrives).
+  /// Indicatore digitazione (prima che arrivi qualsiasi testo)
   Widget _buildTypingIndicator(ThemeData theme) {
     return Padding(
       padding: EdgeInsets.only(bottom: 2.h),
@@ -549,7 +559,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-/// Amber pulsating cursor shown at the end of streaming text.
+/// Cursore ambra pulsante mostrato alla fine del testo in streaming.
 class _AmberCursor extends StatefulWidget {
   const _AmberCursor();
 

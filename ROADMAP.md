@@ -591,11 +591,12 @@
 - **Note**: Nuovo DecisioneOnboardingEvent in sse_events.dart (sealed class aggiornata ovunque). OnboardingFase enum (5 fasi). OnboardingScreenState esteso con faseCorrente, campiCompleti, isSkipped, ultimaAzioneDecisore. Progresso calcolato per fase (non piu' per turni). skipOnboarding() + resumeOnboarding(). MockOnboardingService per test con stream controllati. 25 nuovi test (37 totale file). 662 frontend verdi, analyze 0.
 
 #### Blocco B39.8.2 — Riscrittura onboarding_screen.dart con VoiceInputField + skip
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S68)
 - **Complessita'**: media
 - **Descrizione**: Schermata onboarding usa il nuovo widget VoiceInputField, ha il bottone "Salta per ora" visibile fin dalla prima schermata.
 - **File da toccare**: `frontend/lib/presentation/onboarding_screen/onboarding_screen.dart`
 - **Gate**: widget test nuovo flusso, test skip, rendering corretto
+- **Note**: Sostituito TextField custom con VoiceInputField (testo+voce). Bottone "Salta per ora" sempre visibile in top bar accanto all'etichetta fase. Etichette fase italiane (Benvenuto/Conosciamoci/Valutazione/Il tuo percorso/Pronti a partire). Bottone completa appare solo in fase conclusione (non piu' basato su turnsCompleted). Skip naviga a /registration (se utenteTempId) o /login. testo_libero usa VoiceInputField. 15 nuovi test. 677 frontend verdi, analyze 0.
 
 #### Blocco B39.8.3 — System prompt tutor onboarding riscritto
 - [ ] **Stato**: da fare

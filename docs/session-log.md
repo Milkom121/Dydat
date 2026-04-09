@@ -523,3 +523,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.7.4+B39.7.5+B39.7.6 completati in un'unica sessione. Nuovo SttService (astratto + RealSttService) con POST multipart /stt/transcribe e mapping errori Dio user-friendly. RecordingState.transcribing aggiunto. VoiceInputField: spinner + "Trascrizione in corso..." durante upload, testo trascritto popola campo modificabile (NO auto-invio), errori gestiti con onTranscriptionError callback. ApiConfig.sttTranscribe. 11 nuovi test (49 totale file). 637 frontend verdi, analyze 0.
 ---
+
+## 2026-04-09 04:48:42 — Blocco F10BB39.8.1
+- **Status**: CONTINUE
+- **Summary**: B39.8.1 completato. OnboardingProvider aggiornato per gestire le nuove fasi onboarding narrativo (accoglienza/conoscenza/placement/piano/conclusione), skip/resume, evento decisione_onboarding dal backend. Nuovo DecisioneOnboardingEvent in sse_events.dart con switch aggiornati in session_provider e onboarding_provider. OnboardingFase enum. Progresso calcolato per fase (non piu per turni). MockOnboardingService per test con stream controllati. 25 nuovi test (37 totale file). 662 frontend verdi, analyze 0.
+---
