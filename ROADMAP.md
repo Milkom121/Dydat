@@ -527,11 +527,12 @@
 - **Note**: Schema EsitoVerifica (corretto, concetti_retrocessi, spiegazione_breve) in schemas/onboarding.py. Funzione valuta_risposta deterministica con normalizzazione case-insensitive + strip. Compound sbagliato retrocede tutti i concetti (Decisione 8). 20 nuovi test (4 schema + 9 corrette/sbagliate + 4 edge case + 3 tipo ritorno). 709 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.6 — Integrazione stato_orchestratore + path planner
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S62)
 - **Complessita'**: media
 - **Descrizione**: Salvare la mappa placement finale (`{concetto: forte_confermato/forte_unverified/incerto/digiuno}`) nello `stato_orchestratore` della sessione onboarding. Il path planner la legge per scegliere il nodo di partenza del percorso.
 - **File da toccare**: `backend/app/core/onboarding.py`, `backend/app/core/path_planner.py`
 - **Gate**: integration test flusso completo onboarding + placement + creazione percorso
+- **Note**: costruisci_mappa_placement() unisce autovalutazione + esiti verifica in mappa {area: stato}. determina_nodo_partenza_da_mappa() sceglie il primo nodo operativo con tema non-forte. _determina_nodo_da_placement aggiornato: priorita' mappa > legacy gateway. _inizializza_stato_nodi esteso: nodi di temi forte_confermato → presunti. completa_onboarding passa placement_mappa. 28 nuovi test. 737 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.7.1 — Scheletro widget VoiceInputField
 - [ ] **Stato**: da fare

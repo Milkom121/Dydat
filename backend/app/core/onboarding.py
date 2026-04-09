@@ -501,6 +501,140 @@ def valuta_risposta(
     )
 
 
+# --- Mappa placement (B39.6.6) ---
+
+# Stati possibili nella mappa placement finale
+STATI_PLACEMENT = (
+    "forte_confermato",
+    "forte_unverified",
+    "incerto",
+    "digiuno",
+)
+
+
+def costruisci_mappa_placement(
+    autovalutazione: dict[str, str],
+    esiti_verifica: list[EsitoVerifica] | None = None,
+    aree_verificate: list[str] | None = None,
+) -> dict[str, str]:
+    """Costruisce la mappa placement finale unendo auto-valutazione ed esiti verifica.
+
+    La mappa ha come chiavi i tema_id (aree) e come valori uno stato tra:
+    - forte_confermato: dichiarato forte + esercizio compound corretto
+    - forte_unverified: dichiarato forte ma non selezionato per la verifica
+    - incerto: dichiarato incerto, oppure dichiarato forte ma esercizio sbagliato
+    - digiuno: dichiarato digiuno dall'utente
+
+    Decisione 8: compound sbagliato retrocede TUTTI i concetti dell'esercizio
+    a incerto (già gestito da valuta_risposta, qui applichiamo i concetti_retrocessi).
+
+    Args:
+        autovalutazione: dict {area_id: "forte"|"incerto"|"digiuno"} dall'auto-valutazione.
+        esiti_verifica: lista di EsitoVerifica dagli esercizi compound (può essere None).
+        aree_verificate: lista di area_id che sono state selezionate per la verifica
+                         compound (da seleziona_aree_fondazionali). Serve per distinguere
+                         forte_confermato da forte_unverified.
+
+    Returns:
+        dict {area_id: stato_placement} con tutti i tema_id dell'auto-valutazione.
+    """
+    if not autovalutazione:
+        return {}
+
+    # Insieme delle aree retrocesse dagli esiti compound
+    aree_retrocesse: set[str] = set()
+    aree_confermate: set[str] = set()
+
+    if esiti_verifica:
+        for esito in esiti_verifica:
+            if esito.corretto:
+                # I concetti dell'esercizio sono confermati forti
+                aree_confermate.update(esito.concetti_retrocessi)
+                # Nota: concetti_retrocessi è [] quando corretto=True,
+                # usiamo i concetti direttamente dall'esercizio
+            else:
+                # Compound sbagliato: tutti i concetti retrocedono
+                aree_retrocesse.update(esito.concetti_retrocessi)
+
+    # Per gli esercizi corretti, i concetti sono nel campo concetti_retrocessi=[]
+    # Dobbiamo ricostruire quali aree sono confermate dalle aree verificate
+    # meno quelle retrocesse
+    aree_verificate_set = set(aree_verificate) if aree_verificate else set()
+    # Le aree verificate che non sono state retrocesse sono confermate
+    aree_confermate = aree_verificate_set - aree_retrocesse
+
+    mappa: dict[str, str] = {}
+
+    for area_id, livello in autovalutazione.items():
+        if livello == "digiuno":
+            mappa[area_id] = "digiuno"
+        elif livello == "incerto":
+            mappa[area_id] = "incerto"
+        elif livello == "forte":
+            if area_id in aree_retrocesse:
+                # Dichiarato forte ma bocciato dalla verifica
+                mappa[area_id] = "incerto"
+            elif area_id in aree_confermate:
+                # Dichiarato forte e confermato dalla verifica
+                mappa[area_id] = "forte_confermato"
+            else:
+                # Dichiarato forte ma non selezionato per la verifica
+                mappa[area_id] = "forte_unverified"
+        else:
+            # Livello sconosciuto → trattato come incerto per sicurezza
+            mappa[area_id] = "incerto"
+
+    return mappa
+
+
+def determina_nodo_partenza_da_mappa(
+    mappa_placement: dict[str, str],
+    grafo: object,
+) -> str | None:
+    """Determina il nodo di partenza dal placement basato sulla mappa finale.
+
+    Strategia: il primo nodo operativo nell'ordine topologico il cui tema
+    NON è forte_confermato/forte_unverified. Se tutti i temi sono forti,
+    parte dall'ultimo nodo operativo.
+
+    Nodi senza tema_id sono trattati come non-forti (selezionabili).
+
+    Args:
+        mappa_placement: dict {tema_id: stato} dalla costruzione mappa.
+        grafo: NetworkX DiGraph del knowledge graph.
+
+    Returns:
+        nodo_id del nodo di partenza, o None se la mappa è vuota.
+    """
+    if not mappa_placement or grafo.number_of_nodes() == 0:
+        return None
+
+    ordine = ordinamento_topologico(grafo)
+
+    # Temi considerati padroneggiati (forte confermato o non verificato)
+    temi_forti = {
+        tema_id for tema_id, stato in mappa_placement.items()
+        if stato in ("forte_confermato", "forte_unverified")
+    }
+
+    # Primo nodo operativo il cui tema non è forte
+    for nodo_id in ordine:
+        attrs = grafo.nodes.get(nodo_id, {})
+        if attrs.get("tipo_nodo") != "operativo":
+            continue
+        tema_id = attrs.get("tema_id", "")
+        # Nodo senza tema o tema non forte → punto di partenza
+        if not tema_id or tema_id not in temi_forti:
+            return nodo_id
+
+    # Tutti i temi sono forti → ritorna l'ultimo nodo operativo
+    nodi_operativi = [
+        nid for nid in ordine
+        if grafo.nodes.get(nid, {}).get("tipo_nodo") == "operativo"
+    ]
+    return nodi_operativi[-1] if nodi_operativi else None
+
+
 async def crea_utente_temporaneo(db: AsyncSession) -> Utente:
     """Crea un utente temporaneo (UUID, senza email/password)."""
     utente = Utente(
@@ -787,11 +921,17 @@ async def completa_onboarding(
     sessione.durata_effettiva_min = int(durata)
     await db.flush()
 
-    # 3. Gestisci punto di partenza: placement_risultati > punto_partenza_suggerito
+    # 3. Gestisci punto di partenza: placement_mappa > placement_risultati > suggerito
     stato = sessione.stato_orchestratore or {}
     nodo_override = None
+    placement_mappa = None
 
     placement_risultati = stato.get("placement_risultati", {})
+
+    # Recupera mappa placement se disponibile (B39.6.6)
+    if isinstance(placement_risultati, dict):
+        placement_mappa = placement_risultati.get("placement_mappa")
+
     if placement_risultati and grafo_knowledge.caricato:
         nodo_override = _determina_nodo_da_placement(placement_risultati)
 
@@ -814,7 +954,7 @@ async def completa_onboarding(
 
     # 5. Inizializza stato_nodi_utente per tutti i nodi operativi
     nodi_init = await _inizializza_stato_nodi(
-        db, utente.id, nodo_override
+        db, utente.id, nodo_override, placement_mappa
     )
 
     logger.info(
@@ -864,10 +1004,24 @@ def _trova_nodo_per_tema(tema_o_concetto: str) -> str | None:
 def _determina_nodo_da_placement(placement_risultati: dict) -> str | None:
     """Determina il nodo di partenza dai risultati del placement test.
 
-    Strategia: trova il primo nodo gateway con esito negativo
-    (il primo concetto che lo studente non padroneggia).
-    Se tutti positivi, usa l'ultimo nodo gateway come partenza.
+    Strategia (in ordine di priorità):
+    1. Se presente placement_mappa (nuovo sistema B39.6.6):
+       usa determina_nodo_partenza_da_mappa() con la mappa {tema: stato}.
+    2. Fallback legacy (esiti gateway):
+       trova il primo nodo gateway con esito negativo.
     """
+    # 1. Nuovo sistema: mappa placement (B39.6.6)
+    mappa = placement_risultati.get("placement_mappa")
+    if mappa and grafo_knowledge.caricato:
+        nodo = determina_nodo_partenza_da_mappa(mappa, grafo_knowledge.grafo)
+        if nodo:
+            logger.info(
+                "Nodo partenza da mappa placement: %s (mappa: %d aree)",
+                nodo, len(mappa),
+            )
+            return nodo
+
+    # 2. Fallback legacy: esiti gateway
     esiti = placement_risultati.get("esiti", [])
     if not esiti:
         return None
@@ -898,11 +1052,16 @@ async def _inizializza_stato_nodi(
     db: AsyncSession,
     utente_id: uuid.UUID,
     nodo_override: str | None,
+    placement_mappa: dict[str, str] | None = None,
 ) -> int:
     """Inizializza stato_nodi_utente per tutti i nodi operativi.
 
     Se c'è un nodo_override, i nodi precedenti nell'ordine topologico
     vengono marcati come operativo + presunto=true.
+
+    Se c'è una placement_mappa (B39.6.6), i nodi dei temi forte_confermato
+    vengono marcati come operativo + presunto=true (indipendentemente
+    dalla posizione rispetto al nodo_override).
 
     Returns:
         Numero di nodi inizializzati.
@@ -918,6 +1077,14 @@ async def _inizializza_stato_nodi(
         idx = ordine.index(nodo_override)
         nodi_prima_override = set(ordine[:idx])
 
+    # Temi forte_confermato dal placement: i nodi di questi temi sono presunti
+    temi_forti: set[str] = set()
+    if placement_mappa:
+        temi_forti = {
+            tema_id for tema_id, stato in placement_mappa.items()
+            if stato == "forte_confermato"
+        }
+
     from sqlalchemy.dialects.postgresql import insert as pg_insert
 
     count = 0
@@ -926,8 +1093,14 @@ async def _inizializza_stato_nodi(
         if attrs.get("tipo_nodo") != "operativo":
             continue
 
-        if nodo_id in nodi_prima_override:
-            # Nodo prima del punto di partenza → operativo + presunto
+        tema_nodo = attrs.get("tema_id", "")
+        nodo_presunto = (
+            nodo_id in nodi_prima_override
+            or (tema_nodo and tema_nodo in temi_forti)
+        )
+
+        if nodo_presunto:
+            # Nodo prima del punto di partenza o tema forte_confermato → presunto
             stmt = pg_insert(StatoNodoUtente).values(
                 utente_id=utente_id,
                 nodo_id=nodo_id,
