@@ -30,6 +30,13 @@ class _MockOnboardingService extends OnboardingService {
   /// Se non-null, complete() lancia questo errore
   DioException? completeError;
 
+  /// Risposta per getResumeState() (usato da resumeOnboarding).
+  /// Default: sessione vuota coerente con sess-1/temp-1 usati nei test.
+  OnboardingRipresaResponse? resumeResponse;
+
+  /// Se non-null, getResumeState() lancia questo errore
+  DioException? resumeError;
+
   _MockOnboardingService({
     required super.client,
     required super.sseClient,
@@ -77,6 +84,20 @@ class _MockOnboardingService extends OnboardingService {
           percorsoId: 1,
           nodoIniziale: 'nodo-1',
           nodiInizializzati: 10,
+        );
+  }
+
+  @override
+  Future<OnboardingRipresaResponse> getResumeState({
+    required String utenteId,
+  }) async {
+    if (resumeError != null) throw resumeError!;
+    return resumeResponse ??
+        const OnboardingRipresaResponse(
+          sessioneId: 'sess-1',
+          faseCorrente: 'conoscenza',
+          campiCompleti: 0,
+          turni: [],
         );
   }
 
