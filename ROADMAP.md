@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (10/38 sub-blocchi completati)
+- [>] **Stato**: in corso (11/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -463,11 +463,12 @@
 - **Note**: Rimosso TURNI_CONOSCENZA_MAX (sostituito da TETTO_TURNI_NARRATIVI nel decisore). Rimosso AzioneDecisore.passa_a_placement (mai usato). Aggiornate docstring e test. 550 backend verdi, 10 skipped.
 
 #### Blocco B39.5.1 — Configurazione OPENAI_API_KEY
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S54)
 - **Complessita'**: bassa
 - **Descrizione**: Aggiungere segreto `OPENAI_API_KEY` al backend per uso Whisper. Aggiornare `.env.example`, `docker-compose.yml`, `validate_secrets_for_startup` in `config.py`. Registrare la nuova dipendenza esterna in `docs/dev-shortcuts.md`.
 - **File da toccare**: `backend/app/config.py`, `backend/.env.example`, `backend/docker-compose.yml`, `docs/dev-shortcuts.md`
 - **Gate**: unit test verifica fallimento in produzione se chiave manca, backend parte con chiave presente
+- **Note**: OPENAI_API_KEY aggiunta a Settings con default vuoto. validate_secrets_for_startup estesa (warning in DEBUG, errore in produzione). docker-compose.yml non modificato (env_file: .env gia passa tutte le variabili). Registrata in dev-shortcuts.md. 5 nuovi test, 2 aggiornati. 555 backend verdi (10 skipped).
 
 #### Blocco B39.5.2 — Endpoint POST /stt/transcribe
 - [ ] **Stato**: da fare

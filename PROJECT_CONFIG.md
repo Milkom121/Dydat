@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-09
-- **Data ultima sessione**: 2026-04-09 (S53 — B39.4.3, Pulizia codice onboarding legacy)
-- **Prossima sessione**: S54 — B39.5.1 (Configurazione OPENAI_API_KEY)
+- **Data ultima sessione**: 2026-04-09 (S54 — B39.5.1, Configurazione OPENAI_API_KEY)
+- **Prossima sessione**: S55 — B39.5.2 (Endpoint POST /stt/transcribe)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 
