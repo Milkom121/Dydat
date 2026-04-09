@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.5.2",
-  "total_blocks_run": 117,
+  "current_block": "B39.5.3",
+  "total_blocks_run": 118,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T03:15:00Z",
-  "last_summary": "B39.5.2 completato - Endpoint POST /stt/transcribe con OpenAI Whisper. Validazione formato audio, limite 25 MB, gestione errori completa. 13 nuovi test. 568 backend verdi (10 skipped)."
+  "last_run": "2026-04-09T02:30:00Z",
+  "last_summary": "B39.5.2 completato - Endpoint POST /stt/transcribe con OpenAI Whisper. 14/38 sub-blocchi B39 completati. Prossimo B39.5.3 (test con audio reale). Runner: aggiunta istruzione OBBLIGATORIA nel build_prompt di invocare skill chiusura-blocco a fine sessione, risolve il loop strutturale dove Claude dimenticava di aggiornare handoff.md."
 }

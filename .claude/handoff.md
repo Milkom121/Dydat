@@ -1,39 +1,40 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.5.1
-SUMMARY: B39.4.3 completato - Pulizia codice onboarding legacy. Rimosso TURNI_CONOSCENZA_MAX (non piu usato, il decisore forma C usa TETTO_TURNI_NARRATIVI). Rimosso AzioneDecisore.passa_a_placement (mai generato dal decisore). Aggiornate docstring modulo e aggiorna_fase_onboarding per riflettere il flusso attuale. 540 backend verdi, 10 skipped. Fase 4 chiusa al 100%.
-NEXT: B39.5.1 - Configurazione OPENAI_API_KEY per Whisper
+BLOCK: B39.5.3
+SUMMARY: B39.5.2 completato - Endpoint POST /stt/transcribe con OpenAI Whisper. Riceve audio multipart, valida formato (7 estensioni), limite 25 MB, chiama Whisper con lingua italiana. Gestione errori: formato invalido, rate limit, API down. Dipendenze openai e python-multipart aggiunte. 13 nuovi test. 553 backend verdi, 10 skipped.
+NEXT: B39.5.3 - Test endpoint STT con audio reale (integration test)
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: backend/app/core/onboarding.py, backend/app/schemas/onboarding.py, backend/tests/test_onboarding.py
-TESTS: PASS (540 backend verdi, 10 skipped)
-VERIFICATION: 540 passed, 10 skipped. Ruff pulito. Fase 4 del piano B39 completata (ONB-01 e ONB-02 fixati, codice legacy rimosso).
+FILES_MODIFIED: backend/app/api/stt.py (nuovo), backend/app/main.py, backend/pyproject.toml, backend/tests/test_b39_5_2_stt.py (nuovo)
+TESTS: PASS (553 backend verdi, 10 skipped)
+VERIFICATION: 553 passed, 10 skipped. Endpoint funzionante con mock client OpenAI. Chiave OPENAI_API_KEY configurata in B39.5.1.
 
 ---
 
 ## Contesto dettagliato
 
 ### Cosa e stato fatto
-- Fase 4 di B39 completata: B39.4.1 (fix ONB-01 scrittura profilo), B39.4.2 (fix ONB-02 persistenza streaming con tool use), B39.4.3 (pulizia codice legacy)
-- 12 sub-blocchi su 38 completati: Fase 1 (3/3), Fase 2 (4/4), Fase 3 (2/2), Fase 4 (3/3)
-- Prossima fase: Fase 5 — Motore voce Whisper (3 sub-blocchi: B39.5.1, B39.5.2, B39.5.3)
+- B39.5.1 completato (commit a327233): OPENAI_API_KEY configurata in backend/app/config.py, .env.example, validate_secrets_for_startup, dev-shortcuts.md aggiornato
+- B39.5.2 completato (commit 8b383be): nuovo endpoint POST /stt/transcribe in backend/app/api/stt.py con supporto Whisper
+- 14/38 sub-blocchi B39 completati: Fase 1 (3/3), Fase 2 (4/4), Fase 3 (2/2), Fase 4 (3/3), Fase 5 (2/3)
+- Prossimo: B39.5.3 (ultimo sub-blocco di Fase 5)
 
 ### Stato del progetto
-- Backend: 540 test verdi, 10 skipped
-- Frontend: 588 test verdi (non toccato in Fase 4), analyze 0
+- Backend: 553 test verdi, 10 skipped
+- Frontend: 588 test verdi (non toccato in Fase 5), analyze 0
 - Ruff pulito
 - Branch: develop (pushato)
 
 ### Prossimo passo concreto
-- B39.5.1 - Configurazione OPENAI_API_KEY per il futuro endpoint /stt/transcribe (Whisper)
-- Aggiungere la chiave al backend config, .env.example, docker-compose.yml, validate_secrets_for_startup
-- Registrare la nuova dipendenza esterna in docs/dev-shortcuts.md
-- Specs complete in ROADMAP.md alla voce B39.5.1
+- B39.5.3 - Test endpoint STT con audio reale
+- Test di integrazione con audio reale di smoke (file WAV italiano di prova) per l'endpoint /stt/transcribe
+- Marcato @pytest.mark.integration (non gira nel runner automatico)
+- Specs complete in ROADMAP.md alla voce B39.5.3
+- ATTENZIONE: questo sub-blocco richiede una chiave OPENAI_API_KEY VALIDA. Se la chiave non e settata in .env del backend, il test skippa o fallisce. In caso di fallimento legittimo (chiave non valida), STATUS: BLOCKED con spiegazione.
 
 ### File da leggere per la prossima sessione
 1. CLAUDE.md
 2. PROJECT_CONFIG.md
-3. ROADMAP.md (cerca B39.5.1)
+3. ROADMAP.md (cerca B39.5.3)
 4. .claude/handoff.md (questo file)
-5. backend/app/config.py (dove aggiungere la chiave + validazione)
-6. backend/.env.example (aggiornare con la nuova variabile)
-7. backend/docker-compose.yml (passare la variabile al container)
+5. backend/app/api/stt.py (endpoint da testare)
+6. backend/tests/test_b39_5_2_stt.py (test unitari esistenti come riferimento)
