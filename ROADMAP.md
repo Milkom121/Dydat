@@ -615,11 +615,12 @@
 - **Note**: 15 nuovi test widget in b39_8_4_onboarding_integration_test.dart. 7 scenari: flusso completo collaborativo (accoglienza->conoscenza->placement->conclusione->completa), taciturno (5 turni minimi + forza_chiusura_tetto_turni), skip (4 varianti: dopo turno, senza utenteTempId, resume, durante streaming), errori (SSE, ErroreEvent, complete fallito), domande strutturate (scelta_singola + scala), progresso fasi, streaming testo. 692 frontend verdi, analyze 0.
 
 #### Blocco B39.9.1 — Widget OnboardingPendingBanner
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S71)
 - **Complessita'**: bassa
 - **Descrizione**: Card persistente, non dismissibile, con messaggio caldo + CTA "Riprendi" / "Inizia" a seconda dello stato onboarding.
 - **File da toccare**: nuovo `frontend/lib/widgets/onboarding_pending_banner.dart`
 - **Gate**: widget test rendering + tap su CTA
+- **Note**: OnboardingBannerStato enum (nonIniziato/inCorso). DydatSurface.glowCard con primary glow. Semantics accessibilita. Icona waving_hand. Testi caldi italiani. 11 nuovi test. 703 frontend verdi, analyze 0.
 
 #### Blocco B39.9.2 — Integrazione banner in home_screen
 - [ ] **Stato**: da fare
