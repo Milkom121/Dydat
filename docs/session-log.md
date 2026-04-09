@@ -438,3 +438,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.4.1 completato - Fix completa_onboarding scrittura profilo (ONB-01). La funzione ora legge profilo_estratto dallo stato_orchestratore, costruisce profilo_sintetizzato (dict piatto con valori), contesto_personale (chi_e/motivo/vissuto_scolastico) e preferenze_tutor (stile_cognitivo/tempo_disponibile). Parametri payload hanno priorita'. onboarding_stato aggiornato a COMPLETED. 16 nuovi test. 540 backend verdi, 10 skipped.
 ---
+
+## 2026-04-09 02:04:33 — Blocco F10BB39.4.2
+- **Status**: CONTINUE
+- **Summary**: B39.4.1 completato - Fix completa_onboarding scrittura profilo (ONB-01). La funzione ora legge profilo_estratto dallo stato_orchestratore, costruisce profilo_sintetizzato (dict piatto con valori), contesto_personale (chi_e/motivo/vissuto_scolastico) e preferenze_tutor (stile_cognitivo/tempo_disponibile). Parametri payload hanno priorita'. onboarding_stato aggiornato a COMPLETED. 16 nuovi test. 540 backend verdi, 10 skipped.
+---
