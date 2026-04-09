@@ -5,7 +5,7 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CY
 
 MAX_BLOCKS=10; TIMEOUT_MINUTES=30; PROJECT_DIR="$(pwd)"; DRY_RUN=false; VERBOSE=false; NOTIFY=true; RESUME=false; TARGET_PHASE=""; TEST_TELEGRAM=false
 CLAUDE_MD="CLAUDE.md"; PROJECT_CONFIG="PROJECT_CONFIG.md"; ROADMAP="ROADMAP.md"; PROGRESS_FILE="docs/progress.json"
-HANDOFF_FILE=".claude/handoff.md"; SESSION_LOG="docs/session-log.md"; RUNNER_LOG="docs/runner-log.txt"
+HANDOFF_FILE="docs/handoff.md"; SESSION_LOG="docs/session-log.md"; RUNNER_LOG="docs/runner-log.txt"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -37,7 +37,7 @@ send_telegram() {
     local msg="$1"
     local silent="${2:-false}"  # se "true" la notifica arriva senza suono/vibrazione
     # Passa tutto via variabili d'ambiente per evitare problemi di escape:
-    # - backslash Windows nei percorsi (es. \.claude\handoff.md) rompe le stringhe Python inline
+    # - backslash Windows nei percorsi (es. \docs\handoff.md) rompe le stringhe Python inline
     # - apici, triple-quote e caratteri speciali nei messaggi rompono l'interpolazione bash->Python
     # - true/false bash != True/False Python (NameError silenzioso)
     # Le env vars passano i valori raw senza interpretazione.
@@ -191,7 +191,7 @@ ${next}"
     if [[ "$status" != "BLOCCO_OK" ]]; then
         local win_dir; win_dir="$(cd "$PROJECT_DIR" && pwd -W 2>/dev/null || pwd)"
         local project_label; project_label="$(basename "$PROJECT_DIR")"
-        local dispatch_prompt="Leggi i file ${win_dir}\\.claude\\handoff.md e ${win_dir}\\${ROADMAP}. Fammi il punto della situazione e dimmi cosa serve per procedere."
+        local dispatch_prompt="Leggi i file ${win_dir}\\docs\\handoff.md e ${win_dir}\\${ROADMAP}. Fammi il punto della situazione e dimmi cosa serve per procedere."
         msg+="
 
 ━━━━━━━━━━━━━━━━━━━
@@ -325,8 +325,8 @@ build_prompt() {
     prompt+="   d) Controlla che le regole di sicurezza del progetto siano rispettate"$'\n'
     prompt+="   e) Se hai toccato aree critiche: attenzione doppia, verifica incrociata"$'\n'
     prompt+="   f) Se QUALSIASI test fallisce o il build non compila: STATUS: ERROR, descrivi il problema, NON scrivere CONTINUE"$'\n'
-    prompt+="4. CHIUSURA BLOCCO OBBLIGATORIA: alla fine di OGNI sessione del runner, DEVI invocare la skill chiusura-blocco (comando: usa il tool Skill con skill=\"chiusura-blocco\"). Questa skill aggiorna automaticamente ROADMAP.md, .claude/handoff.md e genera il commit di chiusura. NON saltare questo passo per nessun motivo: senza la chiusura-blocco il runner non sa che hai completato il lavoro e ripetera lo stesso blocco nella sessione successiva (loop)."$'\n'
-    prompt+="5. SE per qualche motivo non puoi usare la skill chiusura-blocco, DEVI manualmente: (a) aggiornare .claude/handoff.md con il nuovo BLOCK (prossimo blocco) e SUMMARY (cosa hai appena fatto), (b) aggiornare ROADMAP.md marcando il blocco corrente come [x], (c) fare un commit git che INCLUDE .claude/handoff.md (uso obbligatorio di git add .claude/handoff.md). NON fidarti di nessun altro meccanismo automatico: il runner legge handoff.md dal disco per decidere il prossimo blocco, se non lo aggiorni tu non si aggiorna."$'\n\n'
+    prompt+="4. CHIUSURA BLOCCO OBBLIGATORIA: alla fine di OGNI sessione del runner, DEVI aggiornare docs/handoff.md con il nuovo stato (puoi farlo manualmente o invocando la skill chiusura-blocco se disponibile). IMPORTANTE: il file di handoff vive in docs/handoff.md (NON piu in .claude/handoff.md, spostato per evitare la protezione hardcoded di Claude Code sui file di .claude/). Scrivilo direttamente con il tool Write."$'\n'
+    prompt+="5. Cosa scrivere in docs/handoff.md: (a) STATUS: CONTINUE/CHECKPOINT/PHASE_COMPLETE/ERROR/BLOCKED, (b) BLOCK: il prossimo blocco da eseguire (NON quello appena chiuso), (c) SUMMARY: cosa hai appena completato, (d) NEXT: descrizione breve del prossimo blocco. Devi anche (f) aggiornare ROADMAP.md marcando il blocco corrente come [x], (g) fare un commit git che INCLUDE docs/handoff.md e ROADMAP.md. Il runner legge handoff.md dal disco per decidere il prossimo blocco, se non lo aggiorni tu non si aggiorna."$'\n\n'
     prompt+="FORMATO HANDOFF:"$'\n'
     prompt+="STATUS: CONTINUE|CHECKPOINT|PHASE_COMPLETE|ERROR|BLOCKED"$'\n'
     prompt+="PHASE: [num] BLOCK: [num] SUMMARY: [fatto] NEXT: [prossimo] DECISIONS_NEEDED: [se checkpoint/blocked]"$'\n'
@@ -442,7 +442,7 @@ main() {
             log "${RED}LOOP RILEVATO: blocco $bid ripetuto per la ${consecutive_same}a volta consecutiva.${NC}"
             log "${RED}Claude non sta aggiornando il campo BLOCK in handoff.md. Interruzione automatica.${NC}"
             local el_now; el_now="$(( ($(date +%s) - st) / 60 ))"
-            send_telegram_report "ERROR" "$bid" "$br" "$el_now" "Loop rilevato: blocco $bid ripetuto $consecutive_same volte consecutive. Il runner si e fermato per evitare iterazioni a vuoto. Verifica manualmente .claude/handoff.md e aggiorna BLOCK al prossimo sub-blocco reale." "" "0"
+            send_telegram_report "ERROR" "$bid" "$br" "$el_now" "Loop rilevato: blocco $bid ripetuto $consecutive_same volte consecutive. Il runner si e fermato per evitare iterazioni a vuoto. Verifica manualmente docs/handoff.md e aggiorna BLOCK al prossimo sub-blocco reale." "" "0"
             break
         fi
         local block_st; block_st="$(date +%s)"  # tempo inizio blocco per metrica per-block

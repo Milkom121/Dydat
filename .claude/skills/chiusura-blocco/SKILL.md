@@ -36,8 +36,10 @@ Segnare il blocco corrente come completato con:
 - Checkbox [x]
 - Eventuali note o problemi riscontrati
 
-### 4. Aggiornare .claude/handoff.md
-Creare/aggiornare il file `.claude/handoff.md` con formato strutturato:
+### 4. Aggiornare docs/handoff.md
+Creare/aggiornare il file `docs/handoff.md` con formato strutturato:
+**NOTA IMPORTANTE (dal 2026-04-09)**: l'handoff e stato spostato da `.claude/handoff.md` a `docs/handoff.md` per evitare la protezione hardcoded di Claude Code sui file della directory `.claude/` (che blocca la scrittura anche con `--dangerously-skip-permissions`). Il template di formato resta in `.claude/handoff-template.md` come riferimento read-only.
+
 ```
 STATUS: CONTINUE | CHECKPOINT | PHASE_COMPLETE | ERROR | BLOCKED
 PHASE: [numero fase]
@@ -75,7 +77,7 @@ Poi, SEMPRE, scrivere direttamente in chat il prompt handoff per la prossima ses
 > 1. CLAUDE.md
 > 2. PROJECT_CONFIG.md
 > 3. ROADMAP.md
-> 4. .claude/handoff.md
+> 4. docs/handoff.md
 >
 > COSA FARE in questa sessione:
 > - Blocco Y: [descrizione concreta]

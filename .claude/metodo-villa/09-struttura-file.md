@@ -92,7 +92,9 @@ Esempio:
 
 Registro obbligatorio di tutte le scorciatoie di sviluppo prese durante il blocco. Deve rimanere aggiornato durante lo sviluppo, non alla fine della sessione.
 
-### .claude/handoff.md
+### docs/handoff.md
+
+**Nota storica**: spostato da `.claude/handoff.md` nel 2026-04-09 per evitare la protezione hardcoded di Claude Code sui file della directory `.claude/` (che blocca la scrittura anche con `--dangerously-skip-permissions`, causando loop nel runner del Metodo Villa).
 
 Generato da Claude a fine sessione. Contiene:
 - Blocco appena completato

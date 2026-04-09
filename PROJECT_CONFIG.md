@@ -108,7 +108,7 @@ Dydat_V1_2026/
 - Roadmap: ROADMAP.md
 - Log decisioni: .claude/decisions.md
 - Scorciatoie attive: docs/dev-shortcuts.md
-- Handoff ultima sessione: .claude/handoff.md
+- Handoff ultima sessione: docs/handoff.md
 - API Reference: docs/dydat_api_reference.md
 - Direzione visiva: docs/dydat_direzione_visiva_v2.md
 - Brief originale: docs/dydat_brief_rocket_new_v2.md

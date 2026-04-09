@@ -15,7 +15,7 @@ Il flusso di apertura è coerente in tutti i progetti. Versione unificata:
 1. **Leggere CLAUDE.md** del progetto (convenzioni, regole specifiche)
 2. **Leggere PROJECT_CONFIG.md** (stack, stato, comandi, deployment)
 3. **Leggere la ROADMAP** (`ROADMAP.md`)
-4. **Leggere il file di stato/handoff** se esiste (`.claude/handoff.md`)
+4. **Leggere il file di stato/handoff** se esiste (`docs/handoff.md` — spostato da `.claude/` nel 2026-04-09)
 5. **Leggere documenti di riferimento** indicati nel "prossimo passo"
 6. **Solo dopo, iniziare a scrivere codice**
 
@@ -58,7 +58,7 @@ PRIMA DI SCRIVERE CODICE, leggi questi file in ordine:
 1. CLAUDE.md
 2. PROJECT_CONFIG.md
 3. ROADMAP.md
-4. .claude/handoff.md
+4. docs/handoff.md
 5. [altri file rilevanti]
 
 COSA FARE in questa sessione:
