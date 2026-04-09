@@ -1,57 +1,43 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.8.2
-SUMMARY: B39.8.1 completato. OnboardingProvider aggiornato per gestire le nuove fasi onboarding narrativo (accoglienza/conoscenza/placement/piano/conclusione), skip/resume, evento decisione_onboarding dal backend. Nuovo DecisioneOnboardingEvent in sse_events.dart con switch aggiornati in session_provider e onboarding_provider. OnboardingFase enum. Progresso calcolato per fase (non piu per turni). MockOnboardingService per test con stream controllati. 25 nuovi test (37 totale file). 662 frontend verdi, analyze 0.
-NEXT: B39.8.2 - Riscrittura onboarding_screen.dart con VoiceInputField + skip
+BLOCK: B39.8.3
+SUMMARY: B39.8.2 completato. Riscritta onboarding_screen.dart con VoiceInputField al posto del TextField custom. Bottone Salta per ora sempre visibile nella top bar accanto all etichetta fase. Etichette fase italiane per ogni OnboardingFase. Bottone completa appare solo in fase conclusione. Skip naviga a /registration o /login. testo_libero usa VoiceInputField. 15 nuovi test. 677 frontend verdi, analyze 0.
+NEXT: B39.8.3 - System prompt tutor onboarding riscritto
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: sse_events.dart, onboarding_provider.dart, session_provider.dart, onboarding_provider_test.dart
-TESTS: PASS (662 frontend verdi, analyze 0)
-VERIFICATION: 662 passed, 0 errors. Analyze pulito.
+FILES_MODIFIED: onboarding_screen.dart, b39_8_2_onboarding_screen_test.dart (nuovo)
+TESTS: PASS (677 frontend verdi, analyze 0)
+VERIFICATION: 677 passed, 0 errors. Analyze pulito.
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto (B39.8.1)
-- 27/38 sub-blocchi B39 completati totali
+### Cosa e stato fatto (B39.8.2)
+- 28/38 sub-blocchi B39 completati totali
 
-### DecisioneOnboardingEvent - nuovo evento SSE
-- Path: frontend/lib/models/sse_events.dart
-- Campi: azione, campoDaChiedere, motivo, faseCorrente, campiCompleti
-- Aggiunto al parser SseEvent.fromRawEvent (tipo decisione_onboarding)
-- Switch aggiornato in session_provider.dart (ignorato, non rilevante per sessione)
+### Modifiche a onboarding_screen.dart
+- Path: frontend/lib/presentation/onboarding_screen/onboarding_screen.dart
+- Rimosso _messageController e _messageFocusNode (gestiti da VoiceInputField)
+- Aggiunto GlobalKey VoiceInputFieldState _voiceInputKey
+- Nuova _buildTopBar(): barra progresso + etichetta fase + bottone Salta per ora
+- Nuova _buildVoiceInput(): wrappa VoiceInputField con hint Scrivi o parla e onTranscriptionError snackbar
+- _buildBottomArea(): scelta_singola -> SceltaSingolaWidget, scala -> ScalaWidget, tutto il resto -> VoiceInputField
+- showCompleteButton usa faseCorrente == OnboardingFase.conclusione
+- _skipOnboarding(): chiama provider.skipOnboarding(), naviga a /registration o /login
+- _faseLabel(): mappa enum -> etichette italiane
 
-### OnboardingFase enum
-- Path: frontend/lib/providers/onboarding_provider.dart
-- 5 valori: accoglienza, conoscenza, placement, piano, conclusione
-- Helper onboardingFaseFromString con fallback a accoglienza
+### Test 15 nuovi (b39_8_2_onboarding_screen_test.dart)
+- Mock service con StreamController per simulare eventi SSE
+- Copertura: rendering base, skip, fasi, interazione, errore, domande strutturate, etichette fase
 
-### OnboardingScreenState - nuovi campi
-- faseCorrente (OnboardingFase): fase backend, default accoglienza
-- campiCompleti (int): 0-5, campi profilo con confidenza alta/media
-- isSkipped (bool): utente ha saltato onboarding
-- ultimaAzioneDecisore (String?): ultima azione del decisore forma C
-- progress: ricalcolato per fase (accoglienza=0, conoscenza=0.1-0.4, placement=0.5, piano=0.7, conclusione=0.9, completato=1.0)
-- copyWith: aggiunto clearUltimaAzione
-
-### OnboardingNotifier - nuovi metodi
-- skipOnboarding(): cancella subscription, isSkipped=true
-- resumeOnboarding(): se sessione esiste ripristina isSkipped=false, altrimenti startOnboarding
-- _handleSseEvent gestisce DecisioneOnboardingEvent (aggiorna fase, campi, azione)
-- startOnboarding resetta tutti i nuovi campi
-
-### Test - 25 nuovi (37 totale file)
-- MockOnboardingService con StreamController per simulare eventi SSE
-- Copertura: stato iniziale, faseFromString, progress per fase, copyWith, DecisioneOnboardingEvent fromJson, flusso SSE completo, skip/resume, errore, forza_chiusura
-
-### Prossimo: B39.8.2 - Riscrittura onboarding_screen.dart con VoiceInputField + skip
-- La schermata onboarding deve usare VoiceInputField come campo input
-- Bottone Salta per ora visibile fin dalla prima schermata
-- UI deve reagire a faseCorrente per mostrare progresso
-- Widget test nuovo flusso, test skip, rendering corretto
+### Prossimo: B39.8.3 - System prompt tutor onboarding riscritto
+- File da creare: backend/app/llm/prompts/onboarding_system_prompt.py
+- Integrare nel flusso del turno onboarding
+- Unit test presenza istruzioni chiave
 
 ### File da leggere
-1. CLAUDE.md -> PROJECT_CONFIG.md -> ROADMAP.md -> handoff.md
-2. frontend/lib/presentation/onboarding_screen/onboarding_screen.dart
-3. frontend/lib/providers/onboarding_provider.dart (appena aggiornato)
-4. frontend/lib/widgets/voice_input_field.dart
+1. CLAUDE.md, PROJECT_CONFIG.md, ROADMAP.md, handoff.md
+2. docs/discussions/b39-onboarding-narrativo.md
+3. backend/app/llm/prompts/onboarding_extractor.py
+4. backend/app/core/onboarding.py
+5. backend/app/core/turno.py
