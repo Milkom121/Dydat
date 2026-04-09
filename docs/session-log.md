@@ -528,3 +528,13 @@
 - **Status**: CONTINUE
 - **Summary**: B39.8.1 completato. OnboardingProvider aggiornato per gestire le nuove fasi onboarding narrativo (accoglienza/conoscenza/placement/piano/conclusione), skip/resume, evento decisione_onboarding dal backend. Nuovo DecisioneOnboardingEvent in sse_events.dart con switch aggiornati in session_provider e onboarding_provider. OnboardingFase enum. Progresso calcolato per fase (non piu per turni). MockOnboardingService per test con stream controllati. 25 nuovi test (37 totale file). 662 frontend verdi, analyze 0.
 ---
+
+## 2026-04-09 05:07:13 — Blocco F10BB39.8.2
+- **Status**: CONTINUE
+- **Summary**: B39.8.2 completato. Riscritta onboarding_screen.dart con VoiceInputField al posto del TextField custom. Bottone Salta per ora sempre visibile nella top bar accanto all etichetta fase. Etichette fase italiane per ogni OnboardingFase. Bottone completa appare solo in fase conclusione. Skip naviga a /registration o /login. testo_libero usa VoiceInputField. 15 nuovi test. 677 frontend verdi, analyze 0.
+---
+
+## 2026-04-09 05:13:34 — Blocco F10BB39.8.3
+- **Status**: CONTINUE
+- **Summary**: B39.8.3 completato. Creato ONBOARDING_SYSTEM_PROMPT dedicato in onboarding_system_prompt.py con 7 sezioni: chi sei (personificato prima persona), patto esplicito (6 punti), forma C adattiva (turno libero + domande mirate), 5 campi profilo (senza nominarli), regole tono/formato (brevita, tu informale), tool use, cosa non fare mai. Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt onboarding vs studio; modello Opus (LLM_MODEL_ONBOARDING) per sessioni onboarding. 21 nuovi test. 758 backend verdi (13 skipped), ruff pulito.
+---

@@ -607,11 +607,12 @@
 - **Note**: ONBOARDING_SYSTEM_PROMPT con 7 sezioni (chi sei, patto esplicito, forma C adattiva, 5 campi, regole tono, tool use, cosa non fare). Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt; modello Opus per onboarding (LLM_MODEL_ONBOARDING). 21 nuovi test (contenuto, integrazione, struttura). 758 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.8.4 — Test integrazione onboarding completo
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S70)
 - **Complessita'**: media
 - **Descrizione**: Test end-to-end del flusso onboarding con mock LLM: utente collaborativo -> completamento, utente taciturno -> chiusura forzata al turno 7, utente che salta.
 - **File da toccare**: `frontend/test/presentation/onboarding_screen_test.dart`
 - **Gate**: widget test flusso completo verde
+- **Note**: 15 nuovi test widget in b39_8_4_onboarding_integration_test.dart. 7 scenari: flusso completo collaborativo (accoglienza->conoscenza->placement->conclusione->completa), taciturno (5 turni minimi + forza_chiusura_tetto_turni), skip (4 varianti: dopo turno, senza utenteTempId, resume, durante streaming), errori (SSE, ErroreEvent, complete fallito), domande strutturate (scelta_singola + scala), progresso fasi, streaming testo. 692 frontend verdi, analyze 0.
 
 #### Blocco B39.9.1 — Widget OnboardingPendingBanner
 - [ ] **Stato**: da fare

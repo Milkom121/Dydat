@@ -1,31 +1,27 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.8.4
-SUMMARY: B39.8.3 completato. Creato ONBOARDING_SYSTEM_PROMPT dedicato in onboarding_system_prompt.py con 7 sezioni: chi sei (personificato prima persona), patto esplicito (6 punti), forma C adattiva (turno libero + domande mirate), 5 campi profilo (senza nominarli), regole tono/formato (brevita, tu informale), tool use, cosa non fare mai. Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt onboarding vs studio; modello Opus (LLM_MODEL_ONBOARDING) per sessioni onboarding. 21 nuovi test. 758 backend verdi (13 skipped), ruff pulito.
-NEXT: B39.8.4 - Test integrazione onboarding completo
+BLOCK: B39.9.1
+SUMMARY: B39.8.4 completato. Scritti 15 test di integrazione widget per il flusso onboarding completo in b39_8_4_onboarding_integration_test.dart. Scenari coperti: (1) utente collaborativo, (2) utente taciturno con forza_chiusura_tetto_turni, (3) skip (4 varianti), (4) errori (SSE, ErroreEvent, complete fallito), (5) domande strutturate, (6) progresso fasi, (7) streaming testo.
+NEXT: B39.9.1 - Widget OnboardingPendingBanner
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: onboarding_system_prompt.py (nuovo), contesto.py, test_b39_8_3_onboarding_system_prompt.py (nuovo)
-TESTS: PASS (758 backend verdi, 13 skipped, ruff pulito)
-VERIFICATION: 758 passed, 13 skipped. Ruff pulito sui file toccati. Analyze frontend 0.
+FILES_MODIFIED: frontend/test/widgets/b39_8_4_onboarding_integration_test.dart (nuovo)
+TESTS: PASS (692 frontend verdi, analyze 0)
+VERIFICATION: 692 passed, 0 errori analyze. 15 nuovi test tutti verdi.
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto (B39.8.3)
-- 29/38 sub-blocchi B39 completati totali
+### Cosa e stato fatto (B39.8.4)
+- 30/38 sub-blocchi B39 completati totali
 
-### Nuovo file: backend/app/llm/prompts/onboarding_system_prompt.py
-- ONBOARDING_SYSTEM_PROMPT: costante stringa (~3500 chars)
-- 7 sezioni: CHI SEI, IL PATTO ESPLICITO, COME CONDUCI LA CONVERSAZIONE, 5 CAMPI, REGOLE TONO, TOOL USE, COSA NON FARE MAI
+### Nuovo file: frontend/test/widgets/b39_8_4_onboarding_integration_test.dart
+- _MockOnboardingService con turn controller multipli sequenziali
+- 15 test widget in 7 gruppi tematici
+- Helper: _emitFirstTurnAndSettle, _sendUserMessage (via provider)
+- Pattern: ProviderContainer + UncontrolledProviderScope per accesso diretto allo stato
 
-### Modifiche a contesto.py
-- _blocco_system_prompt(tipo_sessione) seleziona prompt onboarding vs studio
-- Modello Opus per sessioni onboarding
-
-### Test 21 nuovi
-- 13 contenuto + 5 integrazione + 3 struttura
-
-### Prossimo: B39.8.4
-- Widget test flusso completo onboarding frontend
-- Scenari: collaborativo, taciturno, skip
+### Prossimo: B39.9.1
+- Widget OnboardingPendingBanner
+- Card persistente, non dismissibile, con messaggio caldo + CTA Riprendi/Inizia
+- Condizionale su onboarding_stato (not_started, in_progress, completed)

@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.8.4",
-  "total_blocks_run": 137,
+  "total_blocks_run": 138,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T04:00:00Z",
-  "last_summary": "B39.8.3 completato. Creato ONBOARDING_SYSTEM_PROMPT dedicato con 7 sezioni (personificato, patto esplicito, forma C, 5 campi, tono, tool use, divieti). Integrato in contesto.py con selezione prompt e modello Opus per onboarding. 21 nuovi test. 758 backend verdi (13 skipped), ruff pulito."
+  "last_run": "2026-04-09T03:13:34Z",
+  "last_summary": "B39.8.3 completato. Creato ONBOARDING_SYSTEM_PROMPT dedicato in onboarding_system_prompt.py con 7 sezioni: chi sei (personificato prima persona), patto esplicito (6 punti), forma C adattiva (turno libero + domande mirate), 5 campi profilo (senza nominarli), regole tono/formato (brevita, tu informale), tool use, cosa non fare mai. Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt onboarding vs studio; modello Opus (LLM_MODEL_ONBOARDING) per sessioni onboarding. 21 nuovi test. 758 backend verdi (13 skipped), ruff pulito."
 }
