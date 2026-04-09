@@ -1,10 +1,10 @@
-"""Test B35.12 — Validazione fail-fast dei secrets all'avvio."""
+"""Test B35.12 + B39.5.1 — Validazione fail-fast dei secrets all'avvio."""
 
 from unittest.mock import patch
 
 import pytest
 
-from app.config import Settings, _JWT_SECRET_DEFAULT, validate_secrets_for_startup
+from app.config import _JWT_SECRET_DEFAULT, Settings, validate_secrets_for_startup
 
 
 class TestValidateSecrets:
@@ -37,6 +37,7 @@ class TestValidateSecrets:
         mock_settings = Settings(
             JWT_SECRET="un-secret-sicuro-per-test",
             ANTHROPIC_API_KEY="sk-ant-test-key",
+            OPENAI_API_KEY="sk-openai-test-key",
             DEBUG=False,
         )
         with patch("app.config.settings", mock_settings):
@@ -70,6 +71,7 @@ class TestValidateSecrets:
         mock_settings = Settings(
             JWT_SECRET="un-secret-sicuro-per-test",
             ANTHROPIC_API_KEY="sk-ant-test-key",
+            OPENAI_API_KEY="sk-openai-test-key",
             DEBUG=True,
         )
         with patch("app.config.settings", mock_settings):
@@ -81,6 +83,69 @@ class TestValidateSecrets:
         mock_settings = Settings(
             JWT_SECRET=_JWT_SECRET_DEFAULT,
             ANTHROPIC_API_KEY="",
+            DEBUG=False,
+        )
+        with patch("app.config.settings", mock_settings):
+            with pytest.raises(ValueError):
+                validate_secrets_for_startup()
+
+
+class TestValidateOpenaiKey:
+    """Verifica validazione OPENAI_API_KEY per Whisper STT (B39.5.1)."""
+
+    def test_produzione_blocca_con_openai_key_vuota(self):
+        """In produzione (DEBUG=False), OPENAI_API_KEY vuota blocca l'avvio."""
+        mock_settings = Settings(
+            JWT_SECRET="un-secret-sicuro-per-test",
+            ANTHROPIC_API_KEY="sk-ant-test-key",
+            OPENAI_API_KEY="",
+            DEBUG=False,
+        )
+        with patch("app.config.settings", mock_settings):
+            with pytest.raises(ValueError, match="OPENAI_API_KEY"):
+                validate_secrets_for_startup()
+
+    def test_produzione_ok_con_openai_key_configurata(self):
+        """In produzione con OPENAI_API_KEY valida, nessun errore."""
+        mock_settings = Settings(
+            JWT_SECRET="un-secret-sicuro-per-test",
+            ANTHROPIC_API_KEY="sk-ant-test-key",
+            OPENAI_API_KEY="sk-openai-test-key",
+            DEBUG=False,
+        )
+        with patch("app.config.settings", mock_settings):
+            validate_secrets_for_startup()
+
+    def test_debug_warning_openai_key_vuota(self, caplog):
+        """In DEBUG, OPENAI_API_KEY vuota emette warning senza bloccare."""
+        mock_settings = Settings(
+            JWT_SECRET="un-secret-sicuro-per-test",
+            ANTHROPIC_API_KEY="sk-ant-test-key",
+            OPENAI_API_KEY="",
+            DEBUG=True,
+        )
+        with patch("app.config.settings", mock_settings):
+            validate_secrets_for_startup()
+            assert "OPENAI_API_KEY" in caplog.text
+
+    def test_debug_ok_con_openai_key_configurata(self, caplog):
+        """In DEBUG con OPENAI_API_KEY valida, nessun warning per quella chiave."""
+        mock_settings = Settings(
+            JWT_SECRET="un-secret-sicuro-per-test",
+            ANTHROPIC_API_KEY="sk-ant-test-key",
+            OPENAI_API_KEY="sk-openai-test-key",
+            DEBUG=True,
+        )
+        with patch("app.config.settings", mock_settings):
+            validate_secrets_for_startup()
+            assert "OPENAI_API_KEY" not in caplog.text
+
+    def test_produzione_blocca_con_tutti_i_secrets_invalidi(self):
+        """In produzione, tutti e 3 i secrets invalidi blocca al primo."""
+        mock_settings = Settings(
+            JWT_SECRET=_JWT_SECRET_DEFAULT,
+            ANTHROPIC_API_KEY="",
+            OPENAI_API_KEY="",
             DEBUG=False,
         )
         with patch("app.config.settings", mock_settings):

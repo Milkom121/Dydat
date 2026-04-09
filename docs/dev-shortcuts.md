@@ -26,6 +26,14 @@ Registro delle scorciatoie prese durante lo sviluppo da risolvere prima della pr
 - **Priorità di risoluzione**: ~~alta (sicurezza)~~ risolto
 - **Risoluzione**: Interpolazione `${VAR:-default}` da .env in docker-compose.yml. Creato .env.example con segnaposto. I default rimangono come fallback per dev locale.
 
+## 2026-04-09 - OPENAI_API_KEY con default vuoto
+- **File**: backend/app/config.py
+- **Riga**: ~18
+- **Tipo**: credenziale-hardcoded
+- **Dettaglio**: `OPENAI_API_KEY: str = ""` — default stringa vuota. Necessaria per endpoint Whisper STT (trascrizione vocale). Se non configurata, la trascrizione non funziona. `validate_secrets_for_startup()` emette warning in DEBUG, blocca in produzione.
+- **Priorità di risoluzione**: alta (sicurezza) — da configurare in .env prima dell'uso di Whisper
+- **Risoluzione parziale**: validazione fail-fast al startup (come ANTHROPIC_API_KEY). Resta da configurare la chiave reale in .env.
+
 ## 2026-04-05 - CORS non configurato
 - **File**: backend/app/main.py
 - **Riga**: (mancante)

@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # Anthropic
     ANTHROPIC_API_KEY: str = ""
 
+    # OpenAI (Whisper STT)
+    OPENAI_API_KEY: str = ""
+
     # LLM Models
     LLM_MODEL_TUTOR: str = "claude-sonnet-4-5-20250929"
     LLM_MODEL_PIPELINE: str = "claude-haiku-4-5-20251001"
@@ -55,6 +58,12 @@ def validate_secrets_for_startup() -> None:
     if not settings.ANTHROPIC_API_KEY:
         problemi.append(
             "ANTHROPIC_API_KEY non configurata — le chiamate LLM falliranno. "
+            "Configura la chiave in .env"
+        )
+
+    if not settings.OPENAI_API_KEY:
+        problemi.append(
+            "OPENAI_API_KEY non configurata — la trascrizione vocale (Whisper) non funzionera. "
             "Configura la chiave in .env"
         )
 
