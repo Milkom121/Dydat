@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart' as dio_lib;
 import 'package:dydat/models/api_response.dart' hide AchievementEvent;
 import 'package:dydat/models/onboarding.dart';
 import 'package:dydat/models/sse_events.dart';
@@ -63,6 +64,11 @@ class OnboardingScreenState {
   /// Ultima azione del decisore forma C (per logica UI condizionale).
   final String? ultimaAzioneDecisore;
 
+  /// Conversazione ripristinata dal backend (solo dopo resumeOnboarding).
+  /// Contiene tutti i turni (user + assistant) nell'ordine originale.
+  /// Null se la sessione è nuova.
+  final List<TurnoRipresa>? resumedConversation;
+
   const OnboardingScreenState({
     this.sessioneId,
     this.utenteTempId,
@@ -79,6 +85,7 @@ class OnboardingScreenState {
     this.campiCompleti = 0,
     this.isSkipped = false,
     this.ultimaAzioneDecisore,
+    this.resumedConversation,
   });
 
   /// Progresso da 0.0 a 1.0 calcolato in base alla fase.
@@ -115,6 +122,8 @@ class OnboardingScreenState {
     bool? isSkipped,
     String? ultimaAzioneDecisore,
     bool clearUltimaAzione = false,
+    List<TurnoRipresa>? resumedConversation,
+    bool clearResumedConversation = false,
   }) {
     return OnboardingScreenState(
       sessioneId: sessioneId ?? this.sessioneId,
@@ -135,6 +144,9 @@ class OnboardingScreenState {
       ultimaAzioneDecisore: clearUltimaAzione
           ? null
           : (ultimaAzioneDecisore ?? this.ultimaAzioneDecisore),
+      resumedConversation: clearResumedConversation
+          ? null
+          : (resumedConversation ?? this.resumedConversation),
     );
   }
 }
@@ -168,6 +180,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
       campiCompleti: 0,
       isSkipped: false,
       clearUltimaAzione: true,
+      clearResumedConversation: true,
     );
 
     final stream = _onboardingService.startStream();
@@ -210,18 +223,64 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
     );
   }
 
-  /// Riprende un onboarding saltato o interrotto (stessa sessione).
-  /// Se la sessione esiste, invia un turno vuoto per riprendere il flusso.
+  /// Riprende un onboarding saltato o interrotto.
+  /// Carica lo stato dal backend (sessione + storico turni) e ricostruisce la UI.
+  /// Se non trova sessione attiva, ricomincia da capo.
   Future<void> resumeOnboarding() async {
-    if (state.sessioneId == null) {
-      // Nessuna sessione precedente — ricomincia da capo
+    _cancelSubscription();
+    state = state.copyWith(isLoading: true, clearError: true, isSkipped: false);
+
+    // Recupera utente_temp_id dallo storage
+    final utenteTempId =
+        state.utenteTempId ?? await _storageService.getUtenteTempId();
+
+    if (utenteTempId == null) {
+      // Nessun utente temporaneo — ricomincia da capo
       await startOnboarding();
       return;
     }
-    state = state.copyWith(
-      isSkipped: false,
-      clearError: true,
-    );
+
+    try {
+      final ripresa = await _onboardingService.getResumeState(
+        utenteId: utenteTempId,
+      );
+
+      // Ricostruisci messaggi tutor e contatore turni dalla conversazione
+      final tutorMessages = <String>[];
+      int turnsCompleted = 0;
+      for (final turno in ripresa.turni) {
+        if (turno.ruolo == 'assistant' && turno.contenuto != null) {
+          tutorMessages.add(turno.contenuto!);
+        }
+        // Ogni coppia user+assistant = 1 turno completo
+        if (turno.ruolo == 'assistant') turnsCompleted++;
+      }
+
+      state = state.copyWith(
+        sessioneId: ripresa.sessioneId,
+        utenteTempId: utenteTempId,
+        tutorMessages: tutorMessages,
+        turnsCompleted: turnsCompleted,
+        faseCorrente: onboardingFaseFromString(ripresa.faseCorrente),
+        campiCompleti: ripresa.campiCompleti,
+        isLoading: false,
+        isStreaming: false,
+        resumedConversation: ripresa.turni,
+      );
+
+      // Persisti sessioneId per future riprese
+      await _storageService.saveOnboardingSessioneId(ripresa.sessioneId);
+    } on dio_lib.DioException catch (e) {
+      // 404 = nessuna sessione attiva — ricomincia da capo
+      if (e.response?.statusCode == 404) {
+        await startOnboarding();
+        return;
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: userFriendlyError('$e'),
+      );
+    }
   }
 
   void _listenToStream(Stream<SseEvent> stream) {
@@ -254,6 +313,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
           isStreaming: true,
         );
         _storageService.saveUtenteTempId(event.utenteTempId);
+        _storageService.saveOnboardingSessioneId(event.sessioneId);
 
       case TextDeltaEvent():
         state = state.copyWith(

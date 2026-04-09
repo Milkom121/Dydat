@@ -63,3 +63,35 @@ Map<String, dynamic> _$OnboardingCompletaResponseToJson(
   'nodo_iniziale': instance.nodoIniziale,
   'nodi_inizializzati': instance.nodiInizializzati,
 };
+
+TurnoRipresa _$TurnoRipresaFromJson(Map<String, dynamic> json) =>
+    TurnoRipresa(
+      ruolo: json['ruolo'] as String,
+      contenuto: json['contenuto'] as String?,
+    );
+
+Map<String, dynamic> _$TurnoRipresaToJson(TurnoRipresa instance) =>
+    <String, dynamic>{
+      'ruolo': instance.ruolo,
+      'contenuto': instance.contenuto,
+    };
+
+OnboardingRipresaResponse _$OnboardingRipresaResponseFromJson(
+  Map<String, dynamic> json,
+) => OnboardingRipresaResponse(
+  sessioneId: json['sessione_id'] as String,
+  faseCorrente: json['fase_corrente'] as String,
+  campiCompleti: (json['campi_completi'] as num).toInt(),
+  turni: (json['turni'] as List<dynamic>)
+      .map((e) => TurnoRipresa.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$OnboardingRipresaResponseToJson(
+  OnboardingRipresaResponse instance,
+) => <String, dynamic>{
+  'sessione_id': instance.sessioneId,
+  'fase_corrente': instance.faseCorrente,
+  'campi_completi': instance.campiCompleti,
+  'turni': instance.turni.map((e) => e.toJson()).toList(),
+};

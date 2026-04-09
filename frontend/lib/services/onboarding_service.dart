@@ -41,6 +41,20 @@ class OnboardingService {
     );
   }
 
+  /// Recupera lo stato di una sessione onboarding attiva per ripresa.
+  /// Restituisce sessione_id, fase corrente, campi completi e storico turni.
+  /// Lancia DioException se nessuna sessione attiva (404).
+  Future<OnboardingRipresaResponse> getResumeState({
+    required String utenteId,
+  }) async {
+    final response = await _client.dio.get(
+      ApiConfig.onboardingResume(utenteId),
+    );
+    return OnboardingRipresaResponse.fromJson(
+      response.data as Map<String, dynamic>,
+    );
+  }
+
   /// Completes onboarding — saves profile, creates path, initializes node states.
   Future<OnboardingCompletaResponse> complete({
     required String sessioneId,

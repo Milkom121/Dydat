@@ -74,3 +74,42 @@ class OnboardingCompletaResponse {
       _$OnboardingCompletaResponseFromJson(json);
   Map<String, dynamic> toJson() => _$OnboardingCompletaResponseToJson(this);
 }
+
+/// Singolo turno della conversazione per ripresa onboarding.
+@JsonSerializable()
+class TurnoRipresa {
+  final String ruolo;
+  final String? contenuto;
+
+  const TurnoRipresa({
+    required this.ruolo,
+    this.contenuto,
+  });
+
+  factory TurnoRipresa.fromJson(Map<String, dynamic> json) =>
+      _$TurnoRipresaFromJson(json);
+  Map<String, dynamic> toJson() => _$TurnoRipresaToJson(this);
+}
+
+/// Stato sessione onboarding per ripresa dopo skip/interruzione.
+@JsonSerializable()
+class OnboardingRipresaResponse {
+  @JsonKey(name: 'sessione_id')
+  final String sessioneId;
+  @JsonKey(name: 'fase_corrente')
+  final String faseCorrente;
+  @JsonKey(name: 'campi_completi')
+  final int campiCompleti;
+  final List<TurnoRipresa> turni;
+
+  const OnboardingRipresaResponse({
+    required this.sessioneId,
+    required this.faseCorrente,
+    required this.campiCompleti,
+    required this.turni,
+  });
+
+  factory OnboardingRipresaResponse.fromJson(Map<String, dynamic> json) =>
+      _$OnboardingRipresaResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$OnboardingRipresaResponseToJson(this);
+}

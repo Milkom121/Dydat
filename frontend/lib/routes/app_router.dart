@@ -136,7 +136,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppPaths.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) {
+          final resume =
+              state.uri.queryParameters['resume'] == 'true';
+          return OnboardingScreen(resume: resume);
+        },
       ),
 
       // Studio — fuori dalla shell, fullscreen modale senza bottom bar.

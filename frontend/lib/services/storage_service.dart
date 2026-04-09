@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class StorageService {
   static const _keyAccessToken = 'access_token';
   static const _keyUtenteTempId = 'utente_temp_id';
+  static const _keyOnboardingSessioneId = 'onboarding_sessione_id';
 
   final FlutterSecureStorage _storage;
 
@@ -24,6 +25,16 @@ class StorageService {
       _storage.write(key: _keyUtenteTempId, value: id);
 
   Future<void> deleteUtenteTempId() => _storage.delete(key: _keyUtenteTempId);
+
+  // Onboarding Sessione ID (per ripresa dopo skip/interruzione)
+  Future<String?> getOnboardingSessioneId() =>
+      _storage.read(key: _keyOnboardingSessioneId);
+
+  Future<void> saveOnboardingSessioneId(String id) =>
+      _storage.write(key: _keyOnboardingSessioneId, value: id);
+
+  Future<void> deleteOnboardingSessioneId() =>
+      _storage.delete(key: _keyOnboardingSessioneId);
 
   // Clear all
   Future<void> clearAll() => _storage.deleteAll();

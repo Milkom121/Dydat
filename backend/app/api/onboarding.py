@@ -26,12 +26,14 @@ from app.core.onboarding import (
 )
 from app.core.turno import esegui_turno
 from app.db.engine import get_db
-from app.db.models.utenti import Sessione, Utente
+from app.db.models.utenti import Sessione, TurnoConversazione, Utente
 from app.schemas.onboarding import (
     OnboardingCompletaRequest,
     OnboardingCompletaResponse,
     OnboardingIniziaResponse,
+    OnboardingRipresaResponse,
     OnboardingTurnoRequest,
+    TurnoRipresa,
 )
 
 logger = logging.getLogger(__name__)
@@ -222,6 +224,71 @@ async def api_completa_onboarding(
         percorso_id=risultato["percorso_id"],
         nodo_iniziale=risultato["nodo_iniziale"],
         nodi_inizializzati=risultato["nodi_inizializzati"],
+    )
+
+
+# ===================================================================
+# GET /onboarding/riprendi
+# ===================================================================
+
+
+@router.get("/riprendi")
+async def api_riprendi_onboarding(
+    utente_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> OnboardingRipresaResponse:
+    """Recupera sessione onboarding attiva per ripresa dopo skip/interruzione.
+
+    Non richiede auth — usa utente_id come identificativo (utente temporaneo).
+    Restituisce sessione_id, fase corrente, campi completi e storico turni.
+    """
+    # Cerca sessione onboarding attiva per questo utente
+    result = await db.execute(
+        select(Sessione).where(
+            Sessione.utente_id == utente_id,
+            Sessione.tipo == "onboarding",
+            Sessione.stato == "attiva",
+        )
+    )
+    sessione = result.scalar_one_or_none()
+
+    if sessione is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Nessuna sessione onboarding attiva per questo utente",
+        )
+
+    # Carica storico conversazione ordinato
+    turni_result = await db.execute(
+        select(TurnoConversazione)
+        .where(TurnoConversazione.sessione_id == sessione.id)
+        .order_by(TurnoConversazione.ordine)
+    )
+    turni_db = turni_result.scalars().all()
+
+    turni = [
+        TurnoRipresa(ruolo=t.ruolo, contenuto=t.contenuto)
+        for t in turni_db
+        if t.contenuto  # Escludi turni senza contenuto (tool-use only)
+    ]
+
+    # Estrai stato dalla sessione
+    stato = sessione.stato_orchestratore or {}
+    fase_corrente = stato.get("fase_onboarding", "accoglienza")
+    profilo_raw = stato.get("profilo_estratto", {})
+    campi_completi = sum(
+        1 for campo in (
+            "chi_e", "motivo", "stile_cognitivo",
+            "tempo_disponibile", "vissuto_scolastico",
+        )
+        if profilo_raw.get(campo, {}).get("confidenza") in ("alta", "media")
+    )
+
+    return OnboardingRipresaResponse(
+        sessione_id=sessione.id,
+        fase_corrente=fase_corrente,
+        campi_completi=campi_completi,
+        turni=turni,
     )
 
 

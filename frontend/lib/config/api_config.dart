@@ -23,6 +23,8 @@ class ApiConfig {
   static const String onboardingStart = '/onboarding/inizia';
   static const String onboardingTurn = '/onboarding/turno';
   static const String onboardingComplete = '/onboarding/completa';
+  static String onboardingResume(String utenteId) =>
+      '/onboarding/riprendi?utente_id=$utenteId';
 
   // Sessione
   static const String sessionList = '/sessione/';

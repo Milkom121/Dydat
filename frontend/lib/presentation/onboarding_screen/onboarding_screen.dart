@@ -17,8 +17,11 @@ import './widgets/scala_widget.dart';
 ///
 /// L'utente si racconta liberamente (anche a voce), il tutor adatta il flusso
 /// tramite il decisore forma C. "Salta per ora" è visibile fin dall'inizio.
+/// Se [resume] è true, riprende la sessione precedente dal backend.
 class OnboardingScreen extends ConsumerStatefulWidget {
-  const OnboardingScreen({super.key});
+  final bool resume;
+
+  const OnboardingScreen({super.key, this.resume = false});
 
   @override
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -40,9 +43,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    // Avvia stream SSE onboarding dopo il primo frame
+    // Avvia o riprendi onboarding dopo il primo frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(onboardingProvider.notifier).startOnboarding();
+      if (widget.resume) {
+        ref.read(onboardingProvider.notifier).resumeOnboarding();
+      } else {
+        ref.read(onboardingProvider.notifier).startOnboarding();
+      }
     });
   }
 
@@ -113,8 +120,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _scrollToBottom();
   }
 
-  /// Sincronizza messaggi tutor finalizzati dal provider nella lista locale
+  // Flag per evitare di caricare la conversazione ripristinata più volte
+  bool _resumeLoaded = false;
+
+  /// Sincronizza messaggi tutor finalizzati dal provider nella lista locale.
+  /// Se c'è una conversazione ripristinata (resume), la carica una sola volta.
   void _syncTutorMessages(OnboardingScreenState onboardingState) {
+    // Carica conversazione ripristinata (una sola volta)
+    if (!_resumeLoaded && onboardingState.resumedConversation != null) {
+      _resumeLoaded = true;
+      for (final turno in onboardingState.resumedConversation!) {
+        if (turno.contenuto != null && turno.contenuto!.isNotEmpty) {
+          _messages.add({
+            'text': turno.contenuto!,
+            'isUser': turno.ruolo == 'user',
+            'timestamp': DateTime.now(),
+          });
+        }
+      }
+      // Allinea il contatore con i messaggi tutor già presenti
+      _prevTutorMessagesCount = onboardingState.tutorMessages.length;
+      _scrollToBottom();
+      return;
+    }
+
     final tutorMessages = onboardingState.tutorMessages;
     if (tutorMessages.length > _prevTutorMessagesCount) {
       for (int i = _prevTutorMessagesCount; i < tutorMessages.length; i++) {

@@ -152,3 +152,26 @@ class OnboardingCompletaResponse(BaseModel):
     percorso_id: int
     nodo_iniziale: str | None = None
     nodi_inizializzati: int
+
+
+# --- Schema ripresa onboarding (B39.9.3) ---
+
+
+class TurnoRipresa(BaseModel):
+    """Singolo turno della conversazione onboarding per ripresa."""
+
+    ruolo: str  # "user" o "assistant"
+    contenuto: str | None = None
+
+
+class OnboardingRipresaResponse(BaseModel):
+    """Stato della sessione onboarding per ripresa dopo skip/interruzione.
+
+    Restituisce sessione_id, fase corrente, campi completi e lo storico
+    conversazione per ricostruire la UI senza ripartire da zero.
+    """
+
+    sessione_id: uuid.UUID
+    fase_corrente: str
+    campi_completi: int
+    turni: list[TurnoRipresa]

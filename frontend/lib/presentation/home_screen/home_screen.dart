@@ -96,9 +96,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     context.push(_transitionDestination);
   }
 
-  void _navigaOnboarding() {
+  void _navigaOnboarding({bool resume = false}) {
     HapticFeedback.lightImpact();
-    context.push(AppPaths.onboarding);
+    final path = resume
+        ? '${AppPaths.onboarding}?resume=true'
+        : AppPaths.onboarding;
+    context.push(path);
   }
 
   @override
@@ -166,7 +169,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         stato: onboardingStato == 'in_progress'
                             ? OnboardingBannerStato.inCorso
                             : OnboardingBannerStato.nonIniziato,
-                        onTap: _navigaOnboarding,
+                        onTap: () => _navigaOnboarding(
+                          resume: onboardingStato == 'in_progress',
+                        ),
                       ),
                     ],
 
