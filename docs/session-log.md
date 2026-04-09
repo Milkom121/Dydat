@@ -478,3 +478,13 @@
 - **Status**: CONTINUE
 - **Summary**: B39.6.1 completato - Prompt auto-valutazione placement. Nuovo file onboarding_self_assessment.py con build_self_assessment_prompt (direttiva tutor con aree, livelli forte/incerto/digiuno, marker strutturato [AUTOVALUTAZIONE]), parse_autovalutazione (parser blocco strutturato), seleziona_aree_da_grafo (selezione temi ordinati per importanza/numero nodi). 34 nuovi test. 603 backend verdi, 13 skipped.
 ---
+
+## 2026-04-09 03:47:02 — Blocco F10BB39.6.2
+- **Status**: CONTINUE
+- **Summary**: B39.6.2 completato - Logica selezione aree fondazionali. Funzione seleziona_aree_fondazionali(aree_forte, grafo) in onboarding_self_assessment.py. Fondazionalita = posizione media dei nodi del tema nell ordine topologico. Cap a MAX_AREE_FONDAZIONALI (6). Ignora nodi contesto, aree non presenti nel grafo. 21 nuovi test deterministici con grafi mockati (lineare + ramificato). 624 backend verdi, 13 skipped.
+---
+
+## 2026-04-09 03:53:46 — Blocco F10BB39.6.3
+- **Status**: CONTINUE
+- **Summary**: B39.6.2 completato - Logica selezione aree fondazionali. Funzione seleziona_aree_fondazionali(aree_forte, grafo) in onboarding_self_assessment.py. Fondazionalita = posizione media dei nodi del tema nell ordine topologico. Cap a MAX_AREE_FONDAZIONALI (6). Ignora nodi contesto, aree non presenti nel grafo. 21 nuovi test deterministici con grafi mockati (lineare + ramificato). 624 backend verdi, 13 skipped.
+---

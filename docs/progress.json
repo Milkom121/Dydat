@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.6.3",
-  "total_blocks_run": 122,
+  "total_blocks_run": 125,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T02:00:00Z",
-  "last_summary": "B39.6.2 completato - Logica selezione aree fondazionali. Funzione seleziona_aree_fondazionali(aree_forte, grafo) in onboarding_self_assessment.py. Fondazionalita calcolata come posizione media nodi nell ordine topologico. Cap a 6. 21 nuovi test. 624 backend verdi, 13 skipped."
+  "last_run": "2026-04-09T01:53:47Z",
+  "last_summary": "B39.6.2 completato - Logica selezione aree fondazionali. Funzione seleziona_aree_fondazionali(aree_forte, grafo) in onboarding_self_assessment.py. Fondazionalita = posizione media dei nodi del tema nell ordine topologico. Cap a MAX_AREE_FONDAZIONALI (6). Ignora nodi contesto, aree non presenti nel grafo. 21 nuovi test deterministici con grafi mockati (lineare + ramificato). 624 backend verdi, 13 skipped."
 }

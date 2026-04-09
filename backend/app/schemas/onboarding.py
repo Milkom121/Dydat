@@ -104,6 +104,37 @@ class OnboardingCompletaRequest(BaseModel):
     preferenze_tutor: dict | None = None
 
 
+class OpzioneEsercizio(BaseModel):
+    """Singola opzione di un esercizio a scelta multipla."""
+
+    lettera: str
+    testo: str
+
+
+class EsercizioCompound(BaseModel):
+    """Esercizio compound generato per il placement onboarding.
+
+    Copre 1-2 concetti. Generato da Opus con il prompt di B39.6.3.
+    """
+
+    testo: str
+    concetti: list[str]
+    opzioni: list[OpzioneEsercizio]
+    risposta_corretta: str
+    spiegazione_breve: str = ""
+
+    @model_validator(mode="after")
+    def _valida_risposta(self) -> "EsercizioCompound":
+        """Verifica che risposta_corretta sia tra le lettere delle opzioni."""
+        lettere = {o.lettera for o in self.opzioni}
+        if self.risposta_corretta not in lettere:
+            raise ValueError(
+                f"risposta_corretta '{self.risposta_corretta}' "
+                f"non presente tra le opzioni: {lettere}"
+            )
+        return self
+
+
 class OnboardingCompletaResponse(BaseModel):
     percorso_id: int
     nodo_iniziale: str | None = None

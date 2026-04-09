@@ -511,11 +511,12 @@
 - **Note**: build_exercise_prompt (coppie concetti -> prompt Opus con schema JSON), parse_exercise_response (parser robusto con validazione struttura, gestione markdown wrapper, fallback None). Costanti: MAX_ESERCIZI_VERIFICA=3, MAX_CONCETTI_PER_ESERCIZIO=2, MIN/MAX_OPZIONI=3/4. Schema esempio con testo/concetti/opzioni/risposta_corretta/spiegazione_breve. 36 nuovi test (costanti, prompt, parser con edge case). 660 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.4 — Funzione genera_esercizi_verifica
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S60)
 - **Complessita'**: media
 - **Descrizione**: Funzione `genera_esercizi_verifica(aree_da_verificare)` che prende le aree in coppie, chiama Opus per ciascuna coppia con il prompt di B39.6.3, ritorna lista di esercizi compound. Max 3 esercizi (cap duro). Retry su fallimento, lista vuota in caso di fallimento totale.
 - **File da toccare**: `backend/app/core/onboarding.py`, schema `EsercizioCompound` in `backend/app/schemas/onboarding.py`
 - **Gate**: unit test con mock LLM, test schema output, test retry
+- **Note**: Schema Pydantic EsercizioCompound + OpzioneEsercizio con validatore risposta_corretta. Funzione genera_esercizi_verifica con singola chiamata LLM, retry 1x, fallback lista vuota. Helper _costruisci_coppie con scala adattiva (1-2 singoli, 3+ compound, cap 6 aree). 29 nuovi test (schema, coppie, mock LLM, retry, fallimenti). 689 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.5 — Logica grading deterministico
 - [ ] **Stato**: da fare

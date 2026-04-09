@@ -41,11 +41,17 @@ from app.db.models.utenti import (
 from app.grafo.algoritmi import ordinamento_topologico
 from app.grafo.struttura import grafo_knowledge
 from app.llm.client import chiama_llm_singolo
+from app.llm.prompts.onboarding_exercise_generator import (
+    MAX_ESERCIZI_VERIFICA,
+    build_exercise_prompt,
+    parse_exercise_response,
+)
 from app.llm.prompts.onboarding_extractor import build_extractor_prompt
 from app.schemas.onboarding import (
     AzioneDecisore,
     CampoConConfidenza,
     Decisione,
+    EsercizioCompound,
     ProfiloEstratto,
 )
 
@@ -321,6 +327,140 @@ def _parsa_json_risposta(testo: str) -> dict | None:
             pass
 
     return None
+
+
+async def genera_esercizi_verifica(
+    aree_da_verificare: list[str],
+    nomi_concetti: dict[str, str] | None = None,
+) -> list[EsercizioCompound]:
+    """Genera esercizi compound per verificare le aree dichiarate 'forte'.
+
+    Prende le aree da verificare, le accoppia (max 2 per esercizio),
+    chiama Opus per generare gli esercizi a scelta multipla.
+
+    Cap duro: max MAX_ESERCIZI_VERIFICA (3) esercizi.
+    Retry 1 volta su fallimento per coppia. Lista vuota in caso di
+    fallimento totale irrecuperabile.
+
+    Scala adattiva (da Decisione 8):
+    - 1-2 aree → 1-2 esercizi singoli
+    - 3-4 aree → 2 esercizi compound
+    - 5-6 aree → 3 esercizi compound
+
+    Args:
+        aree_da_verificare: lista di concept_id delle aree da verificare.
+        nomi_concetti: dict opzionale {concept_id: nome_leggibile}.
+
+    Returns:
+        Lista di EsercizioCompound validati. Può essere vuota.
+    """
+    if not aree_da_verificare:
+        return []
+
+    # Costruisci coppie di concetti
+    coppie = _costruisci_coppie(aree_da_verificare)
+
+    # Cap al massimo esercizi
+    coppie = coppie[:MAX_ESERCIZI_VERIFICA]
+
+    # Genera il prompt con tutte le coppie in una singola chiamata
+    prompt = build_exercise_prompt(coppie, nomi_concetti)
+
+    max_tentativi = 2
+    for tentativo in range(max_tentativi):
+        try:
+            testo_risposta = await chiama_llm_singolo(
+                user_prompt=prompt,
+                modello=settings.LLM_MODEL_ONBOARDING,
+                max_tokens=2048,
+            )
+
+            esercizi_raw = parse_exercise_response(testo_risposta)
+            if esercizi_raw is None:
+                raise ValueError("Parsing esercizi fallito: nessun esercizio valido")
+
+            # Valida con Pydantic
+            esercizi = []
+            for ex_dict in esercizi_raw:
+                try:
+                    esercizi.append(EsercizioCompound.model_validate(ex_dict))
+                except Exception:
+                    logger.warning(
+                        "Esercizio scartato per validazione Pydantic: %s",
+                        ex_dict.get("testo", "?")[:50],
+                    )
+
+            if not esercizi:
+                raise ValueError("Nessun esercizio ha superato la validazione Pydantic")
+
+            # Cap finale
+            esercizi = esercizi[:MAX_ESERCIZI_VERIFICA]
+
+            logger.info(
+                "Esercizi verifica generati: %d/%d coppie (tentativo %d)",
+                len(esercizi),
+                len(coppie),
+                tentativo + 1,
+            )
+            return esercizi
+
+        except (anthropic.APIError, TimeoutError) as e:
+            logger.warning(
+                "genera_esercizi_verifica tentativo %d fallito (API): %s",
+                tentativo + 1, e,
+            )
+        except (ValueError, json_module.JSONDecodeError) as e:
+            logger.warning(
+                "genera_esercizi_verifica tentativo %d fallito (parsing): %s",
+                tentativo + 1, e,
+            )
+        except Exception:
+            logger.exception("genera_esercizi_verifica: errore inatteso")
+            return []
+
+    # Tutti i tentativi falliti
+    logger.error(
+        "genera_esercizi_verifica: %d tentativi falliti, ritorno lista vuota",
+        max_tentativi,
+    )
+    return []
+
+
+def _costruisci_coppie(aree: list[str]) -> list[list[str]]:
+    """Accoppia le aree per esercizi compound.
+
+    Scala adattiva:
+    - 1 area → 1 coppia singola [[a]]
+    - 2 aree → 2 coppie singole [[a], [b]] oppure 1 compound [[a, b]]
+    - 3-4 aree → 2 compound (coppie da 2, ultimo singolo se dispari)
+    - 5-6 aree → 3 compound
+    - 7+ aree → le prime 6, poi 3 compound
+
+    Returns:
+        Lista di coppie (liste di 1-2 concept_id).
+    """
+    if not aree:
+        return []
+
+    # Cap a 6 aree (le prime 6 sono le più fondazionali, da B39.6.2)
+    aree_cap = aree[:6]
+
+    if len(aree_cap) <= 2:
+        # 1-2 aree → esercizi singoli
+        return [[a] for a in aree_cap]
+
+    # 3+ aree → compound: accoppia consecutive
+    coppie = []
+    i = 0
+    while i < len(aree_cap):
+        if i + 1 < len(aree_cap):
+            coppie.append([aree_cap[i], aree_cap[i + 1]])
+            i += 2
+        else:
+            coppie.append([aree_cap[i]])
+            i += 1
+
+    return coppie
 
 
 async def crea_utente_temporaneo(db: AsyncSession) -> Utente:
