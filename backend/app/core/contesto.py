@@ -22,10 +22,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
+from app.core.onboarding import seleziona_nodi_gateway
 from app.db.models.grafo import Esercizio, Nodo, Relazione
 from app.db.models.stato_utente import StatoNodoUtente, StoricoEsercizi
 from app.db.models.utenti import Sessione, TurnoConversazione, Utente
-from app.core.onboarding import seleziona_nodi_gateway
 from app.llm.prompts.direttive import (
     direttiva_esercizio,
     direttiva_feynman,
@@ -34,6 +34,7 @@ from app.llm.prompts.direttive import (
     direttiva_ripresa_sessione,
     direttiva_spiegazione,
 )
+from app.llm.prompts.onboarding_system_prompt import ONBOARDING_SYSTEM_PROMPT
 from app.llm.prompts.system_prompt import SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -211,9 +212,10 @@ def tronca_conversazione(messages: list[dict]) -> list[dict]:
 # Assemblaggio blocchi XML
 # ---------------------------------------------------------------------------
 
-def _blocco_system_prompt() -> str:
-    """Blocco 1: system prompt fisso."""
-    return f"<system_prompt>\n{SYSTEM_PROMPT}\n</system_prompt>"
+def _blocco_system_prompt(tipo_sessione: str = "studio") -> str:
+    """Blocco 1: system prompt fisso. Usa il prompt onboarding per sessioni onboarding."""
+    prompt = ONBOARDING_SYSTEM_PROMPT if tipo_sessione == "onboarding" else SYSTEM_PROMPT
+    return f"<system_prompt>\n{prompt}\n</system_prompt>"
 
 
 def _blocco_direttiva(direttiva: str) -> str:
@@ -496,9 +498,11 @@ async def assembla_context_package(
     # Genera direttiva
     direttiva = await _genera_direttiva(db, sessione, utente, nodo)
 
+    tipo_sessione = sessione.tipo or "studio"
+
     # Assembla system prompt (blocchi 1-4 + 6)
     blocchi = [
-        _blocco_system_prompt(),
+        _blocco_system_prompt(tipo_sessione),
         _blocco_direttiva(direttiva),
         _blocco_profilo_utente(utente),
     ]
@@ -519,8 +523,12 @@ async def assembla_context_package(
     if not messages:
         messages = [{"role": "user", "content": "[Inizia la conversazione]"}]
 
-    # Determina modello
-    modello = settings.LLM_MODEL_TUTOR
+    # Determina modello: Opus per onboarding (Decisione 10), Sonnet per studio
+    modello = (
+        settings.LLM_MODEL_ONBOARDING
+        if tipo_sessione == "onboarding"
+        else settings.LLM_MODEL_TUTOR
+    )
 
     logger.info(
         "Context package assemblato: sessione=%s, nodo=%s, %d messages, system=%d chars",
@@ -534,5 +542,5 @@ async def assembla_context_package(
         system=system,
         messages=messages,
         modello=modello,
-        tipo_sessione=sessione.tipo or "studio",
+        tipo_sessione=tipo_sessione,
     )

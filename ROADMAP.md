@@ -599,11 +599,12 @@
 - **Note**: Sostituito TextField custom con VoiceInputField (testo+voce). Bottone "Salta per ora" sempre visibile in top bar accanto all'etichetta fase. Etichette fase italiane (Benvenuto/Conosciamoci/Valutazione/Il tuo percorso/Pronti a partire). Bottone completa appare solo in fase conclusione (non piu' basato su turnsCompleted). Skip naviga a /registration (se utenteTempId) o /login. testo_libero usa VoiceInputField. 15 nuovi test. 677 frontend verdi, analyze 0.
 
 #### Blocco B39.8.3 — System prompt tutor onboarding riscritto
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S69)
 - **Complessita'**: media
 - **Descrizione**: Scrivere il system prompt del tutor di onboarding: personificato in prima persona, patto esplicito, menzione della voce, tono caldo, forma C adattiva.
 - **File da toccare**: nuovo `backend/app/llm/prompts/onboarding_system_prompt.py`, integrato nel flusso del turno
 - **Gate**: unit test presenza istruzioni chiave (io sono Dydat, patto, voce, adattivita)
+- **Note**: ONBOARDING_SYSTEM_PROMPT con 7 sezioni (chi sei, patto esplicito, forma C adattiva, 5 campi, regole tono, tool use, cosa non fare). Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt; modello Opus per onboarding (LLM_MODEL_ONBOARDING). 21 nuovi test (contenuto, integrazione, struttura). 758 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.8.4 — Test integrazione onboarding completo
 - [ ] **Stato**: da fare
