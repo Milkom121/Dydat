@@ -1,72 +1,53 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.7.1
-SUMMARY: B39.6.6 completato - Integrazione stato_orchestratore + path planner. costruisci_mappa_placement() unisce autovalutazione + esiti verifica compound in mappa {area: stato} con 4 stati (forte_confermato/forte_unverified/incerto/digiuno). determina_nodo_partenza_da_mappa() sceglie primo nodo operativo con tema non-forte. _determina_nodo_da_placement aggiornato con priorita mappa > legacy gateway. _inizializza_stato_nodi esteso: nodi di temi forte_confermato marcati presunti. completa_onboarding passa placement_mappa a inizializzazione nodi. 28 nuovi test. 737 backend verdi, 13 skipped.
-NEXT: B39.7.1 - Scheletro widget VoiceInputField
+BLOCK: B39.7.2
+SUMMARY: B39.7.1 completato - Scheletro widget VoiceInputField. Widget riutilizzabile con TextField + pulsante microfono disabilitato (placeholder) + pulsante invio. Controller esterno opzionale (per B39.7.5). Stato pubblico VoiceInputFieldState. HapticFeedback su invio. Testo trimmed, vuoto/spazi ignorati. Semantics label sul mic. 14 nuovi test. 602 frontend verdi, analyze 0.
+NEXT: B39.7.2 - Libreria audio + permessi mic
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: backend/app/core/onboarding.py (costruisci_mappa_placement, determina_nodo_partenza_da_mappa, _determina_nodo_da_placement, _inizializza_stato_nodi, completa_onboarding), backend/tests/test_b39_6_6_placement_integration.py (nuovo)
-TESTS: PASS (737 backend verdi, 13 skipped)
-VERIFICATION: 737 passed, 13 skipped. Ruff pulito. Tutti i test preesistenti continuano a passare.
+FILES_MODIFIED: frontend/lib/widgets/voice_input_field.dart (nuovo), frontend/test/widgets/b39_voice_input_field_test.dart (nuovo)
+TESTS: PASS (602 frontend verdi, analyze 0)
+VERIFICATION: 602 passed, 0 errors. Analyze pulito. Tutti i test preesistenti continuano a passare.
 
 ---
 
 ## Contesto dettagliato
 
 ### Cosa e stato fatto
-- B39.6.6 completato: integrazione stato_orchestratore + path planner
-- Tutta la Fase 6 Placement completata (B39.6.1 - B39.6.6, 6/6 sub-blocchi)
-- 20/38 sub-blocchi B39 completati totali
+- B39.7.1 completato: scheletro widget VoiceInputField
+- 21/38 sub-blocchi B39 completati totali
 
-### Funzioni aggiunte/modificate in core/onboarding.py
+### Widget creato: VoiceInputField
 
-- **costruisci_mappa_placement(autovalutazione, esiti_verifica, aree_verificate)**:
-  - Unisce auto-valutazione {area: forte/incerto/digiuno} + esiti compound -> mappa finale
-  - 4 stati: forte_confermato, forte_unverified, incerto, digiuno
-  - Aree verificate non retrocesse = confermate, retrocesse = incerto
-  - Livello sconosciuto -> incerto (fallback sicuro)
+- **Path**: frontend/lib/widgets/voice_input_field.dart
+- **Struttura**: Row con 3 elementi - TextField (espanso) + IconButton mic (disabilitato) + IconButton send
+- **Props**: hintText, onSubmit, enabled, maxLines, controller (opzionale)
+- **Stato pubblico**: VoiceInputFieldState con getter controller - necessario per B39.7.5
+- **Controller**: se fornito dall'esterno lo usa, altrimenti ne crea uno interno e lo dispone
+- **Comportamento invio**: trim del testo, ignora vuoto/spazi, HapticFeedback.lightImpact(), clear dopo invio
+- **Mic**: onPressed: null (disabilitato), tooltip "Voce - prossimamente", Semantics label
+- **Tema**: usa Theme.of(context) per colori - zero hardcoded
 
-- **determina_nodo_partenza_da_mappa(mappa_placement, grafo)**:
-  - Primo nodo operativo nell'ordine topologico con tema non-forte
-  - Nodi senza tema trattati come non-forti
-  - Se tutti forti -> ultimo nodo operativo
+### Test creati
 
-- **_determina_nodo_da_placement** (aggiornato):
-  - Nuova priorita: placement_mappa (B39.6.6) > esiti legacy (gateway)
-  - Retrocompatibile: se mappa assente, usa il vecchio sistema
-
-- **_inizializza_stato_nodi** (aggiornato):
-  - Nuovo parametro placement_mappa
-  - Nodi di temi forte_confermato -> operativo + presunto=true
-  - Logica OR: presunto se nodo_prima_override O tema forte_confermato
-
-- **completa_onboarding** (aggiornato):
-  - Estrae placement_mappa da placement_risultati
-  - La passa a _inizializza_stato_nodi
-
-### Catena completa Placement (B39.6.1-B39.6.6)
-1. seleziona_aree_da_grafo -> temi per auto-valutazione
-2. parse_autovalutazione -> {area: forte/incerto/digiuno}
-3. seleziona_aree_fondazionali -> aree forti da verificare
-4. genera_esercizi_verifica -> esercizi compound
-5. valuta_risposta -> EsitoVerifica per ogni esercizio
-6. costruisci_mappa_placement -> mappa finale {area: stato}
-7. determina_nodo_partenza_da_mappa -> nodo_id partenza
-8. _inizializza_stato_nodi con placement_mappa -> nodi presunti
+- **Path**: frontend/test/widgets/b39_voice_input_field_test.dart
+- **14 test** in 5 gruppi: rendering base (4), interazione (5), stato disabilitato (2), controller esterno (2), accessibilita (1)
 
 ### Stato del progetto
-- Backend: 737 test verdi, 13 skipped
-- Frontend: 588 test verdi (non toccato), analyze 0
+- Backend: 737 test verdi, 13 skipped (non toccato)
+- Frontend: 602 test verdi, analyze 0
 - Branch: develop
 
 ### Prossimo passo concreto
-- B39.7.1 - Scheletro widget VoiceInputField
-- File Flutter con struttura base del widget riutilizzabile: TextFormField + pulsante microfono disabilitato come placeholder
-- Nessuna funzionalita audio ancora
-- Gate: widget compila, widget test rendering base
+- B39.7.2 - Libreria audio + permessi microfono
+- Aggiungere libreria audio (es. record o equivalente)
+- Configurare permessi microfono in AndroidManifest.xml e Info.plist
+- Integrare in VoiceInputField l'avvio/stop registrazione
+- Gate: permessi configurati, widget registra/ferma audio con mock
 
 ### File da leggere per la prossima sessione
 1. CLAUDE.md
 2. PROJECT_CONFIG.md
-3. ROADMAP.md (cerca B39.7.1)
+3. ROADMAP.md (cerca B39.7.2)
 4. .claude/handoff.md (questo file)
-5. docs/discussions/b39-onboarding-narrativo.md (riferimento strategico onboarding)
+5. frontend/lib/widgets/voice_input_field.dart (widget da estendere)
+6. frontend/pubspec.yaml (per aggiungere dipendenza audio)
