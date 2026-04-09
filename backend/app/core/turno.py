@@ -87,6 +87,10 @@ async def esegui_turno(
 
     azioni_accumulate: list[dict] = []
     segnali_accumulati: list[dict] = []
+    # Accumulo testo indipendente: rete di sicurezza per ONB-02.
+    # Se risultato_llm.testo_completo è vuoto ma abbiamo ricevuto text_delta,
+    # usiamo questo come fallback per la persistenza.
+    testo_accumulato_locale: list[str] = []
     risultato_llm = None
 
     # Onboarding: passa solo tool rilevanti per ridurre rumore
@@ -112,6 +116,7 @@ async def esegui_turno(
         tipo = evento_llm.get("tipo")
 
         if tipo == "text_delta":
+            testo_accumulato_locale.append(evento_llm["testo"])
             yield _evento_sse("text_delta", {"testo": evento_llm["testo"]})
 
         elif tipo == "tool_use":
@@ -169,11 +174,35 @@ async def esegui_turno(
     if sess:
         stato_orch = sess.stato_orchestratore or {}
 
+    # Determina il contenuto testuale da persistere.
+    # Fallback: se risultato_llm ha testo vuoto ma abbiamo accumulato
+    # text_delta localmente, usiamo il testo locale (fix ONB-02).
+    contenuto_da_salvare = risultato_llm.testo_completo or None
+    if not contenuto_da_salvare and testo_accumulato_locale:
+        contenuto_da_salvare = "".join(testo_accumulato_locale)
+        logger.warning(
+            "Turno sessione=%s: risultato_llm.testo_completo vuoto "
+            "ma %d text_delta ricevuti (%d chars). "
+            "Uso testo accumulato locale come fallback.",
+            sessione_id,
+            len(testo_accumulato_locale),
+            len(contenuto_da_salvare),
+        )
+
+    if not contenuto_da_salvare and (azioni_accumulate or segnali_accumulati):
+        logger.info(
+            "Turno sessione=%s: contenuto vuoto con %d azioni e %d segnali "
+            "(turno solo tool-use, nessun testo generato dal LLM).",
+            sessione_id,
+            len(azioni_accumulate),
+            len(segnali_accumulati),
+        )
+
     turno_salvato = await salva_turno(
         db=db,
         sessione_id=sessione_id,
         ruolo="assistente",
-        contenuto=risultato_llm.testo_completo or None,
+        contenuto=contenuto_da_salvare,
         azioni=azioni_accumulate if azioni_accumulate else None,
         segnali=segnali_accumulati if segnali_accumulati else None,
         nodo_focale_id=stato_orch.get("nodo_focale_id") if stato_orch else None,

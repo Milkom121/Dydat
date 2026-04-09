@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-09
-- **Data ultima sessione**: 2026-04-09 (S51 — B39.4.1, Fix completa_onboarding scrittura profilo)
-- **Prossima sessione**: S52 — B39.4.2 (Fix persistenza streaming turni ONB-02)
+- **Data ultima sessione**: 2026-04-09 (S52 — B39.4.2, Fix persistenza streaming turni ONB-02)
+- **Prossima sessione**: S53 — B39.4.3 (Pulizia codice onboarding legacy)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

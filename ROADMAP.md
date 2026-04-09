@@ -447,11 +447,12 @@
 - **Note**: 3 helper (_costruisci_profilo_sintetizzato, _costruisci_contesto_personale, _costruisci_preferenze_tutor). Profilo estratto letto da stato_orchestratore. Payload ha priorita' su profilo estratto. onboarding_stato aggiornato a COMPLETED. Gestione errore su profilo malformato. 16 nuovi test. 540 backend verdi (10 skipped).
 
 #### Blocco B39.4.2 — Fix persistenza streaming turni (ONB-02)
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S52)
 - **Complessita'**: media
 - **Descrizione**: Fix del finding ONB-02: i turni del tutor in sessione onboarding vengono salvati con `contenuto = None` in presenza di tool use. Serve garantire che l'UPDATE finale del contenuto streamato avvenga anche quando ci sono tool use. Aggiungere logging se lo stream finisce senza contenuto.
-- **File da toccare**: `backend/app/api/onboarding.py` o `backend/app/core/onboarding.py` (dove gira lo streaming SSE)
+- **File da toccare**: `backend/app/core/turno.py`
 - **Gate**: unit test simula stream con tool use + contenuto, verifica persistenza nel DB
+- **Note**: Accumulo testo indipendente (`testo_accumulato_locale`) in `esegui_turno` come rete di sicurezza. Se `risultato_llm.testo_completo` e vuoto ma `text_delta` ricevuti, usa il testo locale come fallback. Logging diagnostico per fallback (warning) e turno solo tool-use (info). 10 nuovi test. 550 backend verdi (10 skipped).
 
 #### Blocco B39.4.3 — Pulizia codice onboarding legacy
 - [ ] **Stato**: da fare
