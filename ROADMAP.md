@@ -479,11 +479,12 @@
 - **Note**: Endpoint POST /stt/transcribe con validazione formato (7 estensioni audio), limite 25 MB, lingua italiana. Gestione errori: 400 formato/vuoto/grande, 422 nessun parlato, 429 rate limit, 502 API down, 503 chiave mancante/invalida. Dipendenze aggiunte: openai, python-multipart. 13 nuovi test. 568 backend verdi (10 skipped).
 
 #### Blocco B39.5.3 — Test endpoint STT con audio reale
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S56)
 - **Complessita'**: bassa
 - **Descrizione**: Test di integrazione con audio reale di smoke (file WAV italiano di prova) per l'endpoint `/stt/transcribe`. Marcato `@pytest.mark.integration` (non gira nel runner automatico).
-- **File da toccare**: nuovo `backend/tests/test_stt.py`
+- **File da toccare**: nuovo `backend/tests/test_b39_5_3_stt_integration.py`
 - **Gate**: test skippato di default, eseguibile con flag integration, verde in esecuzione manuale
+- **Note**: 3 smoke test integration (tono WAV 440Hz, silenzio WAV, formato MP3) + 1 test helper (sempre attivo). WAV generati programmaticamente con modulo wave. Skip automatico se OPENAI_API_KEY non configurata. 569 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.1 — Prompt auto-valutazione placement
 - [ ] **Stato**: da fare

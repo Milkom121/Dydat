@@ -463,3 +463,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.4.3 completato - Pulizia codice onboarding legacy. Rimosso TURNI_CONOSCENZA_MAX (non piu usato, il decisore forma C usa TETTO_TURNI_NARRATIVI). Rimosso AzioneDecisore.passa_a_placement (mai generato dal decisore). Aggiornate docstring modulo e aggiorna_fase_onboarding per riflettere il flusso attuale. 540 backend verdi, 10 skipped. Fase 4 chiusa al 100%.
 ---
+
+## 2026-04-09 03:32:46 — Blocco F10BB39.5.3
+- **Status**: CONTINUE
+- **Summary**: B39.5.2 completato - Endpoint POST /stt/transcribe con OpenAI Whisper. Riceve audio multipart, valida formato (7 estensioni), limite 25 MB, chiama Whisper con lingua italiana. Gestione errori: formato invalido, rate limit, API down. Dipendenze openai e python-multipart aggiunte. 13 nuovi test. 553 backend verdi, 10 skipped.
+---

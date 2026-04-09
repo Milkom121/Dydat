@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-09
-- **Data ultima sessione**: 2026-04-09 (S55 — B39.5.2, Endpoint POST /stt/transcribe)
-- **Prossima sessione**: S56 — B39.5.3 (Test endpoint STT con audio reale)
+- **Data ultima sessione**: 2026-04-09 (S56 — B39.5.3, Test endpoint STT con audio reale)
+- **Prossima sessione**: S57 — B39.6.1 (Prompt auto-valutazione placement)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 
