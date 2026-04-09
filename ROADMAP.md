@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (36/38 sub-blocchi completati)
+- [>] **Stato**: in corso (37/38 sub-blocchi completati, resta B39.9.3)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -661,11 +661,12 @@
 - **Note**: 19 nuovi test trasversali in b39_10_3_voice_cross_context_test.dart. 4 gruppi: Onboarding (4 test: hint, submit, disabled, voce+STT), Sessione Studio (5 test: hint dinamico, enabled/disabled, errore STT, controller esterno), Ricerca (5 test: prefixIcon, suffixIcon condizionale, onChanged live, clear, mic visibile), Comportamento trasversale (5 test: vuoto, spazi, permesso negato, trascrizione, errore STT recovery). 753 frontend verdi, analyze 0.
 
 #### Blocco B39.11.1 — Checklist test manuale + consegna
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S75)
 - **Complessita'**: bassa
 - **Descrizione**: Claude prepara un file con scenari dettagliati per il test manuale del fondatore (utente collaborativo, taciturno, off-topic, skip, voce, placement, banner). Villa eseguira il test e riportera i finding in `.claude/test-findings.md`. Dopo B39.11.1 la catena B39 si chiude con STATUS: PHASE_COMPLETE.
 - **File da toccare**: nuovo `docs/discussions/b39-checklist-test-manuale.md`
 - **Gate**: file creato, scenari chiari, pronto per Villa
+- **Note**: 12 scenari di test manuale: utente collaborativo, taciturno, skip immediato, skip dopo turni, voce onboarding, voce sessione studio, voce ricerca, primo turno caldo B33.5, errore mic negato, banner Home, placement test, errore rete. Nota su B39.9.3 (Riprendi con stato preservato) non ancora implementato.
 
 ### Blocco B40 — Sistema Audio Base
 - [ ] **Stato**: da fare
