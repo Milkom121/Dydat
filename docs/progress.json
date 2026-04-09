@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.9.2",
-  "total_blocks_run": 142,
+  "current_block": "B39.10.1",
+  "total_blocks_run": 144,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T04:00:00Z",
-  "last_summary": "B39.9.2 completato. Integrato OnboardingPendingBanner in HomeScreen condizionale su onboarding_stato. 712 frontend verdi."
+  "last_run": "2026-04-09T06:30:00Z",
+  "last_summary": "B39.9.3 completato (commit manuale al risveglio dopo timeout runner a 06:27). Logica Riprendi onboarding con stato preservato. 33/38 sub-blocchi catena B39 completati. Fase 9 chiusa al 100%. Prossimo B39.10.1 (VoiceInputField in chat sessione studio). Restano: B39.10.1, B39.10.2, B39.10.3, B39.11.1 = 4 blocchi + test manuale finale."
 }

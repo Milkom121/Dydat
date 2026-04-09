@@ -538,3 +538,23 @@
 - **Status**: CONTINUE
 - **Summary**: B39.8.3 completato. Creato ONBOARDING_SYSTEM_PROMPT dedicato in onboarding_system_prompt.py con 7 sezioni: chi sei (personificato prima persona), patto esplicito (6 punti), forma C adattiva (turno libero + domande mirate), 5 campi profilo (senza nominarli), regole tono/formato (brevita, tu informale), tool use, cosa non fare mai. Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt onboarding vs studio; modello Opus (LLM_MODEL_ONBOARDING) per sessioni onboarding. 21 nuovi test. 758 backend verdi (13 skipped), ruff pulito.
 ---
+
+## 2026-04-09 05:27:28 — Blocco F10BB39.8.4
+- **Status**: CONTINUE
+- **Summary**: B39.8.4 completato. Scritti 15 test di integrazione widget per il flusso onboarding completo in b39_8_4_onboarding_integration_test.dart. Scenari coperti: (1) utente collaborativo, (2) utente taciturno con forza_chiusura_tetto_turni, (3) skip (4 varianti), (4) errori (SSE, ErroreEvent, complete fallito), (5) domande strutturate, (6) progresso fasi, (7) streaming testo.
+---
+
+## 2026-04-09 05:34:04 — Blocco F10BB39.9.1
+- **Status**: CONTINUE
+- **Summary**: B39.8.4 completato. Scritti 15 test di integrazione widget per il flusso onboarding completo in b39_8_4_onboarding_integration_test.dart. Scenari coperti: (1) utente collaborativo, (2) utente taciturno con forza_chiusura_tetto_turni, (3) skip (4 varianti), (4) errori (SSE, ErroreEvent, complete fallito), (5) domande strutturate, (6) progresso fasi, (7) streaming testo.
+---
+
+## 2026-04-09 05:42:02 — Blocco F10BB39.9.1
+- **Status**: CONTINUE
+- **Summary**: B39.9.2 completato. Integrato OnboardingPendingBanner in HomeScreen condizionale su onboarding_stato. Aggiunto campo onboardingStato al modello Utente Dart.
+---
+
+## 2026-04-09 06:27:09 — Blocco F10BB39.9.2
+- **Status**: FAILED
+- **Summary**: Errore o timeout
+---
