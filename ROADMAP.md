@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (35/38 sub-blocchi completati)
+- [>] **Stato**: in corso (36/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -653,11 +653,12 @@
 - **Note**: Aggiunti 3 parametri opzionali a VoiceInputField (onChanged, prefixIcon, suffixIcon) per supportare ricerca live. Sostituito TextField in _buildSearchBar con VoiceInputField (controller esterno, prefixIcon search, suffixIcon clear, onChanged per filtraggio live). 9 nuovi test. 734 frontend verdi, analyze 0.
 
 #### Blocco B39.10.3 — Widget test finali integrazione trasversale
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S74)
 - **Complessita'**: bassa
 - **Descrizione**: Test che verificano il comportamento di `VoiceInputField` in tutti i contesti di utilizzo (onboarding, sessione, ricerca).
 - **File da toccare**: test widget vari
 - **Gate**: tutti i test verdi, nessuna regressione
+- **Note**: 19 nuovi test trasversali in b39_10_3_voice_cross_context_test.dart. 4 gruppi: Onboarding (4 test: hint, submit, disabled, voce+STT), Sessione Studio (5 test: hint dinamico, enabled/disabled, errore STT, controller esterno), Ricerca (5 test: prefixIcon, suffixIcon condizionale, onChanged live, clear, mic visibile), Comportamento trasversale (5 test: vuoto, spazi, permesso negato, trascrizione, errore STT recovery). 753 frontend verdi, analyze 0.
 
 #### Blocco B39.11.1 — Checklist test manuale + consegna
 - [ ] **Stato**: da fare
