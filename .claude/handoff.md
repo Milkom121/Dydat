@@ -1,56 +1,57 @@
 STATUS: CONTINUE
 PHASE: 10
-BLOCK: B39.8.1
-SUMMARY: B39.7.4+B39.7.5+B39.7.6 completati in un'unica sessione. Nuovo SttService (astratto + RealSttService) con POST multipart /stt/transcribe e mapping errori Dio user-friendly. RecordingState.transcribing aggiunto. VoiceInputField: spinner + "Trascrizione in corso..." durante upload, testo trascritto popola campo modificabile (NO auto-invio), errori gestiti con onTranscriptionError callback. ApiConfig.sttTranscribe. 11 nuovi test (49 totale file). 637 frontend verdi, analyze 0.
-NEXT: B39.8.1 - Aggiorna onboarding_provider.dart
+BLOCK: B39.8.2
+SUMMARY: B39.8.1 completato. OnboardingProvider aggiornato per gestire le nuove fasi onboarding narrativo (accoglienza/conoscenza/placement/piano/conclusione), skip/resume, evento decisione_onboarding dal backend. Nuovo DecisioneOnboardingEvent in sse_events.dart con switch aggiornati in session_provider e onboarding_provider. OnboardingFase enum. Progresso calcolato per fase (non piu per turni). MockOnboardingService per test con stream controllati. 25 nuovi test (37 totale file). 662 frontend verdi, analyze 0.
+NEXT: B39.8.2 - Riscrittura onboarding_screen.dart con VoiceInputField + skip
 DECISIONS_NEEDED: nessuna
-FILES_MODIFIED: stt_service.dart (nuovo), voice_input_field.dart, audio_recorder_service.dart, api_config.dart, b39_voice_input_field_test.dart
-TESTS: PASS (637 frontend verdi, analyze 0)
-VERIFICATION: 637 passed, 0 errors. Analyze pulito.
+FILES_MODIFIED: sse_events.dart, onboarding_provider.dart, session_provider.dart, onboarding_provider_test.dart
+TESTS: PASS (662 frontend verdi, analyze 0)
+VERIFICATION: 662 passed, 0 errors. Analyze pulito.
 
 ---
 
 ## Contesto dettagliato
 
-### Cosa e stato fatto
-- B39.7.4 completato: chiamata endpoint STT con spinner
-- B39.7.5 completato: testo trascritto popola campo input modificabile
-- B39.7.6 completato: gestione errori STT con fallback a scrittura manuale
-- 26/38 sub-blocchi B39 completati totali
+### Cosa e stato fatto (B39.8.1)
+- 27/38 sub-blocchi B39 completati totali
 
-### SttService — nuovo servizio
-- Path: frontend/lib/services/stt_service.dart
-- SttService (astratto) + RealSttService (implementazione reale con DioClient)
-- SttResult (testo), SttException (message, statusCode)
-- POST multipart /stt/transcribe con MultipartFile.fromFile
-- _mapDioError: 400 formato, 422 nessun parlato, 429 rate limit, 502/503 servizio down, timeout, rete
-- receiveTimeout 30s per la trascrizione
+### DecisioneOnboardingEvent - nuovo evento SSE
+- Path: frontend/lib/models/sse_events.dart
+- Campi: azione, campoDaChiedere, motivo, faseCorrente, campiCompleti
+- Aggiunto al parser SseEvent.fromRawEvent (tipo decisione_onboarding)
+- Switch aggiornato in session_provider.dart (ignorato, non rilevante per sessione)
 
-### VoiceInputField — integrazione STT
-- Nuovi parametri: sttService (iniettabile), onTranscriptionError (callback errori)
-- RecordingState.transcribing: terzo stato dopo idle e recording
-- Flusso: stop -> onAudioRecorded -> transcribing -> _transcribeAudio -> popola controller -> idle
-- _buildTranscribingIndicator: Container con CircularProgressIndicator + "Trascrizione in corso..."
-- Pulsante mic e invio disabilitati durante trascrizione (isBusy)
-- Semantics label "Trascrizione in corso" durante stato transcribing
-- Errori: SttException -> onTranscriptionError, generico -> fallback message, sempre torna a idle
-- Senza sttService: comportamento identico a prima (stopRecording -> idle)
+### OnboardingFase enum
+- Path: frontend/lib/providers/onboarding_provider.dart
+- 5 valori: accoglienza, conoscenza, placement, piano, conclusione
+- Helper onboardingFaseFromString con fallback a accoglienza
 
-### ApiConfig — nuovo endpoint
-- ApiConfig.sttTranscribe = '/stt/transcribe'
+### OnboardingScreenState - nuovi campi
+- faseCorrente (OnboardingFase): fase backend, default accoglienza
+- campiCompleti (int): 0-5, campi profilo con confidenza alta/media
+- isSkipped (bool): utente ha saltato onboarding
+- ultimaAzioneDecisore (String?): ultima azione del decisore forma C
+- progress: ricalcolato per fase (accoglienza=0, conoscenza=0.1-0.4, placement=0.5, piano=0.7, conclusione=0.9, completato=1.0)
+- copyWith: aggiunto clearUltimaAzione
 
-### Test — 11 nuovi (49 totale file)
-- MockSttService con completer per controllare timing
-- Test: chiamata transcribe, spinner visibile, testo popola campo, invio/mic disabilitati, errore torna idle, senza sttService, semantics, onAudioRecorded prima di trascrizione, ciclo completo, stopPath null
+### OnboardingNotifier - nuovi metodi
+- skipOnboarding(): cancella subscription, isSkipped=true
+- resumeOnboarding(): se sessione esiste ripristina isSkipped=false, altrimenti startOnboarding
+- _handleSseEvent gestisce DecisioneOnboardingEvent (aggiorna fase, campi, azione)
+- startOnboarding resetta tutti i nuovi campi
 
-### Prossimo: B39.8.1 - Aggiorna onboarding_provider.dart
-- Il provider deve gestire le nuove fasi (conoscenza/auto-valutazione/verifica/chiusura)
-- Gestire lo skip onboarding
-- Passare dati reali al backend
-- Unit test provider con nuove fasi
+### Test - 25 nuovi (37 totale file)
+- MockOnboardingService con StreamController per simulare eventi SSE
+- Copertura: stato iniziale, faseFromString, progress per fase, copyWith, DecisioneOnboardingEvent fromJson, flusso SSE completo, skip/resume, errore, forza_chiusura
+
+### Prossimo: B39.8.2 - Riscrittura onboarding_screen.dart con VoiceInputField + skip
+- La schermata onboarding deve usare VoiceInputField come campo input
+- Bottone Salta per ora visibile fin dalla prima schermata
+- UI deve reagire a faseCorrente per mostrare progresso
+- Widget test nuovo flusso, test skip, rendering corretto
 
 ### File da leggere
 1. CLAUDE.md -> PROJECT_CONFIG.md -> ROADMAP.md -> handoff.md
-2. frontend/lib/providers/onboarding_provider.dart
-3. backend/app/api/onboarding.py (endpoint turno con decisore)
-4. backend/app/schemas/onboarding.py (schema response)
+2. frontend/lib/presentation/onboarding_screen/onboarding_screen.dart
+3. frontend/lib/providers/onboarding_provider.dart (appena aggiornato)
+4. frontend/lib/widgets/voice_input_field.dart

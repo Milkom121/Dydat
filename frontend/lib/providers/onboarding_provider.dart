@@ -9,6 +9,23 @@ import 'package:dydat/services/onboarding_service.dart';
 import 'package:dydat/services/storage_service.dart';
 import 'package:dydat/utils/error_messages.dart';
 
+/// Fasi dell'onboarding narrativo (mappa 1:1 con il backend).
+enum OnboardingFase {
+  accoglienza,
+  conoscenza,
+  placement,
+  piano,
+  conclusione,
+}
+
+/// Converte la stringa backend nella enum Dart.
+OnboardingFase onboardingFaseFromString(String value) {
+  return OnboardingFase.values.firstWhere(
+    (f) => f.name == value,
+    orElse: () => OnboardingFase.accoglienza,
+  );
+}
+
 class OnboardingScreenState {
   final String? sessioneId;
   final String? utenteTempId;
@@ -34,6 +51,18 @@ class OnboardingScreenState {
   /// Null means no question is pending (show default text input or nothing).
   final OnboardingDomandaAction? currentQuestion;
 
+  /// Fase corrente dell'onboarding (dal backend via decisione_onboarding).
+  final OnboardingFase faseCorrente;
+
+  /// Numero campi profilo con confidenza alta/media (0-5).
+  final int campiCompleti;
+
+  /// L'utente ha scelto di saltare l'onboarding.
+  final bool isSkipped;
+
+  /// Ultima azione del decisore forma C (per logica UI condizionale).
+  final String? ultimaAzioneDecisore;
+
   const OnboardingScreenState({
     this.sessioneId,
     this.utenteTempId,
@@ -46,10 +75,26 @@ class OnboardingScreenState {
     this.result,
     this.error,
     this.currentQuestion,
+    this.faseCorrente = OnboardingFase.accoglienza,
+    this.campiCompleti = 0,
+    this.isSkipped = false,
+    this.ultimaAzioneDecisore,
   });
 
-  /// Progress from 0.0 to 1.0 based on turns completed (~10 turns total).
-  double get progress => (turnsCompleted / 10).clamp(0.0, 1.0);
+  /// Progresso da 0.0 a 1.0 calcolato in base alla fase.
+  /// accoglienza=0.0, conoscenza=0.1-0.4 (proporzionale ai campi),
+  /// placement=0.5, piano=0.7, conclusione=0.9, completato=1.0.
+  double get progress {
+    if (isCompleted) return 1.0;
+    return switch (faseCorrente) {
+      OnboardingFase.accoglienza => 0.0,
+      // In conoscenza, progresso proporzionale ai campi completi (5 max)
+      OnboardingFase.conoscenza => 0.1 + (campiCompleti / 5) * 0.3,
+      OnboardingFase.placement => 0.5,
+      OnboardingFase.piano => 0.7,
+      OnboardingFase.conclusione => 0.9,
+    };
+  }
 
   OnboardingScreenState copyWith({
     String? sessioneId,
@@ -65,6 +110,11 @@ class OnboardingScreenState {
     bool clearError = false,
     OnboardingDomandaAction? currentQuestion,
     bool clearQuestion = false,
+    OnboardingFase? faseCorrente,
+    int? campiCompleti,
+    bool? isSkipped,
+    String? ultimaAzioneDecisore,
+    bool clearUltimaAzione = false,
   }) {
     return OnboardingScreenState(
       sessioneId: sessioneId ?? this.sessioneId,
@@ -79,6 +129,12 @@ class OnboardingScreenState {
       error: clearError ? null : (error ?? this.error),
       currentQuestion:
           clearQuestion ? null : (currentQuestion ?? this.currentQuestion),
+      faseCorrente: faseCorrente ?? this.faseCorrente,
+      campiCompleti: campiCompleti ?? this.campiCompleti,
+      isSkipped: isSkipped ?? this.isSkipped,
+      ultimaAzioneDecisore: clearUltimaAzione
+          ? null
+          : (ultimaAzioneDecisore ?? this.ultimaAzioneDecisore),
     );
   }
 }
@@ -108,6 +164,10 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
       tutorMessages: [],
       turnsCompleted: 0,
       clearQuestion: true,
+      faseCorrente: OnboardingFase.accoglienza,
+      campiCompleti: 0,
+      isSkipped: false,
+      clearUltimaAzione: true,
     );
 
     final stream = _onboardingService.startStream();
@@ -137,6 +197,31 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
   Future<void> answerQuestion(String answer) async {
     state = state.copyWith(clearQuestion: true);
     await sendMessage(answer);
+  }
+
+  /// L'utente salta l'onboarding. Lo stato resta in_progress sul backend
+  /// (nessuna chiamata API), il banner in Home lo inviterà a riprendere.
+  void skipOnboarding() {
+    _cancelSubscription();
+    state = state.copyWith(
+      isSkipped: true,
+      isLoading: false,
+      isStreaming: false,
+    );
+  }
+
+  /// Riprende un onboarding saltato o interrotto (stessa sessione).
+  /// Se la sessione esiste, invia un turno vuoto per riprendere il flusso.
+  Future<void> resumeOnboarding() async {
+    if (state.sessioneId == null) {
+      // Nessuna sessione precedente — ricomincia da capo
+      await startOnboarding();
+      return;
+    }
+    state = state.copyWith(
+      isSkipped: false,
+      clearError: true,
+    );
   }
 
   void _listenToStream(Stream<SseEvent> stream) {
@@ -183,6 +268,13 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
           turnsCompleted: state.turnsCompleted + 1,
         );
 
+      case DecisioneOnboardingEvent():
+        state = state.copyWith(
+          faseCorrente: onboardingFaseFromString(event.faseCorrente),
+          campiCompleti: event.campiCompleti,
+          ultimaAzioneDecisore: event.azione,
+        );
+
       case ErroreEvent():
         state = state.copyWith(
           isLoading: false,
@@ -196,7 +288,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingScreenState> {
           state = state.copyWith(currentQuestion: onboardingQ);
         }
 
-      // Events not relevant to onboarding — ignore
+      // Eventi non rilevanti per l'onboarding — ignorati
       case SessioneCreataEvent():
       case AchievementEvent():
       case EsitoEsercizioEvent():

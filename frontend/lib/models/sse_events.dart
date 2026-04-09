@@ -24,6 +24,7 @@ sealed class SseEvent {
         'achievement' => AchievementEvent.fromJson(data),
         'esito_esercizio' => EsitoEsercizioEvent.fromJson(data),
         'promozione' => PromozioneEvent.fromJson(data),
+        'decisione_onboarding' => DecisioneOnboardingEvent.fromJson(data),
         'turno_completo' => TurnoCompletoEvent.fromJson(data),
         'errore' => ErroreEvent.fromJson(data),
         _ => null,
@@ -348,6 +349,34 @@ class ReconnectingEvent extends SseEvent {
     required this.attempt,
     required this.maxAttempts,
   });
+}
+
+/// Decisione del decisore onboarding forma C (emesso dopo ogni turno in fase conoscenza).
+/// Contiene l'azione decisa, la fase corrente, e il numero di campi profilo completi.
+class DecisioneOnboardingEvent extends SseEvent {
+  final String azione;
+  final String? campoDaChiedere;
+  final String? motivo;
+  final String faseCorrente;
+  final int campiCompleti;
+
+  const DecisioneOnboardingEvent({
+    required this.azione,
+    this.campoDaChiedere,
+    this.motivo,
+    required this.faseCorrente,
+    required this.campiCompleti,
+  });
+
+  factory DecisioneOnboardingEvent.fromJson(Map<String, dynamic> json) {
+    return DecisioneOnboardingEvent(
+      azione: json['azione'] as String,
+      campoDaChiedere: json['campo_da_chiedere'] as String?,
+      motivo: json['motivo'] as String?,
+      faseCorrente: json['fase_corrente'] as String,
+      campiCompleti: json['campi_completi'] as int? ?? 0,
+    );
+  }
 }
 
 /// Error event. The stream terminates after this.

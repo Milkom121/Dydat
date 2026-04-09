@@ -268,7 +268,8 @@ class SessionNotifier extends StateNotifier<SessionScreenState> {
         );
 
       case OnboardingIniziatoEvent():
-        // Not handled in session — this is for onboarding
+      case DecisioneOnboardingEvent():
+        // Non gestiti nella sessione — sono per l'onboarding
         break;
     }
   }

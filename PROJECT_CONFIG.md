@@ -11,8 +11,8 @@
 
 - **Data creazione**: 2026-02-18
 - **Data ultimo aggiornamento**: 2026-04-09
-- **Data ultima sessione**: 2026-04-09 (S66 — B39.7.4+7.5+7.6, Chiamata STT + popolamento + errori)
-- **Prossima sessione**: S67 — B39.8.1 (Aggiorna onboarding_provider.dart)
+- **Data ultima sessione**: 2026-04-09 (S67 — B39.8.1, Aggiorna onboarding_provider con fasi/skip/decisore)
+- **Prossima sessione**: S68 — B39.8.2 (Riscrittura onboarding_screen.dart con VoiceInputField + skip)
 
 ## Stack Tecnologico (HARD CONSTRAINT)
 

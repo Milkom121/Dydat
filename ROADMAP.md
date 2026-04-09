@@ -583,11 +583,12 @@
 - **Note**: Implementato in B39.7.4. SttException catturata con messaggio user-friendly, errori generici con fallback. onTranscriptionError callback per snackbar. Utente torna sempre a idle e puo scrivere. Test errore STT verde.
 
 #### Blocco B39.8.1 — Aggiorna onboarding_provider.dart
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S67)
 - **Complessita'**: media
 - **Descrizione**: Il provider deve passare i dati reali al backend, gestire le nuove fasi (conoscenza/auto-valutazione/verifica/chiusura), gestire lo skip.
 - **File da toccare**: `frontend/lib/providers/onboarding_provider.dart`
 - **Gate**: unit test provider con nuove fasi, flussi mockati
+- **Note**: Nuovo DecisioneOnboardingEvent in sse_events.dart (sealed class aggiornata ovunque). OnboardingFase enum (5 fasi). OnboardingScreenState esteso con faseCorrente, campiCompleti, isSkipped, ultimaAzioneDecisore. Progresso calcolato per fase (non piu' per turni). skipOnboarding() + resumeOnboarding(). MockOnboardingService per test con stream controllati. 25 nuovi test (37 totale file). 662 frontend verdi, analyze 0.
 
 #### Blocco B39.8.2 — Riscrittura onboarding_screen.dart con VoiceInputField + skip
 - [ ] **Stato**: da fare
