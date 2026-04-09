@@ -40,6 +40,15 @@ class VoiceInputField extends StatefulWidget {
   /// Callback per errori di trascrizione (per mostrare snackbar o simili).
   final ValueChanged<String>? onTranscriptionError;
 
+  /// Callback ad ogni modifica del testo (utile per ricerca live).
+  final ValueChanged<String>? onChanged;
+
+  /// Icona prefissa nel campo input (es. icona ricerca).
+  final Widget? prefixIcon;
+
+  /// Icona suffissa nel campo input (es. pulsante cancella).
+  final Widget? suffixIcon;
+
   const VoiceInputField({
     super.key,
     this.hintText = 'Scrivi qui...',
@@ -51,6 +60,9 @@ class VoiceInputField extends StatefulWidget {
     this.recorderService,
     this.sttService,
     this.onTranscriptionError,
+    this.onChanged,
+    this.prefixIcon,
+    this.suffixIcon,
   });
 
   @override
@@ -327,6 +339,8 @@ class VoiceInputFieldState extends State<VoiceInputField>
       enabled: widget.enabled,
       decoration: InputDecoration(
         hintText: widget.hintText,
+        prefixIcon: widget.prefixIcon,
+        suffixIcon: widget.suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -338,6 +352,7 @@ class VoiceInputFieldState extends State<VoiceInputField>
       maxLines: widget.maxLines,
       textInputAction: TextInputAction.send,
       onSubmitted: (_) => _handleSubmit(),
+      onChanged: widget.onChanged,
     );
   }
 

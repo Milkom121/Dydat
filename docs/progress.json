@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
   "current_block": "B39.10.2",
-  "total_blocks_run": 146,
+  "total_blocks_run": 147,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T13:00:00Z",
-  "last_summary": "B39.10.1 completato + fix test hang b39_8_4. VoiceInputField in chat sessione studio. 34/38 sub-blocchi catena B39 completati. Restano B39.10.2, B39.10.3, B39.11.1. Bug scoperto stamattina: un test in b39_8_4 causava hang della suite frontend per 5 minuti (mock mancante per getResumeState), responsabile dei timeout runner su B39.9.3 e B39.10.1 notturni. Fix risolve anche i futuri run."
+  "last_run": "2026-04-09T13:47:47Z",
+  "last_summary": "B39.10.1 completato (commit d990152). VoiceInputField integrato nella chat della sessione studio (session_input_bar_widget + studio_screen). Inoltre fix test hang in b39_8_4 (commit 25255d4): il _MockOnboardingService ora sovrascrive getResumeState, eliminando l'hang che causava i timeout runner. Suite frontend intera: 725 verdi in 21s (prima appesa indefinitamente). analyze 0."
 }

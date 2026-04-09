@@ -10,6 +10,7 @@ import '../../providers/path_provider.dart';
 import '../../providers/ripasso_provider.dart';
 import '../../widgets/custom_icon_widget.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/voice_input_field.dart';
 import './widgets/empty_state_widget.dart';
 import './widgets/graph_overview.dart';
 import './widgets/linear_path_map.dart';
@@ -175,44 +176,32 @@ class _LearningPathScreenState extends ConsumerState<LearningPathScreen> {
   Widget _buildSearchBar(ThemeData theme) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-      child: TextField(
+      child: VoiceInputField(
         controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Cerca argomento...',
-          hintStyle: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 3.w,
-            vertical: 1.2.h,
-          ),
-        ),
-        style: theme.textTheme.bodyMedium,
+        hintText: 'Cerca argomento...',
+        maxLines: 1,
+        onSubmit: (_) {
+          // La ricerca avviene gia' live via onChanged
+        },
         onChanged: (value) {
           setState(() => _searchQuery = value);
         },
+        prefixIcon: Icon(
+          Icons.search,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                icon: Icon(
+                  Icons.clear,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                },
+              )
+            : null,
       ),
     );
   }

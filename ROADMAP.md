@@ -368,7 +368,7 @@
 > Primo contatto memorabile e sistema audio che da personalita.
 
 ### Blocco B39 — Onboarding Narrativo con Momento Wow
-- [>] **Stato**: in corso (15/38 sub-blocchi completati)
+- [>] **Stato**: in corso (35/38 sub-blocchi completati)
 - **Complessita'**: alta
 - **Descrizione**: Ridisegnare l'onboarding come flusso narrativo ibrido adattivo. L'utente si racconta liberamente (anche a voce tramite OpenAI Whisper), un estrattore Opus trasforma la conversazione in un profilo strutturato a 5 campi (chi_e, motivo, stile_cognitivo, tempo_disponibile, vissuto_scolastico). Un decisore rules-based gestisce la forma C adattiva (1 turno libero + domande mirate sui buchi, max 7 turni). Placement test con auto-valutazione + verifica compound. Tutor personificato con patto esplicito, skip rinviabile con banner Home persistente.
 - **Riferimento strategico**: `docs/discussions/b39-onboarding-narrativo.md` (documento di discovery con le 12 decisioni di design prese con Villa, visione, esempi concreti, rischi e criteri di successo)
@@ -645,11 +645,12 @@
 - **Gate**: widget test integrazione, microfono visibile e funzionante
 
 #### Blocco B39.10.2 — VoiceInputField in ricerca "I miei studi"
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S73)
 - **Complessita'**: bassa
 - **Descrizione**: Sostituire il campo di ricerca in `learning_path_screen` con il nuovo widget `VoiceInputField`.
 - **File da toccare**: `learning_path_screen.dart` o widget search correlato
 - **Gate**: widget test integrazione
+- **Note**: Aggiunti 3 parametri opzionali a VoiceInputField (onChanged, prefixIcon, suffixIcon) per supportare ricerca live. Sostituito TextField in _buildSearchBar con VoiceInputField (controller esterno, prefixIcon search, suffixIcon clear, onChanged per filtraggio live). 9 nuovi test. 734 frontend verdi, analyze 0.
 
 #### Blocco B39.10.3 — Widget test finali integrazione trasversale
 - [ ] **Stato**: da fare

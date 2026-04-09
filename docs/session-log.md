@@ -563,3 +563,8 @@
 - **Status**: FAILED
 - **Summary**: Errore o timeout
 ---
+
+## 2026-04-09 15:47:46 — Blocco F10BB39.10.2
+- **Status**: CONTINUE
+- **Summary**: B39.10.1 completato (commit d990152). VoiceInputField integrato nella chat della sessione studio (session_input_bar_widget + studio_screen). Inoltre fix test hang in b39_8_4 (commit 25255d4): il _MockOnboardingService ora sovrascrive getResumeState, eliminando l'hang che causava i timeout runner. Suite frontend intera: 725 verdi in 21s (prima appesa indefinitamente). analyze 0.
+---
