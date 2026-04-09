@@ -543,11 +543,12 @@
 - **Note**: VoiceInputField con TextField + mic disabilitato + send. Controller esterno opzionale (per B39.7.5). Stato pubblico VoiceInputFieldState. HapticFeedback su invio. Testo trimmed, vuoto ignorato. Semantics label sul mic. 14 nuovi test (rendering, interazione, stato disabilitato, controller esterno, accessibilita). 602 frontend verdi, analyze 0.
 
 #### Blocco B39.7.2 — Libreria audio + permessi mic
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S64)
 - **Complessita'**: media
 - **Descrizione**: Aggiungere libreria audio (es. `record` o equivalente), configurare permessi microfono in `AndroidManifest.xml` e `Info.plist`, integrare in `VoiceInputField` l'avvio/stop registrazione.
 - **File da toccare**: `frontend/pubspec.yaml`, `frontend/android/app/src/main/AndroidManifest.xml`, `frontend/ios/Runner/Info.plist`, `voice_input_field.dart`
 - **Gate**: permessi configurati, widget registra/ferma audio con mock
+- **Note**: Package `record` ^5.1.2 aggiunto. AudioRecorderService astratto + RealAudioRecorderService (AAC-LC, 44.1kHz, mono). Permesso RECORD_AUDIO in AndroidManifest, NSMicrophoneUsageDescription in Info.plist. VoiceInputField: mic abilitato con toggle registra/ferma, icona stop rossa durante recording, campo testo e invio disabilitati durante recording, gestione permesso negato, try-catch su start/stop. 27 test (13 nuovi). 615 frontend verdi, analyze 0.
 
 #### Blocco B39.7.3 — UI stato registrazione
 - [ ] **Stato**: da fare

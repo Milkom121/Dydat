@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/sizer_extensions.dart';
+import '../services/audio_recorder_service.dart';
 
 /// Campo di input testuale riutilizzabile con pulsante microfono.
 ///
-/// Il pulsante microfono è disabilitato come placeholder — la funzionalità
-/// audio verrà implementata in B39.7.2+.
+/// Il pulsante microfono avvia/ferma la registrazione audio.
+/// Al termine, il file audio viene passato via [onAudioRecorded].
 /// Usato in: onboarding, sessione studio, ricerca "I miei studi".
 class VoiceInputField extends StatefulWidget {
   /// Testo placeholder nel campo input
@@ -23,6 +24,12 @@ class VoiceInputField extends StatefulWidget {
   /// Controller esterno opzionale (se null, ne crea uno interno)
   final TextEditingController? controller;
 
+  /// Callback quando una registrazione audio è completata (path del file)
+  final ValueChanged<String>? onAudioRecorded;
+
+  /// Servizio recorder iniettabile (per test). Se null, usa RealAudioRecorderService.
+  final AudioRecorderService? recorderService;
+
   const VoiceInputField({
     super.key,
     this.hintText = 'Scrivi qui...',
@@ -30,6 +37,8 @@ class VoiceInputField extends StatefulWidget {
     this.enabled = true,
     this.maxLines,
     this.controller,
+    this.onAudioRecorded,
+    this.recorderService,
   });
 
   @override
@@ -42,7 +51,19 @@ class VoiceInputFieldState extends State<VoiceInputField> {
   late final TextEditingController _controller;
   bool _ownsController = false;
 
+  late AudioRecorderService _recorder;
+  bool _ownsRecorder = false;
+
+  RecordingState _recordingState = RecordingState.idle;
+  bool _permissionDenied = false;
+
   TextEditingController get controller => _controller;
+
+  /// Stato corrente della registrazione — esposto per test e widget esterni
+  RecordingState get recordingState => _recordingState;
+
+  /// True se il permesso microfono è stato negato dall'utente
+  bool get permissionDenied => _permissionDenied;
 
   @override
   void initState() {
@@ -53,13 +74,22 @@ class VoiceInputFieldState extends State<VoiceInputField> {
       _controller = TextEditingController();
       _ownsController = true;
     }
+    if (widget.recorderService != null) {
+      _recorder = widget.recorderService!;
+    } else {
+      _recorder = RealAudioRecorderService();
+      _ownsRecorder = true;
+    }
   }
 
   @override
   void dispose() {
-    if (_ownsController) {
-      _controller.dispose();
+    // Se stiamo registrando, ferma prima di disporre
+    if (_recordingState == RecordingState.recording) {
+      _recorder.stopRecording();
     }
+    if (_ownsController) _controller.dispose();
+    if (_ownsRecorder) _recorder.dispose();
     super.dispose();
   }
 
@@ -71,9 +101,53 @@ class VoiceInputFieldState extends State<VoiceInputField> {
     _controller.clear();
   }
 
+  Future<void> _handleMicTap() async {
+    if (_recordingState == RecordingState.idle) {
+      await _startRecording();
+    } else {
+      await _stopRecording();
+    }
+  }
+
+  Future<void> _startRecording() async {
+    try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!hasPermission) {
+        if (mounted) setState(() => _permissionDenied = true);
+        return;
+      }
+      await _recorder.startRecording();
+      HapticFeedback.mediumImpact();
+      if (mounted) {
+        setState(() {
+          _recordingState = RecordingState.recording;
+          _permissionDenied = false;
+        });
+      }
+    } catch (e) {
+      // Fallback silenzioso — l'utente può continuare a scrivere
+      debugPrint('Errore avvio registrazione: $e');
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    try {
+      final path = await _recorder.stopRecording();
+      HapticFeedback.lightImpact();
+      if (mounted) setState(() => _recordingState = RecordingState.idle);
+      if (path != null && widget.onAudioRecorded != null) {
+        widget.onAudioRecorded!(path);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _recordingState = RecordingState.idle);
+      debugPrint('Errore stop registrazione: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isRecording = _recordingState == RecordingState.recording;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -82,9 +156,10 @@ class VoiceInputFieldState extends State<VoiceInputField> {
         Expanded(
           child: TextField(
             controller: _controller,
-            enabled: widget.enabled,
+            enabled: widget.enabled && !isRecording,
             decoration: InputDecoration(
-              hintText: widget.hintText,
+              hintText:
+                  isRecording ? 'Registrazione in corso...' : widget.hintText,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -99,24 +174,32 @@ class VoiceInputFieldState extends State<VoiceInputField> {
           ),
         ),
         SizedBox(width: 2.w),
-        // Pulsante microfono (placeholder disabilitato)
+        // Pulsante microfono (registra/ferma)
         Semantics(
-          label: 'Microfono — non ancora disponibile',
+          label: isRecording
+              ? 'Ferma registrazione'
+              : (_permissionDenied
+                  ? 'Microfono — permesso negato'
+                  : 'Registra messaggio vocale'),
           child: IconButton(
-            onPressed: null, // Disabilitato — audio in B39.7.2+
+            onPressed: widget.enabled ? _handleMicTap : null,
             icon: Icon(
-              Icons.mic,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              isRecording ? Icons.stop_rounded : Icons.mic,
+              color: isRecording
+                  ? theme.colorScheme.error
+                  : (widget.enabled
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.3)),
             ),
-            tooltip: 'Voce — prossimamente',
+            tooltip: isRecording ? 'Ferma registrazione' : 'Registra voce',
           ),
         ),
-        // Pulsante invio
+        // Pulsante invio (disabilitato durante registrazione)
         IconButton(
-          onPressed: widget.enabled ? _handleSubmit : null,
+          onPressed: widget.enabled && !isRecording ? _handleSubmit : null,
           icon: Icon(
             Icons.send_rounded,
-            color: widget.enabled
+            color: widget.enabled && !isRecording
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
