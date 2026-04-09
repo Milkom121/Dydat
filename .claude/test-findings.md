@@ -6,6 +6,21 @@
 
 ---
 
+## Sessione Manuale 2026-04-09 — pre-test B39
+
+### BUG-B39-01 — CRITICO — Enum OnboardingStato Python/PostgreSQL mismatch (risolto)
+- **Severita**: CRITICA (rompe qualsiasi lettura ORM di utenti dal DB — login, dashboard, onboarding tutti falliscono con `LookupError`)
+- **Scoperto durante**: verifica pre-test manuale del 2026-04-09 dopo chiusura catena B39
+- **File**: `backend/app/db/models/utenti.py:40-49`
+- **Sintomo**: Qualsiasi `SELECT` ORM su `Utente` crasha con `LookupError: 'not_started' is not among the defined enum values. Enum name: onboarding_stato_enum. Possible values: NOT_STARTED, IN_PROGRESS, COMPLETED`.
+- **Causa**: l'enum Python `OnboardingStato` ha nomi uppercase (`NOT_STARTED`) e valori lowercase (`"not_started"`). Il tipo PostgreSQL `onboarding_stato_enum` e stato creato dalla migrazione B39.1.1 con valori lowercase (`not_started`, `in_progress`, `completed`). Di default, `sqlalchemy.Enum(OnboardingStato, ...)` usa i NOMI Python (uppercase) come valori PostgreSQL, non i `value`. Risultato: quando SQLAlchemy legge `'not_started'` dal DB, cerca un nome Python `not_started` che non esiste → crash.
+- **Perche i 768 test unitari non l'hanno beccato**: i test del modello di B39.1.2 testano la creazione di utenti ma non la lettura via ORM dopo persistenza. I test di business logic fanno mock di utenti. Nessun test unitario pre-test-manuale faceva un `SELECT` con filtro su utente esistente con il campo `onboarding_stato` valorizzato. La suite verde non garantiva che il mapping funzionasse in practice.
+- **Fix**: aggiunto `values_callable=lambda enum_cls: [e.value for e in enum_cls]` al costruttore `SAEnum` per usare i `value` dell'enum Python (lowercase) invece dei `name`. Fix di una riga.
+- **Verifica post-fix**: la query `SELECT * FROM utenti` torna `OnboardingStato.NOT_STARTED` correttamente. 768 test backend verdi, nessuna regressione.
+- **Lesson learned**: aggiungere un test di smoke che fa create + read round-trip di Utente con tutti i campi enum valorizzati, per catturare subito questa classe di bug.
+
+---
+
 ## Scenario 1 — Home
 
 ### BUG-01 — Overflow 58px in MiniPercorsoWidget

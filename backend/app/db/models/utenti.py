@@ -43,6 +43,11 @@ class Utente(Base):
             name="onboarding_stato_enum",
             create_constraint=False,
             native_enum=True,
+            # CRITICO: usa i `value` dell'enum Python (lowercase) invece dei `name`
+            # (uppercase) per mappare ai valori del tipo PostgreSQL. Senza questo,
+            # SQLAlchemy cerca di mappare 'not_started' dal DB a un nome Python
+            # inesistente (esiste solo NOT_STARTED) e crasha con LookupError.
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
         ),
         nullable=False,
         server_default=text("'not_started'"),
