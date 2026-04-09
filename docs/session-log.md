@@ -473,3 +473,8 @@
 - **Status**: CONTINUE
 - **Summary**: B39.5.3 completato - Test di integrazione endpoint STT con audio reale. 3 smoke test integration (tono WAV 440Hz, silenzio WAV, formato MP3 header) + 1 test helper sempre attivo. WAV generati programmaticamente con modulo wave. Skip automatico senza OPENAI_API_KEY o senza --run-integration. 569 backend verdi, 13 skipped.
 ---
+
+## 2026-04-09 03:41:25 — Blocco F10BB39.6.1
+- **Status**: CONTINUE
+- **Summary**: B39.6.1 completato - Prompt auto-valutazione placement. Nuovo file onboarding_self_assessment.py con build_self_assessment_prompt (direttiva tutor con aree, livelli forte/incerto/digiuno, marker strutturato [AUTOVALUTAZIONE]), parse_autovalutazione (parser blocco strutturato), seleziona_aree_da_grafo (selezione temi ordinati per importanza/numero nodi). 34 nuovi test. 603 backend verdi, 13 skipped.
+---

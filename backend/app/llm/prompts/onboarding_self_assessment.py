@@ -3,9 +3,15 @@
 Dopo la fase narrativa (Forma C), il tutor chiede all'utente come si sente
 su ciascuna area chiave della materia: forte / incerto / digiuno.
 Le aree vengono selezionate dal grafo curriculum (temi).
+Le aree dichiarate "forte" vengono filtrate per fondazionalità (B39.6.2)
+per decidere quali verificare con esercizi compound.
 
 Riferimento: docs/discussions/b39-onboarding-narrativo.md, Decisione 8.
 """
+
+import networkx as nx
+
+from app.grafo.algoritmi import ordinamento_topologico
 
 # Livelli di auto-valutazione — usati dal prompt, dal parser e dai test
 LIVELLI_AUTOVALUTAZIONE = ("forte", "incerto", "digiuno")
@@ -21,6 +27,9 @@ ISTRUZIONI_CHIAVE = [
 
 # Numero massimo di aree da presentare all'utente
 MAX_AREE_AUTOVALUTAZIONE = 10
+
+# Cap massimo aree fondazionali da verificare con esercizi compound (Decisione 8)
+MAX_AREE_FONDAZIONALI = 6
 
 
 def build_self_assessment_prompt(
@@ -221,3 +230,56 @@ def seleziona_aree_da_grafo(
 def _umanizza_tema_id(tema_id: str) -> str:
     """Converte un tema_id in nome leggibile (underscore -> spazi, capitalize)."""
     return tema_id.replace("_", " ").capitalize()
+
+
+def seleziona_aree_fondazionali(
+    aree_forte: list[str],
+    grafo: nx.DiGraph,
+) -> list[str]:
+    """Seleziona le aree più fondazionali tra quelle dichiarate "forte".
+
+    Dopo l'auto-valutazione, l'utente dichiara alcune aree come "forte".
+    Questa funzione seleziona le più fondazionali (i cui nodi compaiono
+    prima nell'ordine topologico del grafo) per la verifica con esercizi
+    compound. Cap a MAX_AREE_FONDAZIONALI (6) — Decisione 8.
+
+    Fondazionalità = posizione media dei nodi del tema nell'ordine topologico.
+    Posizione bassa = tema i cui concetti hanno meno prerequisiti = più fondazionale.
+
+    Args:
+        aree_forte: lista di tema_id dichiarati "forte" dall'utente.
+        grafo: NetworkX DiGraph del knowledge graph (nodi con attributi
+               tipo_nodo e tema_id).
+
+    Returns:
+        Lista di tema_id ordinata per fondazionalità decrescente
+        (i più fondazionali prima), max MAX_AREE_FONDAZIONALI elementi.
+        Aree forte non presenti nel grafo vengono ignorate.
+    """
+    if not aree_forte or grafo.number_of_nodes() == 0:
+        return []
+
+    # Ordine topologico: indice basso = più fondazionale
+    ordine = ordinamento_topologico(grafo)
+    posizione = {nodo_id: idx for idx, nodo_id in enumerate(ordine)}
+
+    # Per ogni tema forte, raccogli le posizioni dei suoi nodi operativi
+    aree_forte_set = set(aree_forte)
+    tema_posizioni: dict[str, list[int]] = {}
+
+    for nodo_id, attrs in grafo.nodes(data=True):
+        if attrs.get("tipo_nodo") != "operativo":
+            continue
+        tema_id = attrs.get("tema_id")
+        if not tema_id or tema_id not in aree_forte_set:
+            continue
+        if nodo_id in posizione:
+            tema_posizioni.setdefault(tema_id, []).append(posizione[nodo_id])
+
+    # Ordina per posizione media (più bassa = più fondazionale)
+    temi_ordinati = sorted(
+        tema_posizioni.keys(),
+        key=lambda t: sum(tema_posizioni[t]) / len(tema_posizioni[t]),
+    )
+
+    return temi_ordinati[:MAX_AREE_FONDAZIONALI]

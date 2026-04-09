@@ -495,11 +495,12 @@
 - **Note**: build_self_assessment_prompt (direttiva tutor con aree, livelli, marker strutturato), parse_autovalutazione (parser blocco [AUTOVALUTAZIONE]), seleziona_aree_da_grafo (selezione temi ordinati per importanza). 34 nuovi test. 603 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.2 — Logica selezione aree fondazionali
-- [ ] **Stato**: da fare
+- [x] **Stato**: completato (S58)
 - **Complessita'**: media
 - **Descrizione**: Funzione `seleziona_aree_fondazionali(aree_forte, grafo)` che, data la lista aree dichiarate forti dall'utente, seleziona le N piu fondazionali partendo dai nodi del grafo con meno prerequisiti. Cap a 6 per la verifica.
-- **File da toccare**: `backend/app/core/onboarding.py`
+- **File da toccare**: `backend/app/llm/prompts/onboarding_self_assessment.py`
 - **Gate**: unit test deterministici con grafo mockato
+- **Note**: Fondazionalita' calcolata come posizione media dei nodi del tema nell'ordine topologico (piu' bassa = piu' fondazionale). Costante MAX_AREE_FONDAZIONALI = 6. Ignora nodi contesto, aree non presenti nel grafo, nodi senza tema_id. 21 nuovi test. 624 backend verdi (13 skipped), ruff pulito.
 
 #### Blocco B39.6.3 — Prompt generatore esercizi compound
 - [ ] **Stato**: da fare

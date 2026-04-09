@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.6.1",
-  "total_blocks_run": 120,
+  "current_block": "B39.6.3",
+  "total_blocks_run": 122,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T01:35:43Z",
-  "last_summary": "B39.5.3 completato - Test di integrazione endpoint STT con audio reale. 3 smoke test integration (tono WAV 440Hz, silenzio WAV, formato MP3 header) + 1 test helper sempre attivo. WAV generati programmaticamente con modulo wave. Skip automatico senza OPENAI_API_KEY o senza --run-integration. 569 backend verdi, 13 skipped."
+  "last_run": "2026-04-09T02:00:00Z",
+  "last_summary": "B39.6.2 completato - Logica selezione aree fondazionali. Funzione seleziona_aree_fondazionali(aree_forte, grafo) in onboarding_self_assessment.py. Fondazionalita calcolata come posizione media nodi nell ordine topologico. Cap a 6. 21 nuovi test. 624 backend verdi, 13 skipped."
 }
