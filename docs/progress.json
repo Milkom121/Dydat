@@ -1,8 +1,8 @@
 {
   "current_phase": "10",
-  "current_block": "B39.8.4",
-  "total_blocks_run": 138,
+  "current_block": "B39.9.2",
+  "total_blocks_run": 140,
   "status": "CONTINUE",
-  "last_run": "2026-04-09T03:13:34Z",
-  "last_summary": "B39.8.3 completato. Creato ONBOARDING_SYSTEM_PROMPT dedicato in onboarding_system_prompt.py con 7 sezioni: chi sei (personificato prima persona), patto esplicito (6 punti), forma C adattiva (turno libero + domande mirate), 5 campi profilo (senza nominarli), regole tono/formato (brevita, tu informale), tool use, cosa non fare mai. Integrato in contesto.py: _blocco_system_prompt(tipo_sessione) seleziona prompt onboarding vs studio; modello Opus (LLM_MODEL_ONBOARDING) per sessioni onboarding. 21 nuovi test. 758 backend verdi (13 skipped), ruff pulito."
+  "last_run": "2026-04-09T04:15:00Z",
+  "last_summary": "B39.9.1 completato. Creato widget OnboardingPendingBanner con enum OnboardingBannerStato (nonIniziato/inCorso). Card con DydatSurface.glowCard, icona waving_hand, testi caldi italiani contestuali, CTA Inizia/Riprendi, Semantics accessibilita. 11 nuovi test. 703 frontend verdi, analyze 0."
 }
