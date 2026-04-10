@@ -518,11 +518,15 @@ class TestFlussoOnboardingE2E:
             fase = await aggiorna_fase_onboarding(db, sessione)
         assert fase == "conoscenza"  # aggiorna_fase non transisce più da sola
 
-        # Il decisore transisce a placement (profilo completo dopo i turni)
+        # Il decisore transisce a auto_valutazione (profilo completo dopo i turni)
         with patch("app.core.onboarding.carica_conversazione") as mock_conv, \
-             patch("app.core.onboarding.estrai_profilo") as mock_estrai:
+             patch("app.core.onboarding.estrai_profilo") as mock_estrai, \
+             patch("app.core.onboarding.seleziona_nodi_gateway") as mock_gw:
             mock_conv.return_value = [{"role": "user", "content": "tutto detto"}]
-            # Profilo completo → chiudi_narrativa → placement
+            mock_gw.return_value = [
+                {"nodo_id": "n1", "nome": "Equazioni", "tema_id": "algebra", "profondita": 0},
+            ]
+            # Profilo completo → chiudi_narrativa → auto_valutazione
             from app.schemas.onboarding import CampoConConfidenza, ProfiloEstratto
             mock_estrai.return_value = ProfiloEstratto(
                 chi_e=CampoConConfidenza(valore="studente", confidenza="alta"),
@@ -533,13 +537,12 @@ class TestFlussoOnboardingE2E:
             )
             decisione = await elabora_decisione_onboarding(db, sessione)
             assert decisione is not None
-            assert sessione.stato_orchestratore["fase_onboarding"] == "placement"
+            assert sessione.stato_orchestratore["fase_onboarding"] == "auto_valutazione"
 
-        # Step 5: Transizione placement → piano (via segnale)
-        nuova_fase = await transizione_fase_onboarding(db, sessione, "piano")
-        assert nuova_fase == "piano"
+        # Step 5: Simula passaggio da auto_valutazione a placement
+        sessione.stato_orchestratore["fase_onboarding"] = "placement"
 
-        # Step 6: Transizione piano → conclusione (via segnale)
+        # Step 6: Transizione placement → conclusione (via segnale)
         nuova_fase = await transizione_fase_onboarding(db, sessione, "conclusione")
         assert nuova_fase == "conclusione"
 
@@ -677,29 +680,35 @@ class TestOnboardingDomandaTool:
 
 
 class TestDirettivaOnboardingAdattiva:
-    def test_accoglienza_menziona_onboarding_domanda(self):
+    def test_accoglienza_vieta_tool_use(self):
+        """B39-FIX: accoglienza è testo libero, NO tool use."""
         d = direttiva_onboarding(fase="accoglienza")
-        assert "onboarding_domanda" in d
+        assert "NON chiamare il tool `onboarding_domanda`" in d
 
-    def test_accoglienza_menziona_checklist(self):
+    def test_accoglienza_menziona_patto(self):
         d = direttiva_onboarding(fase="accoglienza")
-        assert "CHECKLIST" in d
+        assert "patto esplicito" in d
 
-    def test_accoglienza_menziona_scelta_singola(self):
+    def test_accoglienza_primo_turno(self):
         d = direttiva_onboarding(fase="accoglienza")
-        assert "scelta_singola" in d
+        assert "PRIMO TURNO" in d
 
-    def test_conoscenza_menziona_onboarding_domanda(self):
+    def test_conoscenza_vieta_tool_use(self):
+        """B39-FIX: conoscenza è testo libero, NO tool use."""
         d = direttiva_onboarding(fase="conoscenza")
-        assert "onboarding_domanda" in d
+        assert "NON chiamare `onboarding_domanda`" in d
 
     def test_conoscenza_menziona_una_domanda(self):
         d = direttiva_onboarding(fase="conoscenza")
-        assert "UNA domanda per turno" in d
+        assert "UNA domanda naturale" in d
 
     def test_conoscenza_include_info_raccolte(self):
         d = direttiva_onboarding(fase="conoscenza", info_raccolte="studente, matematica")
         assert "studente, matematica" in d
+
+    def test_conoscenza_include_prossimo_campo(self):
+        d = direttiva_onboarding(fase="conoscenza", prossimo_campo="motivo")
+        assert "perché vuole imparare" in d
 
     def test_conclusione_vieta_onboarding_domanda(self):
         d = direttiva_onboarding(fase="conclusione")
@@ -722,7 +731,7 @@ class TestDirettivaOnboardingAdattiva:
 class TestFasiOnboarding:
     def test_fasi_onboarding_ordine(self):
         assert FASI_ONBOARDING == (
-            "accoglienza", "conoscenza", "placement", "piano", "conclusione"
+            "accoglienza", "conoscenza", "auto_valutazione", "placement", "conclusione"
         )
 
     def test_tetto_turni_narrativi(self):
@@ -733,17 +742,19 @@ class TestFasiOnboarding:
 
 class TestTransizioneFaseOnboarding:
     @pytest.mark.asyncio
-    async def test_placement_a_piano(self):
+    async def test_placement_a_conclusione(self):
+        """B39-FIX: placement va direttamente a conclusione (piano rimossa)."""
         db = AsyncMock()
         sessione = _mock_sessione(
             stato_orchestratore={"fase_onboarding": "placement"}
         )
-        nuova = await transizione_fase_onboarding(db, sessione, "piano")
-        assert nuova == "piano"
-        assert sessione.stato_orchestratore["fase_onboarding"] == "piano"
+        nuova = await transizione_fase_onboarding(db, sessione, "conclusione")
+        assert nuova == "conclusione"
+        assert sessione.stato_orchestratore["fase_onboarding"] == "conclusione"
 
     @pytest.mark.asyncio
-    async def test_piano_a_conclusione(self):
+    async def test_piano_a_conclusione_backcompat(self):
+        """Back-compat: piano → conclusione per sessioni legacy."""
         db = AsyncMock()
         sessione = _mock_sessione(
             stato_orchestratore={"fase_onboarding": "piano"}
@@ -937,6 +948,7 @@ class TestPlacementEsitoSignal:
 
     @pytest.mark.asyncio
     async def test_processa_transizione_fase(self):
+        """B39-FIX: placement → conclusione (piano rimossa)."""
         from app.core.elaborazione import _processa_transizione_fase
 
         db = AsyncMock()
@@ -952,11 +964,11 @@ class TestPlacementEsitoSignal:
 
         await _processa_transizione_fase(
             db,
-            {"fase_destinazione": "piano"},
+            {"fase_destinazione": "conclusione"},
             sessione_id,
         )
 
-        assert sess.stato_orchestratore["fase_onboarding"] == "piano"
+        assert sess.stato_orchestratore["fase_onboarding"] == "conclusione"
 
 
 class TestGetOnboardingToolsFase:
@@ -1028,28 +1040,19 @@ class TestDirettivaPlacement:
 
 
 class TestDirettivaPiano:
-    def test_piano_menziona_piano_studio(self):
-        d = direttiva_onboarding(fase="piano")
-        assert "Piano Studio" in d
+    """B39-FIX: fase piano rimossa, delega a conclusione per back-compat."""
 
-    def test_piano_include_risultati_placement(self):
-        risultati = {
-            "esiti": [
-                {"nodo_id": "nodo_1", "padroneggiato": True},
-                {"nodo_id": "nodo_2", "padroneggiato": False},
-            ]
-        }
-        d = direttiva_onboarding(fase="piano", placement_risultati=risultati)
-        assert "nodo_1" in d
-        assert "nodo_2" in d
-
-    def test_piano_menziona_transizione_fase(self):
+    def test_piano_delega_a_conclusione(self):
         d = direttiva_onboarding(fase="piano")
-        assert "transizione_fase" in d
+        assert "Conclusione" in d
 
-    def test_piano_menziona_onboarding_domanda(self):
+    def test_piano_vieta_onboarding_domanda(self):
         d = direttiva_onboarding(fase="piano")
-        assert "onboarding_domanda" in d
+        assert "NON usare onboarding_domanda" in d
+
+    def test_piano_include_info_raccolte(self):
+        d = direttiva_onboarding(fase="piano", info_raccolte="studente 20 anni")
+        assert "studente 20 anni" in d
 
 
 class TestCompletaOnboardingPlacement:

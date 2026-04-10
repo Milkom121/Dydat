@@ -98,19 +98,29 @@ class TestElaboraDecisioneOnboarding:
     @pytest.mark.asyncio
     @patch("app.core.onboarding.estrai_profilo")
     @patch("app.core.onboarding.carica_conversazione")
-    async def test_fase_non_conoscenza_ritorna_none(
+    async def test_fase_non_narrativa_ritorna_none(
         self, mock_carica, mock_estrai
     ):
-        """Se la fase non è conoscenza, non si fa nulla."""
+        """Se la fase non è narrativa (placement/conclusione), non si fa nulla."""
         db = _mock_db()
-        for fase in ("accoglienza", "placement", "piano", "conclusione"):
+        for fase in ("placement", "conclusione"):
             sess = _mock_sessione(fase=fase)
             risultato = await elabora_decisione_onboarding(db, sess)
             assert risultato is None
 
-        # L'estrattore non deve essere chiamato
+        # L'estrattore non deve essere chiamato per fasi non narrative
         mock_carica.assert_not_called()
         mock_estrai.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_accoglienza_ritorna_decisione(self):
+        """In accoglienza, il decisore ritorna una Decisione (non None)."""
+        db = _mock_db()
+        sess = _mock_sessione(fase="accoglienza")
+        risultato = await elabora_decisione_onboarding(db, sess)
+        assert risultato is not None
+        assert risultato.azione == AzioneDecisore.chiedi_campo_mancante
+        assert risultato.campo_da_chiedere == "chi_e"
 
     @pytest.mark.asyncio
     @patch("app.core.onboarding.estrai_profilo")
@@ -144,10 +154,11 @@ class TestElaboraDecisioneOnboarding:
     @pytest.mark.asyncio
     @patch("app.core.onboarding.estrai_profilo")
     @patch("app.core.onboarding.carica_conversazione")
+    @patch("app.core.onboarding.seleziona_nodi_gateway")
     async def test_profilo_completo_chiudi_narrativa(
-        self, mock_carica, mock_estrai
+        self, mock_gateway, mock_carica, mock_estrai
     ):
-        """Con profilo completo, il decisore chiude la narrativa → placement."""
+        """Con profilo completo, il decisore chiude la narrativa → auto_valutazione."""
         db = _mock_db()
         sess = _mock_sessione(fase="conoscenza", turni=3)
 
@@ -156,6 +167,9 @@ class TestElaboraDecisioneOnboarding:
             {"role": "user", "content": "Racconto tutto di me..."},
         ]
         mock_estrai.return_value = _profilo_completo()
+        mock_gateway.return_value = [
+            {"nodo_id": "n1", "nome": "Equazioni", "tema_id": "algebra", "profondita": 0},
+        ]
 
         decisione = await elabora_decisione_onboarding(db, sess)
 
@@ -163,16 +177,18 @@ class TestElaboraDecisioneOnboarding:
         assert decisione.azione == AzioneDecisore.chiudi_narrativa
         assert decisione.campo_da_chiedere is None
 
-        # Transizione a placement
-        assert sess.stato_orchestratore["fase_onboarding"] == "placement"
+        # Transizione a auto_valutazione (non più placement diretto)
+        assert sess.stato_orchestratore["fase_onboarding"] == "auto_valutazione"
+        assert sess.stato_orchestratore["nodo_da_valutare"] is not None
 
     @pytest.mark.asyncio
     @patch("app.core.onboarding.estrai_profilo")
     @patch("app.core.onboarding.carica_conversazione")
+    @patch("app.core.onboarding.seleziona_nodi_gateway")
     async def test_tetto_turni_forza_chiusura(
-        self, mock_carica, mock_estrai
+        self, mock_gateway, mock_carica, mock_estrai
     ):
-        """Al tetto turni, forza chiusura anche con profilo vuoto → placement."""
+        """Al tetto turni, forza chiusura anche con profilo vuoto → auto_valutazione."""
         db = _mock_db()
         sess = _mock_sessione(
             fase="conoscenza",
@@ -183,14 +199,17 @@ class TestElaboraDecisioneOnboarding:
             {"role": "user", "content": "boh"},
         ]
         mock_estrai.return_value = _profilo_vuoto()
+        mock_gateway.return_value = [
+            {"nodo_id": "n1", "nome": "Frazioni", "tema_id": "aritmetica", "profondita": 0},
+        ]
 
         decisione = await elabora_decisione_onboarding(db, sess)
 
         assert decisione is not None
         assert decisione.azione == AzioneDecisore.forza_chiusura_tetto_turni
 
-        # Transizione a placement
-        assert sess.stato_orchestratore["fase_onboarding"] == "placement"
+        # Transizione a auto_valutazione (non più placement diretto)
+        assert sess.stato_orchestratore["fase_onboarding"] == "auto_valutazione"
 
     @pytest.mark.asyncio
     @patch("app.core.onboarding.estrai_profilo")
@@ -327,23 +346,27 @@ class TestElaboraDecisioneOnboarding:
     async def test_stato_orchestratore_none_trattato_come_accoglienza(
         self, mock_carica, mock_estrai
     ):
-        """Se stato_orchestratore è None, la fase è 'accoglienza' → nessuna decisione."""
+        """Se stato_orchestratore è None, la fase è 'accoglienza' → Decisione chi_e."""
         db = _mock_db()
         sess = MagicMock()
         sess.id = uuid.uuid4()
         sess.stato_orchestratore = None
 
         risultato = await elabora_decisione_onboarding(db, sess)
-        assert risultato is None
+        # Accoglienza ora restituisce Decisione (B39-FIX)
+        assert risultato is not None
+        assert risultato.azione == AzioneDecisore.chiedi_campo_mancante
+        assert risultato.campo_da_chiedere == "chi_e"
         mock_estrai.assert_not_called()
 
     @pytest.mark.asyncio
+    @patch("app.core.onboarding.seleziona_nodi_gateway")
     @patch("app.core.onboarding.estrai_profilo")
     @patch("app.core.onboarding.carica_conversazione")
     async def test_profilo_con_media_confidenza_e_completo(
-        self, mock_carica, mock_estrai
+        self, mock_carica, mock_estrai, mock_gateway
     ):
-        """Campi con confidenza media contano come completi → chiudi narrativa."""
+        """Campi con confidenza media contano come completi → chiudi narrativa → auto_valutazione."""
         db = _mock_db()
         sess = _mock_sessione(fase="conoscenza", turni=4)
 
@@ -356,11 +379,15 @@ class TestElaboraDecisioneOnboarding:
         )
         mock_carica.return_value = [{"role": "user", "content": "..."}]
         mock_estrai.return_value = profilo
+        mock_gateway.return_value = [
+            {"nodo_id": "n1", "nome": "Frazioni", "tema_id": "aritmetica", "profondita": 0},
+        ]
 
         decisione = await elabora_decisione_onboarding(db, sess)
 
         assert decisione.azione == AzioneDecisore.chiudi_narrativa
-        assert sess.stato_orchestratore["fase_onboarding"] == "placement"
+        # B39-FIX: transisce a auto_valutazione, non più placement diretto
+        assert sess.stato_orchestratore["fase_onboarding"] == "auto_valutazione"
 
     @pytest.mark.asyncio
     @patch("app.core.onboarding.estrai_profilo")

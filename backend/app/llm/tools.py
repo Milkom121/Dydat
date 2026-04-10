@@ -99,10 +99,23 @@ AZIONI_LOOP_1: list[dict] = [
     {
         "name": "onboarding_domanda",
         "description": (
-            "SOLO DURANTE ONBOARDING. Presenta una domanda allo studente "
-            "con un formato UI specifico. Usa questa azione per OGNI domanda "
-            "durante l'onboarding. Il testo descrittivo va nel messaggio "
-            "testuale, la domanda strutturata va qui."
+            "SOLO DURANTE ONBOARDING, e SOLO in due fasi specifiche: "
+            "(1) AUTO-VALUTAZIONE — quando chiedi allo studente quanto si sente "
+            "forte/incerto/digiuno su un'area del curriculum (usa "
+            "tipo_input='scelta_singola' con opzioni forte/incerto/digiuno, "
+            "oppure tipo_input='scala' per una scala numerica con etichette); "
+            "(2) PLACEMENT TEST — quando proponi un esercizio a scelta multipla "
+            "per verificare una conoscenza che lo studente ha dichiarato 'forte' "
+            "(usa tipo_input='scelta_singola' con le opzioni dell'esercizio). "
+            "NON USARE QUESTO TOOL durante la FASE NARRATIVA (accoglienza e "
+            "conoscenza — i primi turni conversazionali in cui stai scoprendo "
+            "chi e lo studente, perche studia, come impara, quanto tempo ha, "
+            "il suo rapporto con la materia). In fase narrativa DEVI chattare "
+            "liberamente nel messaggio testuale, facendo domande aperte "
+            "formulate in modo naturale come in una conversazione umana — mai "
+            "strutturate, mai con pulsanti. Sara la direttiva del turno a "
+            "dirti esplicitamente quando sei entrato in fase auto-valutazione "
+            "o placement; finche non te lo dice, solo chat libera."
         ),
         "input_schema": {
             "type": "object",

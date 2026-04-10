@@ -265,80 +265,69 @@ def direttiva_onboarding(
     *,
     fase: str,
     info_raccolte: str | None = None,
+    prossimo_campo: str | None = None,
+    nodo_da_valutare: dict | None = None,
     nodi_gateway: list[dict] | None = None,
     placement_risultati: dict | None = None,
 ) -> str:
-    """Direttiva per le fasi di onboarding.
+    """Direttiva per le fasi di onboarding narrativo.
 
-    Fasi: accoglienza → conoscenza → placement → piano → conclusione.
-    Il tutor usa l'azione `onboarding_domanda` per presentare domande
-    strutturate allo studente. Ogni turno: breve commento + una domanda.
+    Fasi: accoglienza → conoscenza → auto_valutazione → placement → conclusione.
+    Accoglienza e conoscenza: testo libero conversazionale, NO tool use.
+    Auto-valutazione e placement: usa onboarding_domanda per input strutturato.
     """
     if fase == "accoglienza":
         return (
-            "ATTIVITÀ: Onboarding — Accoglienza\n"
+            "ATTIVITÀ: Onboarding — Primo turno (accoglienza narrativa)\n"
             "FASE: accoglienza\n\n"
-            "⚠️ VINCOLO ASSOLUTO — LEGGI CON ATTENZIONE:\n"
-            "DEVI chiamare il tool `onboarding_domanda` in OGNI turno.\n"
-            "NON scrivere MAI domande nel testo. Le domande vanno SOLO "
-            "nel tool. Il testo serve solo per brevi commenti (max 2 frasi).\n"
-            "Se non chiami il tool, il turno è considerato FALLITO.\n\n"
-            "FORMATO TURNO OBBLIGATORIO:\n"
-            "1. Testo: 1-2 frasi BREVI di presentazione (NO domande, "
-            "NO elenchi, NO asterischi, NO formattazione elaborata)\n"
-            "2. Tool call: `onboarding_domanda` con UNA domanda\n\n"
-            "REGOLA TIPO INPUT:\n"
-            "- Preferisci SEMPRE `scelta_singola`. Aggiungi 'Altro' come "
-            "ultima opzione se lo studente potrebbe voler rispondere liberamente.\n"
-            "- Usa `scala` solo per misurare confidenza/livello numerico.\n"
-            "- Usa `testo_libero` SOLO se nessuna delle precedenti funziona "
-            "(es: 'Come ti chiami?').\n\n"
-            "CHECKLIST (cose da scoprire):\n"
-            "- Chi è: studente, lavoratore, adulto che torna a studiare?\n"
-            "- Materia: matematica, fisica, chimica (o più di una)\n"
-            "- Livello attuale: dove si trova? Ultimo argomento?\n"
-            "- Confidenza: come si sente con la materia?\n"
-            "- Urgenza: esame vicino? curiosità? obiettivo?\n"
-            "- Stile: teoria prima, esercizi subito, o mix?\n"
-            "- Punto di partenza: da dove vuole cominciare?\n\n"
-            "Obiettivo: 5-8 turni. Se una risposta copre più punti, "
-            "salta avanti.\n\n"
-            "ORA: Presentati brevemente (2 frasi), poi chiama "
-            "`onboarding_domanda` con tipo_input='scelta_singola', "
-            "domanda='Come ti descriveresti?', "
-            "opzioni=['Sono uno studente', 'Voglio imparare per conto mio', "
-            "'Sto riprendendo dopo tanto tempo']."
+            "Questo è il PRIMO TURNO dell'onboarding. Segui esattamente il sistema prompt:\n"
+            "1. Dichiara il patto esplicito (chi sei, cosa fai, perché, quanto dura, "
+            "che può saltare, che può parlare a voce)\n"
+            "2. Chiudi con un invito aperto a raccontarsi "
+            "(NO domande strutturate, NO tool use)\n\n"
+            "NON chiamare il tool `onboarding_domanda` in questo turno.\n"
+            "Il formato è testo libero conversazionale."
         )
     elif fase == "conoscenza":
+        # Mappa campo tecnico → descrizione naturale per la direttiva
+        _descrizione_campo = {
+            "chi_e": "chi è (studente, lavoratore, adulto che riprende...)",
+            "motivo": "perché vuole imparare (esame, curiosità, lavoro...)",
+            "stile_cognitivo": "come preferisce studiare (teoria, pratica, mix...)",
+            "tempo_disponibile": "quanto tempo ha a disposizione",
+            "vissuto_scolastico": "il suo rapporto passato con la materia",
+        }
+        campo_desc = _descrizione_campo.get(
+            prossimo_campo or "", prossimo_campo or "(nessun campo specifico)"
+        )
         return (
-            "ATTIVITÀ: Onboarding — Conoscenza\n"
+            "ATTIVITÀ: Onboarding — Conoscenza narrativa\n"
             "FASE: conoscenza\n\n"
-            f"INFO RACCOLTE FINORA: {info_raccolte or '(nessuna)'}\n\n"
-            "⚠️ VINCOLO ASSOLUTO:\n"
-            "DEVI chiamare il tool `onboarding_domanda` in questo turno.\n"
-            "NON scrivere domande nel testo. Solo nel tool.\n\n"
-            "FORMATO TURNO OBBLIGATORIO:\n"
-            "1. Testo: commenta la risposta (1-2 frasi BREVI, "
-            "interesse genuino, NO elenchi, NO formattazione elaborata)\n"
-            "2. Tool call: `onboarding_domanda` con la prossima domanda\n\n"
-            "REGOLA TIPO INPUT:\n"
-            "- Preferisci SEMPRE `scelta_singola`. Aggiungi 'Altro' come "
-            "ultima opzione se servono risposte libere.\n"
-            "- Usa `scala` solo per misurare confidenza/livello (1-5).\n"
-            "- Usa `testo_libero` SOLO come ultima risorsa.\n\n"
-            "CHECKLIST (scopri ciò che non sai ancora):\n"
-            "- Chi è: studente, lavoratore, adulto che torna a studiare?\n"
-            "- Materia: matematica, fisica, chimica?\n"
-            "- Livello attuale: ultimo argomento studiato/capito?\n"
-            "- Confidenza: come si sente (usa scala 1-5)\n"
-            "- Urgenza/obiettivo: esame, concorso, curiosità, recupero?\n"
-            "- Stile: teoria-poi-pratica, subito-esercizi, mix?\n"
-            "- Punto di partenza: da dove vuole cominciare?\n\n"
-            "REGOLE:\n"
-            "- UNA domanda per turno, MAI di più\n"
-            "- Se la risposta copre più punti, salta domande già coperte\n"
-            "- Adatta il linguaggio: a uno studente 'cosa fate in classe?', "
-            "a un adulto 'qual è l'ultima cosa che ricordi bene?'"
+            f"INFO GIÀ RACCOLTE: {info_raccolte or '(nessuna)'}\n"
+            f"CAMPO DA APPROFONDIRE: {campo_desc}\n\n"
+            "Formato turno:\n"
+            "1. Commento breve (1-2 frasi) su quello che ha appena detto lo studente\n"
+            "2. UNA domanda naturale, conversazionale, sul campo da approfondire\n\n"
+            "NON chiamare `onboarding_domanda`. La domanda va nel testo.\n"
+            "NON nominare mai il campo letterale ('stile cognitivo', 'vissuto'). "
+            "Usa parafrasi naturali.\n"
+            "Massimo 4-5 righe."
+        )
+    elif fase == "auto_valutazione":
+        nodo_nome = (
+            nodo_da_valutare.get("nome", "questo argomento")
+            if nodo_da_valutare
+            else "questo argomento"
+        )
+        return (
+            "ATTIVITÀ: Onboarding — Auto-valutazione\n"
+            "FASE: auto_valutazione\n"
+            f"NODO: {nodo_nome}\n\n"
+            "Commenta brevemente (1 frase) poi chiama `onboarding_domanda` con:\n"
+            f"- tipo_input='scelta_singola'\n"
+            f"- domanda='Come ti senti con {nodo_nome}?'\n"
+            "- opzioni=['Forte, lo so bene', 'Incerto, mi serve ripassare', "
+            "'Digiuno, mai visto']"
         )
     elif fase == "placement":
         # Prepara lista nodi gateway per il prompt
@@ -364,18 +353,15 @@ def direttiva_onboarding(
             "ATTIVITÀ: Onboarding — Placement Test\n"
             "FASE: placement\n\n"
             f"INFO RACCOLTE: {info_raccolte or '(nessuna)'}\n\n"
-            "⚠️ VINCOLO ASSOLUTO:\n"
-            "DEVI chiamare il tool `onboarding_domanda` in questo turno.\n"
-            "NON scrivere domande nel testo. Solo nel tool.\n\n"
             "OBIETTIVO: Mini-test diagnostico rapido. Fai 2-3 domande "
             "su concetti chiave per capire dove lo studente si trova.\n\n"
             "NODI GATEWAY DISPONIBILI (in ordine di profondità):\n"
             f"{nodi_str}\n\n"
             f"ESITI GIÀ RACCOLTI:\n{esiti_str}\n\n"
-            "FORMATO TURNO OBBLIGATORIO:\n"
+            "FORMATO TURNO:\n"
             "1. Testo: commento breve (1-2 frasi) — tipo 'Ottimo, ora vediamo "
             "come te la cavi con qualche domanda veloce'\n"
-            "2. Tool call: `onboarding_domanda` con tipo_input='scelta_singola' "
+            "2. Tool call: `onboarding_domanda` con tipo_input='testo_libero' "
             "— domanda su un concetto gateway\n"
             "3. Segnale: `placement_esito` dopo aver valutato la risposta\n\n"
             "REGOLE:\n"
@@ -385,43 +371,10 @@ def direttiva_onboarding(
             "- Massimo 3-4 domande — non è un esame!\n"
             "- Le domande devono essere accessibili, non intimidatorie\n"
             "- Quando hai abbastanza informazioni, emetti segnale "
-            "`transizione_fase` con fase_destinazione='piano'"
+            "`transizione_fase` con fase_destinazione='conclusione'"
         )
-    elif fase == "piano":
-        # Prepara riepilogo placement
-        piano_str = "(nessun risultato placement)"
-        if placement_risultati and placement_risultati.get("esiti"):
-            righe = []
-            for e in placement_risultati["esiti"]:
-                stato_e = "padroneggiato" if e.get("padroneggiato") else "da lavorare"
-                righe.append(f"- {e['nodo_id']}: {stato_e}")
-            piano_str = "\n".join(righe)
-
-        return (
-            "ATTIVITÀ: Onboarding — Proposta Piano Studio\n"
-            "FASE: piano\n\n"
-            f"INFO RACCOLTE: {info_raccolte or '(nessuna)'}\n\n"
-            f"RISULTATI PLACEMENT:\n{piano_str}\n\n"
-            "⚠️ VINCOLO:\n"
-            "DEVI chiamare il tool `onboarding_domanda` con una domanda "
-            "di conferma (tipo scelta_singola).\n\n"
-            "ISTRUZIONI:\n"
-            "1. Presenta un riepilogo dei risultati del placement (2-3 righe)\n"
-            "2. Proponi un piano studio personalizzato:\n"
-            "   - Da dove si parte (primo concetto da lavorare)\n"
-            "   - Cosa verrà coperto nelle prime sessioni\n"
-            "   - Tono positivo: 'Hai già una buona base, partiamo da X'\n"
-            "3. Chiama `onboarding_domanda` con domanda tipo "
-            "'Ti sembra un buon piano?' e opzioni di conferma/modifica\n"
-            "4. Dopo la risposta, emetti `transizione_fase` con "
-            "fase_destinazione='conclusione'\n\n"
-            "REGOLE:\n"
-            "- NON elencare tutti i nodi del grafo\n"
-            "- Usa nomi comprensibili (non nodo_id tecnici)\n"
-            "- Max 5-6 righe per il piano\n"
-            "- Il piano deve far sentire lo studente motivato, non sopraffatto"
-        )
-    elif fase == "conclusione":
+    elif fase in ("piano", "conclusione"):
+        # fase piano rimossa: back-compat, delega a conclusione
         return (
             "ATTIVITÀ: Onboarding — Conclusione\n"
             "FASE: conclusione\n\n"

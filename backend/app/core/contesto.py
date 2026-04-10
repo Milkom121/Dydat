@@ -343,7 +343,11 @@ async def _genera_direttiva(
             "fase": fase,
             "info_raccolte": stato_orch.get("info_raccolte"),
         }
-        if fase == "placement":
+        if fase == "conoscenza":
+            kwargs["prossimo_campo"] = stato_orch.get("prossimo_campo")
+        elif fase == "auto_valutazione":
+            kwargs["nodo_da_valutare"] = stato_orch.get("nodo_da_valutare")
+        elif fase == "placement":
             kwargs["nodi_gateway"] = seleziona_nodi_gateway()
             kwargs["placement_risultati"] = stato_orch.get("placement_risultati")
         elif fase == "piano":

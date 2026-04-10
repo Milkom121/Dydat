@@ -58,8 +58,8 @@ from app.schemas.onboarding import (
 
 logger = logging.getLogger(__name__)
 
-# Fasi onboarding in ordine
-FASI_ONBOARDING = ("accoglienza", "conoscenza", "placement", "piano", "conclusione")
+# Fasi onboarding in ordine (piano rimossa in B39-FIX, auto_valutazione aggiunta)
+FASI_ONBOARDING = ("accoglienza", "conoscenza", "auto_valutazione", "placement", "conclusione")
 
 # Tetto massimo turni narrativi prima di chiusura forzata (Decisione 4)
 TETTO_TURNI_NARRATIVI = 7
@@ -146,23 +146,51 @@ async def elabora_decisione_onboarding(
     db: AsyncSession,
     sessione: Sessione,
 ) -> Decisione | None:
-    """Dopo un turno in fase conoscenza, estrae profilo e decide prossima mossa.
+    """Dopo un turno onboarding, estrae profilo e decide prossima mossa.
 
-    Flusso:
+    Gestisce le fasi: accoglienza, conoscenza, auto_valutazione.
+    Le fasi placement e conclusione sono guidate dal segnale LLM.
+
+    Flusso conoscenza:
     1. Carica conversazione dal DB
     2. Chiama estrattore Opus per aggiornare il profilo a 5 campi
     3. Chiama decisore rules-based per la prossima mossa
-    4. Salva profilo + decisione nello stato_orchestratore
-    5. Se chiudi_narrativa o forza_chiusura → transizione a placement
+    4. Salva profilo + decisione + prossimo_campo nello stato_orchestratore
+    5. Se chiudi_narrativa o forza_chiusura → transizione a auto_valutazione
+
+    Flusso auto_valutazione:
+    Emette decisione corrente (il cycling dei nodi è gestito da
+    aggiorna_fase_onboarding che gira pre-turno).
 
     Returns:
-        Decisione se fase == conoscenza, None altrimenti.
+        Decisione per fasi narrative, None per placement/conclusione.
     """
     stato = sessione.stato_orchestratore or {}
     fase = stato.get("fase_onboarding", "accoglienza")
 
-    if fase != "conoscenza":
+    # Solo fasi narrative gestite dal decisore
+    if fase not in ("accoglienza", "conoscenza", "auto_valutazione"):
         return None
+
+    # --- Accoglienza: transizione già gestita da aggiorna_fase_onboarding ---
+    if fase == "accoglienza":
+        return Decisione(
+            azione=AzioneDecisore.chiedi_campo_mancante,
+            campo_da_chiedere="chi_e",
+            motivo="Inizio conoscenza narrativa",
+        )
+
+    # --- Auto-valutazione: emette stato corrente per evento SSE ---
+    if fase == "auto_valutazione":
+        nodo = stato.get("nodo_da_valutare")
+        autoval = stato.get("autovalutazioni", {})
+        return Decisione(
+            azione=AzioneDecisore.chiedi_campo_mancante,
+            campo_da_chiedere=nodo.get("nome") if nodo else None,
+            motivo=f"Auto-valutazione: {len(autoval)} aree valutate",
+        )
+
+    # --- Conoscenza: estrattore profilo + decisore forma C ---
 
     # 1. Carica conversazione per l'estrattore
     conversazione = await carica_conversazione(db, sessione.id)
@@ -176,20 +204,31 @@ async def elabora_decisione_onboarding(
     # 4. Decidi prossima mossa
     decisione = decidi_prossima_mossa(profilo, turni_fatti)
 
-    # 5. Salva profilo e decisione nello stato_orchestratore
+    # 5. Salva profilo, decisione e prossimo_campo nello stato_orchestratore
     stato["profilo_estratto"] = profilo.model_dump()
     stato["ultima_decisione"] = decisione.model_dump()
 
-    # 6. Se chiudi_narrativa o forza_chiusura → transizione a placement
+    # Salva prossimo_campo per la direttiva del turno successivo
+    if decisione.azione == AzioneDecisore.chiedi_campo_mancante:
+        stato["prossimo_campo"] = decisione.campo_da_chiedere
+
+    # 6. Se chiudi_narrativa o forza_chiusura → transizione a auto_valutazione
     if decisione.azione in (
         AzioneDecisore.chiudi_narrativa,
         AzioneDecisore.forza_chiusura_tetto_turni,
     ):
-        stato["fase_onboarding"] = "placement"
+        # Inizializza auto_valutazione con nodi gateway
+        gateway = seleziona_nodi_gateway()
+        stato["fase_onboarding"] = "auto_valutazione"
+        stato["nodi_gateway_auto_valutazione"] = gateway
+        stato["nodo_da_valutare"] = gateway[0] if gateway else None
+        stato["autovalutazioni"] = {}
+        stato["turni_auto_valutazione"] = 0
         logger.info(
-            "Onboarding: conoscenza → placement (decisore: %s, turni=%d)",
+            "Onboarding: conoscenza → auto_valutazione (decisore: %s, turni=%d, gateway=%d)",
             decisione.azione.value,
             turni_fatti,
+            len(gateway),
         )
 
     sessione.stato_orchestratore = stato
@@ -667,6 +706,21 @@ async def crea_sessione_onboarding(
     return sessione
 
 
+def _parsa_livello_autovalutazione(messaggio: str) -> str:
+    """Estrae il livello di autovalutazione dalla risposta dello studente.
+
+    Matching fuzzy sulle parole chiave delle 3 opzioni presentate.
+    Default a 'incerto' se non riconosciuto (conservativo).
+    """
+    msg = messaggio.lower().strip()
+    if "forte" in msg or "lo so bene" in msg:
+        return "forte"
+    if "digiuno" in msg or "mai visto" in msg or "mai fatto" in msg:
+        return "digiuno"
+    # Default conservativo
+    return "incerto"
+
+
 async def aggiorna_fase_onboarding(
     db: AsyncSession,
     sessione: Sessione,
@@ -676,11 +730,11 @@ async def aggiorna_fase_onboarding(
     Logica automatica (senza segnale):
     - Primo turno: accoglienza
     - Dopo 1° risposta studente: conoscenza (+ incrementa contatore turni)
+    - Auto-valutazione: processa risposta, cicla nodi, transizione a placement
 
-    La transizione conoscenza→placement è gestita dal decisore forma C
+    La transizione conoscenza→auto_valutazione è gestita dal decisore forma C
     (elabora_decisione_onboarding, chiamato post-turno dall'API).
-    Le transizioni placement→piano e piano→conclusione sono guidate
-    dal segnale transizione_fase emesso dal LLM.
+    La transizione placement→conclusione è guidata dal segnale transizione_fase.
     """
     stato = sessione.stato_orchestratore or {}
     fase = stato.get("fase_onboarding", "accoglienza")
@@ -699,21 +753,76 @@ async def aggiorna_fase_onboarding(
             fase = "conoscenza"
             stato["fase_onboarding"] = fase
             stato["turni_conoscenza"] = 0
+            # Primo campo da approfondire (default, il decisore lo affinerà)
+            stato["prossimo_campo"] = "chi_e"
             sessione.stato_orchestratore = stato
             flag_modified(sessione, "stato_orchestratore")
             await db.flush()
             logger.info("Onboarding: accoglienza → conoscenza")
 
     elif fase == "conoscenza":
-        # Incrementa contatore turni — la transizione a placement è gestita
-        # dal decisore forma C in elabora_decisione_onboarding (B39.3.2)
+        # Incrementa contatore turni — la transizione a auto_valutazione è gestita
+        # dal decisore forma C in elabora_decisione_onboarding
         turni = stato.get("turni_conoscenza", 0) + 1
         stato["turni_conoscenza"] = turni
         sessione.stato_orchestratore = stato
         flag_modified(sessione, "stato_orchestratore")
         await db.flush()
 
-    # placement e piano: transizioni guidate da segnale transizione_fase
+    elif fase == "auto_valutazione":
+        turni_av = stato.get("turni_auto_valutazione", 0)
+
+        if turni_av >= 1:
+            # Lo studente ha risposto a una domanda auto_valutazione precedente:
+            # processa la risposta e cicla al nodo successivo
+            nodo_corrente = stato.get("nodo_da_valutare")
+            if nodo_corrente:
+                # Recupera ultimo messaggio utente
+                result = await db.execute(
+                    select(TurnoConversazione.contenuto).where(
+                        TurnoConversazione.sessione_id == sessione.id,
+                        TurnoConversazione.ruolo == "utente",
+                    ).order_by(TurnoConversazione.ordine.desc()).limit(1)
+                )
+                ultimo_msg = result.scalar_one_or_none() or ""
+                livello = _parsa_livello_autovalutazione(ultimo_msg)
+
+                autoval = stato.get("autovalutazioni", {})
+                tema_id = nodo_corrente.get("tema_id") or nodo_corrente.get("nodo_id", "")
+                if tema_id:
+                    autoval[tema_id] = livello
+                stato["autovalutazioni"] = autoval
+
+                # Seleziona prossimo nodo gateway non ancora valutato
+                gateway_nodes = stato.get("nodi_gateway_auto_valutazione", [])
+                temi_valutati = set(autoval.keys())
+
+                nodo_successivo = None
+                for gw in gateway_nodes:
+                    gw_tema = gw.get("tema_id", "")
+                    if gw_tema and gw_tema not in temi_valutati:
+                        nodo_successivo = gw
+                        break
+
+                if nodo_successivo:
+                    stato["nodo_da_valutare"] = nodo_successivo
+                else:
+                    # Tutte le aree valutate → transizione a placement
+                    fase = "placement"
+                    stato["fase_onboarding"] = "placement"
+                    stato["nodo_da_valutare"] = None
+                    logger.info(
+                        "Onboarding: auto_valutazione → placement (%d aree valutate)",
+                        len(autoval),
+                    )
+
+        # Incrementa contatore turni auto_valutazione
+        stato["turni_auto_valutazione"] = turni_av + 1
+        sessione.stato_orchestratore = stato
+        flag_modified(sessione, "stato_orchestratore")
+        await db.flush()
+
+    # placement e conclusione: transizioni guidate da segnale transizione_fase
     # (gestite in elaborazione.py → _processa_transizione_fase)
 
     return fase
@@ -737,7 +846,9 @@ async def transizione_fase_onboarding(
     fase_corrente = stato.get("fase_onboarding", "accoglienza")
 
     transizioni_valide = {
-        "placement": "piano",
+        "auto_valutazione": "placement",
+        "placement": "conclusione",
+        # Back-compat: piano → conclusione (fase piano rimossa)
         "piano": "conclusione",
     }
 

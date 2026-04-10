@@ -223,12 +223,12 @@ class TestDirettive:
         result = direttiva_onboarding(fase="accoglienza")
         assert "Onboarding" in result
         assert "accoglienza" in result
-        assert "Presentati" in result
+        assert "patto esplicito" in result
 
     def test_direttiva_onboarding_conoscenza(self):
         result = direttiva_onboarding(fase="conoscenza")
         assert "conoscenza" in result
-        assert "Punto di partenza" in result
+        assert "CAMPO DA APPROFONDIRE" in result
 
     def test_direttiva_onboarding_conclusione(self):
         result = direttiva_onboarding(fase="conclusione", info_raccolte="studente 20 anni, esame")
